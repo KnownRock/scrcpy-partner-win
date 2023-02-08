@@ -6,11 +6,16 @@
 #[macro_use]
 extern crate lazy_static;
 
+use std::env;
 use std::mem;
 use std::sync::Mutex;
 use std::thread::sleep;
 use std::time::Duration;
 
+use tauri::LogicalPosition;
+use tauri::LogicalSize;
+use tauri::Position;
+use tauri::Size;
 use tauri::{Manager};
 use serde::{Serialize, Deserialize};
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -23,34 +28,6 @@ fn greet(name: &str) -> String {
 struct Device {
     name: String,
     id: String,
-}
-
-#[tauri::command]
-fn list_devices() -> Vec<Device> {
-    let output = std::process::Command::new("adb")
-        .arg("devices")
-        .output()
-        .expect("failed to execute process");
-    let output = String::from_utf8(output.stdout).unwrap();
-    println!("output: {}", &output);
-    let mut devices = Vec::new();
-    let lines = output.lines();
-
-    for line in lines {
-        if line.contains("device") {
-            if line.contains("List of devices attached") {
-                continue;
-            }
-            let device_name = line.split("\t").collect::<Vec<&str>>()[0];
-            let device_id = line.split("\t").collect::<Vec<&str>>()[1];
-            devices.push(Device {
-                name: device_name.to_string(),
-                id: device_id.to_string(),
-            });
-            
-        }
-    }
-    devices
 }
 
 #[tauri::command]
@@ -69,6 +46,7 @@ static mut SCRCPY_PROCESS: Vec<u32> = Vec::new();
 // use std::process::Command;
 use async_process::Command;
 
+use winapi::ctypes::c_void;
 use winapi::shared::ntdef::LONG;
 use winapi::shared::windef::HWINEVENTHOOK;
 use winapi::shared::windef::HWND;
@@ -83,7 +61,6 @@ fn enumerate_windows<F>(mut callback: F)
     where F: FnMut(HWND) -> bool
 {
     use winapi::um::winuser::EnumWindows;
-    use std::os::raw::c_void;
 
     unsafe extern "system" fn enumerate_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
         let closure: &mut &mut dyn FnMut(HWND) -> bool = mem::transmute(lparam as *mut c_void);
@@ -107,54 +84,85 @@ lazy_static! {
     };    
 }
 
+static mut MAIN_WINDOWS : Vec<tauri::Window> = Vec::new();
 
-fn watch_window_size_and_position() {
-    // use winapi::um::winuser::GetWindowRect;
-    // use winapi::um::winuser::GetClientRect;
-    // use winapi::um::winuser::GetWindowLongPtrW;
-    // use winapi::um::winuser::SetWindowLongPtrW;
+unsafe extern "system" fn win_event_callback(
+    _hwin_event_hook: HWINEVENTHOOK,
+    _event: winapi::shared::minwindef::DWORD,
+    _hwnd: winapi::shared::windef::HWND,
+    _id_object: LONG,
+    _id_child: LONG,
+    _id_event_thread: winapi::shared::minwindef::DWORD,
+    _dwms_event_time: winapi::shared::minwindef::DWORD,
+) {
+    let hwnd_usize = _hwnd as usize;
 
-    // use winapi::um::winuser::SetWinEventHook;
+    if hwnd_usize == 0 {
+        return;
+    }
 
+    println!("window size changed");
+    println!("hwnd: {:?}", _hwnd);
+    println!("id event thread: {}", _id_event_thread);
+    println!("** is scrpcy hwnd **");
+
+    let mut rect = RECT {
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+    };
+    // get rect of window
+    winapi::um::winuser::GetWindowRect(_hwnd, &mut rect);
+
+    println!("rect: {:?}", rect.left);
+    println!("rect: {:?}", rect.top);
+    println!("rect: {:?}", rect.right);
+    println!("rect: {:?}", rect.bottom);
+
+
+    // println!("{:?}", MAIN_WINDOWS.len());
+    if MAIN_WINDOWS.len() == 1{
+        let window = & mut MAIN_WINDOWS[0];
+
+        window.set_position(Position::Logical(LogicalPosition::new((rect.right - 8) as f64, (rect.top + 30i32) as f64)));
+    }
+
+
+}
+
+fn watch_window_size_and_position(pid: DWORD) {
     println!("watch_window_size_and_position, pid: {}", 0);
 
+    
 
-    unsafe extern "system" fn win_event_callback(
-        _hwin_event_hook: HWINEVENTHOOK,
-        _event: winapi::shared::minwindef::DWORD,
-        _hwnd: winapi::shared::windef::HWND,
-        _id_object: LONG,
-        _id_child: LONG,
-        _id_event_thread: winapi::shared::minwindef::DWORD,
-        _dwms_event_time: winapi::shared::minwindef::DWORD,
-    ) {
-        // let hwnd = _hwnd;
-        
-        let hwnd_usize = _hwnd as usize;
+    // type MyFn = unsafe extern "system" fn(
+    //     HWINEVENTHOOK,
+    //     winapi::shared::minwindef::DWORD,
+    //     winapi::shared::windef::HWND,
+    //     LONG,
+    //     LONG,
+    //     winapi::shared::minwindef::DWORD,
+    //     winapi::shared::minwindef::DWORD,
+    // );
 
-        // if IS_SCRCPY_HWND_MAP.lock().unwrap().contains_key(&hwnd_usize) {
-            println!("window size changed");
-            println!("hwnd: {:?}", _hwnd);
-            println!("id event thread: {}", _id_event_thread);
-            println!("** is scrpcy hwnd **");
+    // let win_event_callback_2 = |
+    //         _hwin_event_hook: HWINEVENTHOOK,
+    //         _event: winapi::shared::minwindef::DWORD,
+    //         _hwnd: winapi::shared::windef::HWND,
+    //         _id_object: LONG,
+    //         _id_child: LONG,
+    //         _id_event_thread: winapi::shared::minwindef::DWORD,
+    //         _dwms_event_time: winapi::shared::minwindef::DWORD, 
+    // | {
+    //     unsafe{
+    //         return win_event_callback(_hwin_event_hook, _event, _hwnd, _id_object, _id_child, _id_event_thread, _dwms_event_time);
+    //     }
 
-            let mut rect = RECT {
-                left: 0,
-                top: 0,
-                right: 0,
-                bottom: 0,
-            };
-            // get rect of window
-            winapi::um::winuser::GetWindowRect(_hwnd, &mut rect);
-
-            println!("rect: {:?}", rect.left);
-            println!("rect: {:?}", rect.top);
-            println!("rect: {:?}", rect.right);
-            println!("rect: {:?}", rect.bottom);
+    // } as MyFn;
 
 
-        // }
-    }
+    
 
     use winapi::um::winuser::{SetWinEventHook ,EVENT_OBJECT_LOCATIONCHANGE,EVENT_SYSTEM_FOREGROUND, WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS, WINEVENT_SKIPOWNTHREAD}; 
 
@@ -165,7 +173,7 @@ fn watch_window_size_and_position() {
                 EVENT_OBJECT_LOCATIONCHANGE, 
                 std::ptr::null_mut(), 
                 Some(win_event_callback), 
-                31612, 
+                pid, 
                 0, 
                 WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD
             )
@@ -212,20 +220,31 @@ fn get_title(hwnd: HWND) -> String {
     }
 }
 
-
+#[tauri::command]
+async fn get_exec_mode() -> String {
+    unsafe {
+        if IS_TOOL_MODE {
+            return "tool".to_string();
+        } else {
+            return "local".to_string();
+        }
+    }
+}
 
 #[tauri::command]
-async fn lanuch_scrcpy(handle: tauri::AppHandle) {
+async fn lanuch_scrcpy(handle: tauri::AppHandle, id: String)  {
+    // let local_window = tauri::WindowBuilder::new(
+    //     &handle,
+    //     "local",
+    //     tauri::WindowUrl::App("tool.html".into())
+    //   ).build();
 
-    let local_window = tauri::WindowBuilder::new(
-        &handle,
-        "local",
-        tauri::WindowUrl::App("tool.html".into())
-      ).build();
+    // watch_window_size_and_position();
 
-
+   
     
     let child = Command::new("scrcpy.exe")
+        .arg(format!("-s{}", id))
         // .arg(" --window-x -1858 --window-y 31 --window-width 480 --window-height 1049 --max-size 2160  --turn-screen-off --stay-awake --window-title \"K30s\" -s 7dbe4499")
         // .args(&["--window-x", "0", "--window-y", "31", "--window-width", "480", "--window-height", "1049", "--max-size", "2160", "--turn-screen-off", "--stay-awake", "--window-title", "\"K30s\"", "-s", "7dbe4499"])
         .spawn()
@@ -290,16 +309,96 @@ async fn lanuch_scrcpy(handle: tauri::AppHandle) {
 }
 
 
+static mut IS_TOOL_MODE : bool = false;
+static mut PID : u32 = 0;
+
+
 
 
 fn main() {
     println!("Start");
 
-    watch_window_size_and_position();
+    // print work dir
+    // let work_dir = env::current_dir().unwrap();
+    // println!("work dir: {:?}", work_dir);
+
+    // get pars
+    let args: Vec<String> = env::args().collect();
+    println!("args: {:?}", args);
+
+    
+
+
+    // watch_window_size_and_position();
 
     tauri::Builder::default()
         .setup(|app| {
-            let window = app.get_window("main").unwrap();
+            let mut window = app.get_window("main").unwrap();
+
+            match app.get_cli_matches() {
+                    Ok(matches) => {
+                    matches.args.iter().for_each(|(key, value)| {
+                        println!("{}: {:?}", key, value);
+                        unsafe {
+                            if key == "spw-tool" {
+                                IS_TOOL_MODE = value.value.as_bool().unwrap();
+                            }
+                            if key == "spw-pid" {
+                                match value.value.as_str() {
+                                    Some(v) => {
+                                        PID = v.parse::<u32>().unwrap();
+                                    }
+                                    None => {}
+                                }
+                            }
+                        }
+                    });
+
+                    unsafe {
+                        println!("PID: {:?}", &PID);
+                        println!("IS_TOOL_MODE: {:?}", &IS_TOOL_MODE);
+                    }
+                }
+                Err(_) => {}
+            }
+
+            if unsafe { IS_TOOL_MODE } {
+                window.set_title("SPW Tool");
+                window.set_size(Size::Logical(LogicalSize {
+                    width: 40.0,
+                    height: 600.0,
+                }));
+                window.set_decorations(false);
+                window.set_resizable(false);
+
+
+                window.set_position(Position::Logical(LogicalPosition {
+                    x: 0.0,
+                    y: 0.0,
+                }));
+            } else {
+                window.set_title("SPW");
+                window.set_size(Size::Logical(LogicalSize {
+                    width: 480.0,
+                    height: 1049.0,
+                }));
+                
+            }
+
+            unsafe{
+                if IS_TOOL_MODE {
+                    let pid = PID;
+                    if pid == 0 {
+                        panic!("PID is 0");
+                    }
+
+                    // MAIN_WINDOW.lock().unwrap().replace(window);
+                    MAIN_WINDOWS.push(window);
+                    watch_window_size_and_position(pid);
+                }
+            }
+
+
             
             // window.set_title("Hello World!!!");
 
@@ -318,7 +417,6 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             greet, 
-            list_devices,
             adb_devices_l,
             lanuch_scrcpy
             ])

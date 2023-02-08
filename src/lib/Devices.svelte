@@ -14,39 +14,23 @@
     ActionIcons,
   } from '@smui/card';
   import IconButton, { Icon } from '@smui/icon-button';
-  type Device = {
-    name: string,
-    id: string,
-    model: string,
-    device: string
-    deviceProduct: string
-    transportId: string
-  }
+
+  import {getDevices} from "../utils/devices";
+  import type { Device  } from "../utils/devices";
 
   import Config from './Config.svelte';
 
   let devices : Device[] = [];
 
   let showConfig = false
+  let currentDeviceId : string = ""
 
   async function setDevices() {
-    const rawOutput = await invoke("adb_devices_l") as string;  
-    const lines = rawOutput.split("\n");
-    const deviceLines = lines.slice(1, lines.length).filter(line => line.match(/\S/));
-
-    devices = deviceLines.map(line => {
-      const [,id, deviceProduct, model, device, transportId] = 
-        line.match(/(\S+)\s+device product:(\S+) model:(\S+) device:(\S+) transport_id:(\S+)/);
-      const name = id;
-      return { name, id, model, device, deviceProduct, transportId };
-    }); 
-
-
-    devices = devices.concat(devices)
+    devices = await getDevices()
   }
 
-  async function lanuchScrcpy() {
-    await invoke("lanuch_scrcpy", { id: "emulator-5554" });
+  async function lanuchScrcpy(deviceId: string) {
+    await invoke("lanuch_scrcpy", { id: deviceId });
   }
 
   setDevices();
@@ -56,15 +40,15 @@
 
 <div>
 
-  <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+  <!-- <div style="display: flex; justify-content: space-between; align-items: flex-end;">
     <h1 style="margin-bottom:0.3em;">Device list</h1>
     <Button on:click={setDevices}>
       refresh
     </Button>
 
-  </div>
+  </div> -->
 
-  <Config bind:open={showConfig} />
+  <Config bind:open={showConfig} currentDeviceId={currentDeviceId} />
   
   <LayoutGrid>
     {#each devices as device}
@@ -87,14 +71,17 @@
           </PrimaryAction>
           <Actions>
             <ActionButtons>
-              <Button on:click={() => lanuchScrcpy()}>
+              <Button on:click={() => lanuchScrcpy(device.id)}>
                 <Label>Start</Label>
               </Button>
             </ActionButtons>
             <ActionIcons>
               <IconButton
                 class="material-icons"
-                on:click={() => { showConfig = true } }
+                on:click={() => { 
+                  showConfig = true;
+                  currentDeviceId = device.id;
+                }}
                 title="More options">more_vert
               </IconButton>
             </ActionIcons>

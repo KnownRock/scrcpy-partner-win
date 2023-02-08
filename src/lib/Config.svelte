@@ -5,10 +5,12 @@
   // import LoremIpsum from '$lib/LoremIpsum.svelte';
   import Autocomplete from '@smui-extra/autocomplete';
 
-  let fruits = ['Apple', 'Orange', 'Banana', 'Mango'];
-  let valueStandard: string | undefined = undefined;
+  import type { Device } from '../utils/devices';
+  import { getDevices } from '../utils/devices';
+  let devices : Device[] = [];
 
   export let open = false;
+  export let currentDeviceId = "";
   let response = 'Nothing yet.';
 
   function closeHandler(e: CustomEvent<{ action: string }>) {
@@ -24,6 +26,17 @@
         break;
     }
   }
+
+  async function setDevices() {
+    devices = await getDevices();
+  }
+
+  // $: open && setDevices();
+
+  $: open && (()=>{
+    setDevices();
+  })()
+
 </script>
 
 
@@ -35,14 +48,14 @@
   on:SMUIDialog:closed={closeHandler}
 >
   <Header>
-    <Title id="fullscreen-title">Terms and Conditions</Title>
+    <Title id="fullscreen-title">Config</Title>
     <IconButton action="close" class="material-icons">close</IconButton>
   </Header>
   <Content id="fullscreen-content">
     <div style="height:25em;">
       <Autocomplete
-        options={fruits}
-        bind:value={valueStandard}
+        options={devices.map((d) => d.id)}
+        bind:value={currentDeviceId}
         label="Device"
       />
     </div>
@@ -50,11 +63,14 @@
     
   </Content>
   <Actions>
-    <Button action="reject">
-      <Label>Reject</Label>
+    <Button action="Save">
+      <Label>Save</Label>
     </Button>
-    <Button action="accept" defaultAction>
-      <Label>Accept</Label>
+    <Button action="cancel">
+      <Label>Cancel</Label>
+    </Button>
+    <Button action="start" defaultAction>
+      <Label>Start</Label>
     </Button>
   </Actions>
 </Dialog>
