@@ -17,6 +17,10 @@ tauri-build = { version = "1.2", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.2", features = ["shell-open"] }
+winapi = { version = "0.3.9", features = ["psapi", "winuser"] }
+futures = "0.3"
+async-process = "1.6.0"
+lazy_static = "1.4.0"
 
 [dependencies.windows]
 version = "0.44.0"
