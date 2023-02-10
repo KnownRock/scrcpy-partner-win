@@ -14,18 +14,18 @@
   const key = (tab: TabEntry) => tab.k;
 
   const tabs: TabEntry[] = [
-    {
-      k: 'config',
-      label: 'Config',
-    },
+    // {
+    //   k: 'config',
+    //   label: 'Config',
+    // },
     {
       k: 'devices',
       label: 'Devices',
     },
-    {
-      k: 'components',
-      label: 'Components',
-    },
+    // {
+    //   k: 'components',
+    //   label: 'Components',
+    // },
   ];
   let active = tabs[1];
 
