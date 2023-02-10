@@ -24,12 +24,6 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct Device {
-    name: String,
-    id: String,
-}
-
 #[tauri::command]
 fn adb_devices_l() -> String {
     let output = std::process::Command::new("adb")
@@ -43,7 +37,6 @@ fn adb_devices_l() -> String {
 }
 
 static mut SCRCPY_PROCESS: Vec<u32> = Vec::new();
-// use std::process::Command;
 use async_process::Command;
 
 use winapi::ctypes::c_void;
@@ -84,9 +77,65 @@ lazy_static! {
     };    
 }
 
-static mut MAIN_WINDOWS : Vec<tauri::Window> = Vec::new();
+static mut MAIN_WINDOW : Option<tauri::Window> = None;
 
-unsafe extern "system" fn win_event_callback(
+unsafe extern "system" fn win_event_loc_callback(
+    _hwin_event_hook: HWINEVENTHOOK,
+    _event: winapi::shared::minwindef::DWORD,
+    _hwnd: winapi::shared::windef::HWND,
+    _id_object: LONG,
+    _id_child: LONG,
+    _id_event_thread: winapi::shared::minwindef::DWORD,
+    _dwms_event_time: winapi::shared::minwindef::DWORD,
+) {
+    let hwnd_usize = _hwnd as usize;
+
+    if HWND == 0 {
+        return;
+    }
+
+    if hwnd_usize != HWND {
+        return;
+    }
+    println!("window size changed");
+    println!("hwnd: {:?}", _hwnd);
+
+
+    match &mut MAIN_WINDOW {
+        Some(window) => {
+            set_window_loc_by_hwnd(HWND, window);
+        },
+        None => {}
+    }
+
+
+}
+
+fn set_window_loc_by_hwnd(hwnd_usize: usize, window:&mut tauri::Window) {
+    if hwnd_usize == 0 {
+        return;
+    }
+
+    let hwnd = hwnd_usize as HWND;
+    
+    let mut rect = RECT {
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+    };
+    // get rect of window
+    unsafe {
+        winapi::um::winuser::GetWindowRect(hwnd, &mut rect);
+    }
+
+    window
+        .set_position(Position::Logical(LogicalPosition::new((rect.right - 8) as f64, (rect.top + 30i32) as f64)))
+        .unwrap();
+
+}
+
+unsafe extern "system" fn win_event_order_callback(
     _hwin_event_hook: HWINEVENTHOOK,
     _event: winapi::shared::minwindef::DWORD,
     _hwnd: winapi::shared::windef::HWND,
@@ -100,85 +149,57 @@ unsafe extern "system" fn win_event_callback(
     if hwnd_usize == 0 {
         return;
     }
-
-    println!("window size changed");
+    println!("window order changed");
     println!("hwnd: {:?}", _hwnd);
-    println!("id event thread: {}", _id_event_thread);
-    println!("** is scrpcy hwnd **");
 
-    let mut rect = RECT {
-        left: 0,
-        top: 0,
-        right: 0,
-        bottom: 0,
-    };
-    // get rect of window
-    winapi::um::winuser::GetWindowRect(_hwnd, &mut rect);
-
-    println!("rect: {:?}", rect.left);
-    println!("rect: {:?}", rect.top);
-    println!("rect: {:?}", rect.right);
-    println!("rect: {:?}", rect.bottom);
-
-
-    // println!("{:?}", MAIN_WINDOWS.len());
-    if MAIN_WINDOWS.len() == 1{
-        let window = & mut MAIN_WINDOWS[0];
-
-        window.set_position(Position::Logical(LogicalPosition::new((rect.right - 8) as f64, (rect.top + 30i32) as f64)));
+    match &mut MAIN_WINDOW {
+        Some(window) => {
+            window.set_always_on_top(true).unwrap();
+            window.set_always_on_top(false).unwrap();
+        },
+        None => {}
     }
 
-
+    match &mut MAIN_WINDOW {
+        Some(window) => {
+            set_window_loc_by_hwnd(HWND, window);
+        },
+        None => {}
+    }
+ 
 }
 
-fn watch_window_size_and_position(pid: DWORD) {
+
+fn watch_window_size_and_position_and_order(pid: DWORD) {
     println!("watch_window_size_and_position, pid: {}", 0);
-
     
-
-    // type MyFn = unsafe extern "system" fn(
-    //     HWINEVENTHOOK,
-    //     winapi::shared::minwindef::DWORD,
-    //     winapi::shared::windef::HWND,
-    //     LONG,
-    //     LONG,
-    //     winapi::shared::minwindef::DWORD,
-    //     winapi::shared::minwindef::DWORD,
-    // );
-
-    // let win_event_callback_2 = |
-    //         _hwin_event_hook: HWINEVENTHOOK,
-    //         _event: winapi::shared::minwindef::DWORD,
-    //         _hwnd: winapi::shared::windef::HWND,
-    //         _id_object: LONG,
-    //         _id_child: LONG,
-    //         _id_event_thread: winapi::shared::minwindef::DWORD,
-    //         _dwms_event_time: winapi::shared::minwindef::DWORD, 
-    // | {
-    //     unsafe{
-    //         return win_event_callback(_hwin_event_hook, _event, _hwnd, _id_object, _id_child, _id_event_thread, _dwms_event_time);
-    //     }
-
-    // } as MyFn;
+    use winapi::um::winuser::{SetWinEventHook ,EVENT_OBJECT_LOCATIONCHANGE,EVENT_OBJECT_REORDER,EVENT_SYSTEM_FOREGROUND, WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS, WINEVENT_SKIPOWNTHREAD}; 
 
 
+    unsafe {
+        SetWinEventHook(
+            EVENT_OBJECT_LOCATIONCHANGE,
+            EVENT_OBJECT_LOCATIONCHANGE,
+            std::ptr::null_mut(), 
+            Some(win_event_loc_callback), 
+            pid, 
+            0, 
+            WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD
+        );
+
+        SetWinEventHook(
+            EVENT_OBJECT_REORDER,
+            EVENT_OBJECT_REORDER,
+            std::ptr::null_mut(), 
+            Some(win_event_order_callback), 
+            pid, 
+            0, 
+            WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD
+        );
+
+
+    };
     
-
-    use winapi::um::winuser::{SetWinEventHook ,EVENT_OBJECT_LOCATIONCHANGE,EVENT_SYSTEM_FOREGROUND, WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS, WINEVENT_SKIPOWNTHREAD}; 
-
-    unsafe{
-        let hook_handle = unsafe {
-            SetWinEventHook(
-                EVENT_OBJECT_LOCATIONCHANGE, 
-                EVENT_OBJECT_LOCATIONCHANGE, 
-                std::ptr::null_mut(), 
-                Some(win_event_callback), 
-                pid, 
-                0, 
-                WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD
-            )
-        };
-    }
 }
 
 
@@ -191,6 +212,8 @@ fn get_window_thread_process_id(hwnd: HWND) -> DWORD {
     pid
 }
 
+/*
+ */
 
 fn get_hwnd_by_pid(pid: DWORD) -> HWND {
     let mut hwnd: HWND = std::ptr::null_mut();
@@ -220,13 +243,23 @@ fn get_title(hwnd: HWND) -> String {
     }
 }
 
+#[test]
+fn test_get_title() {
+    use winapi::um::winuser::GetForegroundWindow;
+
+    let hwnd = unsafe { GetForegroundWindow() };
+    let title = get_title(hwnd);
+    println!("Foreground window title:{}", title);
+    assert!(title.len() > 0);
+}
+
 #[tauri::command]
 async fn get_exec_mode() -> String {
     unsafe {
         if IS_TOOL_MODE {
             return "tool".to_string();
         } else {
-            return "local".to_string();
+            return "home".to_string();
         }
     }
 }
@@ -311,29 +344,18 @@ async fn lanuch_scrcpy(handle: tauri::AppHandle, id: String)  {
 
 static mut IS_TOOL_MODE : bool = false;
 static mut PID : u32 = 0;
-
-
+static mut HWND: usize = 0;
 
 
 fn main() {
     println!("Start");
 
-    // print work dir
-    // let work_dir = env::current_dir().unwrap();
-    // println!("work dir: {:?}", work_dir);
-
-    // get pars
     let args: Vec<String> = env::args().collect();
     println!("args: {:?}", args);
 
-    
-
-
-    // watch_window_size_and_position();
-
     tauri::Builder::default()
         .setup(|app| {
-            let mut window = app.get_window("main").unwrap();
+            let window = app.get_window("main").unwrap();
 
             match app.get_cli_matches() {
                     Ok(matches) => {
@@ -363,26 +385,21 @@ fn main() {
             }
 
             if unsafe { IS_TOOL_MODE } {
-                window.set_title("SPW Tool");
+                window.set_title("SPW Tool").unwrap();
                 window.set_size(Size::Logical(LogicalSize {
-                    width: 40.0,
-                    height: 600.0,
-                }));
-                window.set_decorations(false);
-                window.set_resizable(false);
+                    width: 32.0,
+                    height: 550.0,
+                })).unwrap();
+                window.set_decorations(false).unwrap();
+                window.set_resizable(false).unwrap();
 
 
                 window.set_position(Position::Logical(LogicalPosition {
                     x: 0.0,
                     y: 0.0,
-                }));
-            } else {
-                window.set_title("SPW");
-                window.set_size(Size::Logical(LogicalSize {
-                    width: 480.0,
-                    height: 1049.0,
-                }));
-                
+                })).unwrap();
+
+                window.set_skip_taskbar(true).unwrap();
             }
 
             unsafe{
@@ -392,33 +409,30 @@ fn main() {
                         panic!("PID is 0");
                     }
 
-                    // MAIN_WINDOW.lock().unwrap().replace(window);
-                    MAIN_WINDOWS.push(window);
-                    watch_window_size_and_position(pid);
+                    MAIN_WINDOW = Some(window);
+                    HWND = get_hwnd_by_pid(pid) as usize;
+                    println!("HWND: 0x{:x}", HWND);
+                    watch_window_size_and_position_and_order(pid);
+
+                    match &mut MAIN_WINDOW {
+                        Some(window) => {
+                            set_window_loc_by_hwnd(HWND, window);
+                            window.set_always_on_top(true).unwrap();
+                            window.set_always_on_top(false).unwrap();
+                        },
+                        None => {}
+                    }
+                    
                 }
-            }
-
-
-            
-            // window.set_title("Hello World!!!");
-
-            // window.set_size(Size::Logical(LogicalSize {
-            //     width: 200.0,
-            //     height: 200.0,
-            // }));
-
-            // let local_window = tauri::WindowBuilder::new(
-            //     app,
-            //     "local",
-            //     tauri::WindowUrl::App("tool.html".into())
-            //   ).build()?;
+            } 
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             greet, 
             adb_devices_l,
-            lanuch_scrcpy
+            lanuch_scrcpy,
+            get_exec_mode
             ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");
