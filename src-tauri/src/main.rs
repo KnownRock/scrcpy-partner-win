@@ -18,11 +18,9 @@ use tauri::Position;
 use tauri::Size;
 use tauri::{Manager};
 use serde::{Serialize, Deserialize};
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+ 
+mod sendkey;
+
 
 #[tauri::command]
 fn adb_devices_l() -> String {
@@ -130,7 +128,7 @@ fn set_window_loc_by_hwnd(hwnd_usize: usize, window:&mut tauri::Window) {
     }
 
     window
-        .set_position(Position::Logical(LogicalPosition::new((rect.right - 8) as f64, (rect.top + 30i32) as f64)))
+        .set_position(Position::Logical(LogicalPosition::new((rect.right - 8) as f64, (rect.top + 40i32) as f64)))
         .unwrap();
 
 }
@@ -255,6 +253,7 @@ fn test_get_title() {
 
 #[tauri::command]
 async fn get_exec_mode() -> String {
+    println!("get_exec_mode");
     unsafe {
         if IS_TOOL_MODE {
             return "tool".to_string();
@@ -263,6 +262,19 @@ async fn get_exec_mode() -> String {
         }
     }
 }
+
+#[tauri::command]
+async fn sendkey(
+    key_code: usize, 
+    scan_code: usize, 
+    extend_key_flag: usize,
+    is_alt: bool,
+    is_shift: bool
+){
+    unsafe{
+        sendkey::sendkey(HWND, key_code, scan_code, extend_key_flag, is_alt, is_shift)
+    }
+}  
 
 #[tauri::command]
 async fn lanuch_scrcpy(handle: tauri::AppHandle, id: String)  {
@@ -386,9 +398,10 @@ fn main() {
 
             if unsafe { IS_TOOL_MODE } {
                 window.set_title("SPW Tool").unwrap();
+                // TODO: set window size
                 window.set_size(Size::Logical(LogicalSize {
-                    width: 32.0,
-                    height: 550.0,
+                    width: 36.0,
+                    height: 500.0,
                 })).unwrap();
                 window.set_decorations(false).unwrap();
                 window.set_resizable(false).unwrap();
@@ -413,7 +426,6 @@ fn main() {
                     HWND = get_hwnd_by_pid(pid) as usize;
                     println!("HWND: 0x{:x}", HWND);
                     watch_window_size_and_position_and_order(pid);
-
                     match &mut MAIN_WINDOW {
                         Some(window) => {
                             set_window_loc_by_hwnd(HWND, window);
@@ -429,10 +441,10 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            greet, 
             adb_devices_l,
             lanuch_scrcpy,
-            get_exec_mode
+            get_exec_mode,
+            sendkey
             ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");
