@@ -27,7 +27,7 @@
     //   label: 'Components',
     // },
   ];
-  let active = tabs[1];
+  let active = tabs[0];
 
   
 </script>
