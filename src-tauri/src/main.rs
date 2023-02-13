@@ -168,10 +168,47 @@ unsafe extern "system" fn win_event_order_callback(
 }
 
 
+unsafe extern "system" fn win_event_close_callback(
+    _hwin_event_hook: HWINEVENTHOOK,
+    _event: winapi::shared::minwindef::DWORD,
+    _hwnd: winapi::shared::windef::HWND,
+    _id_object: LONG,
+    _id_child: LONG,
+    _id_event_thread: winapi::shared::minwindef::DWORD,
+    _dwms_event_time: winapi::shared::minwindef::DWORD,
+) {
+    let hwnd_usize = _hwnd as usize;
+
+    if hwnd_usize == 0 {
+        return;
+    }
+    println!("window close");
+    println!("hwnd: {:?}", _hwnd);
+
+    if hwnd_usize == HWND {
+        println!("window close");
+        println!("hwnd: {:?}", _hwnd);
+        std::process::exit(0);
+    }
+
+    
+ 
+}
+
+
 fn watch_window_size_and_position_and_order(pid: DWORD) {
     println!("watch_window_size_and_position, pid: {}", 0);
     
-    use winapi::um::winuser::{SetWinEventHook ,EVENT_OBJECT_LOCATIONCHANGE,EVENT_OBJECT_REORDER,EVENT_SYSTEM_FOREGROUND, WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS, WINEVENT_SKIPOWNTHREAD}; 
+    use winapi::um::winuser::{
+        SetWinEventHook ,
+        EVENT_OBJECT_LOCATIONCHANGE,
+        EVENT_OBJECT_REORDER,
+        EVENT_SYSTEM_FOREGROUND, 
+        WINEVENT_OUTOFCONTEXT, 
+        WINEVENT_SKIPOWNPROCESS, 
+        WINEVENT_SKIPOWNTHREAD,
+        EVENT_OBJECT_DESTROY
+    }; 
 
 
     unsafe {
@@ -190,6 +227,16 @@ fn watch_window_size_and_position_and_order(pid: DWORD) {
             EVENT_OBJECT_REORDER,
             std::ptr::null_mut(), 
             Some(win_event_order_callback), 
+            pid, 
+            0, 
+            WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD
+        );
+
+        SetWinEventHook(
+            EVENT_OBJECT_DESTROY,
+            EVENT_OBJECT_DESTROY,
+            std::ptr::null_mut(), 
+            Some(win_event_close_callback), 
             pid, 
             0, 
             WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD
@@ -401,7 +448,7 @@ fn main() {
                 // TODO: set window size
                 window.set_size(Size::Logical(LogicalSize {
                     width: 36.0,
-                    height: 500.0,
+                    height: 540.0,
                 })).unwrap();
                 window.set_decorations(false).unwrap();
                 window.set_resizable(false).unwrap();
