@@ -81,6 +81,22 @@
       isAlt : true,
       isShift: false
     },
+    'aspect_ratio':{
+      // alt w
+      keyCode: 0x57,
+      scanCode: 0x11,
+      extendKeyFlag: 0,
+      isAlt : true,
+      isShift: false
+    },
+    'power':{
+      // alt p
+      keyCode: 0x50,
+      scanCode: 0x19,
+      extendKeyFlag: 0,
+      isAlt : true,
+      isShift: false
+    },
     
   }
 
@@ -95,7 +111,7 @@
 <div class="tool-container">
 
 
-  <IconButton class="material-icons" on:click={() => 1}>
+  <IconButton class="material-icons" on:click={() => sendKey('power')}>
     power_settings_new
   </IconButton>
   <IconButton class="material-icons" on:click={() => sendKey('volume_up')}>
@@ -109,6 +125,9 @@
   </IconButton>
   <IconButton class="material-icons" on:click={() => sendKey('rotate_right')}>
     rotate_right
+  </IconButton>
+  <IconButton class="material-icons" on:click={() => sendKey('aspect_ratio')}>
+    aspect_ratio
   </IconButton>
   <IconButton class="material-icons" on:click={() => sendKey('expend_notification')}>
     menu_open
