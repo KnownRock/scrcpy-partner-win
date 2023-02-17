@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { invoke } from "@tauri-apps/api/tauri"
-  import List, { Item, Separator, Text } from '@smui/list';
-  // import Button from "@smui/button";
+
+
   import LayoutGrid, { Cell } from '@smui/layout-grid';
   import Button, { Label } from '@smui/button';
   import Card, {
@@ -15,7 +14,7 @@
   } from '@smui/card';
   import IconButton, { Icon } from '@smui/icon-button';
 
-  import {getDevices} from "../utils/devices";
+  import {getDevices, lanuchSelf} from "../utils/devices";
   import type { Device  } from "../utils/devices";
 
   import Config from './Config.svelte';
@@ -30,7 +29,7 @@
   }
 
   async function lanuchScrcpy(deviceId: string) {
-    await invoke("lanuch_scrcpy", { id: deviceId });
+    lanuchSelf([ `-s${deviceId}` ])
   }
 
   setDevices();

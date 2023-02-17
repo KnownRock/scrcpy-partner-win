@@ -22,3 +22,7 @@ export async function getDevices(): Promise<Device[]> {
   }); 
 
 }
+
+export async function lanuchSelf(args) {
+  await invoke("lanuch_self", { args });
+}

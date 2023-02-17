@@ -7,7 +7,7 @@
   import Autocomplete from '@smui-extra/autocomplete';
   import FormField from '@smui/form-field';
   import type { Device } from '../utils/devices';
-  import { getDevices } from '../utils/devices';
+  import { getDevices, lanuchSelf } from '../utils/devices';
   let devices : Device[] = [];
 
   export let open = false;
@@ -34,31 +34,31 @@
     const form : FormItem[] = [{
       type: 'option',
       label: 'Device',
-      name: 'device',
+      name: 'serial',
       options: devices.map((d) => d.id),
       value: currentDeviceId
     },{
       type: 'option',
       label: 'Max Size',
-      name: 'maxSize',
+      name: 'max-size',
       options: ['2160', '1440', '1080', '720', '480', '360', '240'],
       value: '1080',
     },{
       type: 'option',
       label: 'Bit Rate',
-      name: 'bitRate',
+      name: 'bit-rate',
       options: ['32M', '16M', '8M', '4M', '2M', '1M', '512K', '256K'],
       value: '8M'
     },{
       type: 'option',
       label: 'FPS',
-      name: 'fps',
+      name: 'max-fps',
       options: ['144','120','75', '60', '30', '20', '15', '10', '5'],
       value: '60'
     },{
       type: 'option',
       label: 'Display Buffer',
-      name: 'displayBuffer',
+      name: 'display-buffer',
       options: ['100', '50', '30', '20', '10', '5', '0'],
       value: '0'
     }, {
@@ -66,7 +66,7 @@
     }, {
       type: 'switch',
       label: 'Always on top',
-      name: 'alwaysOnTop',
+      name: 'always-on-top',
       value: false
     }, {
       type: 'switch',
@@ -76,11 +76,13 @@
     }, {
       type: 'switch',
       label: 'Window Borderless',
-      name: 'displayBuffer',
+      name: 'window-borderless',
       value: false
     }]
     return form;
   }
+
+  let response = ''
 
   function closeHandler(e: CustomEvent<{ action: string }>) {
     switch (e.detail.action) {
@@ -98,8 +100,27 @@
 
   async function setDevices() {
     devices = await getDevices();
-
     form = getForm(devices);
+  }
+
+  async function start(){
+    function formToArgs(form: FormItem[]){
+      const args = [];
+      for (const item of form) {
+        if(item.type === 'option'){
+          args.push(`--${item.name}=${item.value}`);
+        } else if(item.type === 'switch'){
+          if(item.value){
+            args.push(`--${item.name}`);
+          }
+        }
+      }
+
+      return args
+    }
+
+    const args = formToArgs(form);
+    lanuchSelf(args);
   }
 
   // $: open && setDevices();
@@ -130,6 +151,7 @@
           bind:value={formItem.value}
           label={formItem.label}
         />
+        <br>
       {/if}
       {#if formItem.type === 'br'}
         <br/>
@@ -155,13 +177,13 @@
     
   </Content>
   <Actions>
-    <Button action="Save">
+    <!-- <Button action="Save">
       <Label>Save</Label>
-    </Button>
+    </Button> -->
     <Button action="cancel">
       <Label>Cancel</Label>
     </Button>
-    <Button action="start" defaultAction>
+    <Button action="start" defaultAction  on:click={() => start()}>
       <Label>Start</Label>
     </Button>
   </Actions>
