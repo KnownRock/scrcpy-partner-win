@@ -21,19 +21,6 @@ use tauri::Size;
 
 mod sendkey;
 
-#[tauri::command]
-fn adb_devices_l() -> String {
-    let output = std::process::Command::new("adb")
-        .arg("devices")
-        .arg("-l")
-        .output()
-        .expect("failed to execute process");
-    let output = String::from_utf8(output.stdout).unwrap();
-    println!("output: {}", &output);
-    output
-}
-
-static mut SCRCPY_PROCESS: Vec<u32> = Vec::new();
 
 use std::os::windows::process::CommandExt;
 use std::process::{Command};
@@ -255,6 +242,30 @@ fn get_hwnd_by_pid(pid: DWORD) -> HWND {
     hwnd
 }
 
+#[tauri::command]
+fn adb_devices_l() -> String {
+    let output = std::process::Command::new("adb")
+        .arg("devices")
+        .arg("-l")
+        .output()
+        .expect("failed to execute process");
+    let output = String::from_utf8(output.stdout).unwrap();
+    println!("output: {}", &output);
+    output
+}
+
+#[tauri::command]
+fn lanuch_self(args: Vec<String>) {
+    let self_path = std::env::current_exe().unwrap();
+
+    println!("lanuch_self: {:?}", self_path);
+
+    let mut cmd = Command::new(self_path);
+    cmd.args(args);
+
+    cmd.spawn().unwrap();
+}
+
 
 #[tauri::command]
 async fn get_exec_mode() -> String {
@@ -276,6 +287,31 @@ async fn get_exec_mode() -> String {
 
             return "tool".to_string();
         } else {
+            println!("get_exec_mode, home mode");
+
+            match &mut MAIN_WINDOW {
+                // TODO: set window size by items count
+                Some(window) => {
+                    println!("get_exec_mode, home mode, set window size");
+
+                    window
+                        .set_size(Size::Logical(LogicalSize {
+                            width: 800.0,
+                            height: 600.0,
+                        }))
+                        .unwrap();
+
+                    window
+                        .set_position(Position::Logical(LogicalPosition::new(0.0, 0.0)))
+                        .unwrap();
+
+                    window.set_decorations(true).unwrap();
+                    window.set_resizable(true).unwrap();
+                }
+                None => {}
+            }
+
+
             return "home".to_string();
         }
     }
@@ -302,7 +338,7 @@ fn run_scrcpy(pars:&Vec<String>) -> Option<(u32, usize)> {
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .args(pars)
-        // .creation_flags(0x08000000)
+        .creation_flags(0x08000000)
         .spawn()
         .unwrap();
 
@@ -401,9 +437,11 @@ fn main() {
                     window.set_always_on_top(true).unwrap();
                     window.set_always_on_top(false).unwrap();
 
-                    MAIN_WINDOW = Some(window);
+                    
                     println!("HWND: 0x{:x}", HWND);
                 }
+
+                MAIN_WINDOW = Some(window);
             }
 
             Ok(())
@@ -411,7 +449,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             adb_devices_l,
             get_exec_mode,
-            sendkey
+            sendkey,
+            lanuch_self
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");
