@@ -12,6 +12,7 @@ use std::sync::Mutex;
 use std::thread::sleep;
 use std::time::Duration;
 
+use async_process::Stdio;
 use tauri::LogicalPosition;
 use tauri::LogicalSize;
 use tauri::Manager;
@@ -33,7 +34,9 @@ fn adb_devices_l() -> String {
 }
 
 static mut SCRCPY_PROCESS: Vec<u32> = Vec::new();
-use async_process::Command;
+
+use std::os::windows::process::CommandExt;
+use std::process::{Command};
 
 use winapi::ctypes::c_void;
 use winapi::shared::minwindef::BOOL;
@@ -294,18 +297,27 @@ static mut IS_TOOL_MODE: bool = false;
 static mut HWND: usize = 0;
 
 fn run_scrcpy(pars:&Vec<String>) -> Option<(u32, usize)> {
+    // noconsole
     let child = Command::new("scrcpy.exe")
-        // .stdout(Stdio::null())
-        // .stderr(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .args(pars)
+        // .creation_flags(0x08000000)
         .spawn()
         .unwrap();
+
+    // let child = Command::new("scrcpy.exe")
+    //     // .stdout(Stdio::null())
+    //     // .stderr(Stdio::null())
+    //     .args(pars)
+    //     .spawn()
+    //     .unwrap();
 
     println!("Launched scrcpy");
 
     let pid = child.id();
 
-    let mut timeout = 10;
+    let mut timeout = 20;
     let mut hwnd_usize: usize = 0;
     while timeout > 0 {
         sleep(Duration::from_millis(100));
