@@ -60,24 +60,15 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
-        "resizable": true,
+        "height": 1,
+        "resizable": false,
         "title": "scrcpy-partner-win",
-        "width": 800
+        "width": 1,
+        "x": 9999999,
+        "y": 9999999,
+        "decorations": false
       }
-    ],
-    "cli": {
-      "args": [
-        {
-          "name": "spw-tool"
-        },
-        {
-          "name": "spw-pid",
-          "takesValue": true,
-          "numberOfValues": 1
-          
-        }
-      ]
-    }
+    ]
+    
   }
 }
