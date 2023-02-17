@@ -10,7 +10,6 @@
 
 <main class="container">
   <!-- <Home /> -->
-
   {#await getExecMode()}
     <p>loading</p>
   {:then execMode}
