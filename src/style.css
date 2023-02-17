@@ -33,7 +33,7 @@ body,
   padding: 0;
   font-family: 'Roboto', sans-serif;
   font-size: 16px;
-  color: rgb(96, 125, 139);
+  /* color: rgb(96, 125, 139); */
   background-color: rgb(240, 240, 240)
 }
 
@@ -46,7 +46,8 @@ body,
   height: calc(100vh - 2px);
   width: calc(100vw - 2px);
 
-  background-color: rgb(240, 240, 240);
+  color: rgb(96, 125, 139);
+  /* background-color: rgb(240, 240, 240); */
 
   border: 1px solid rgb(96, 125, 139);
 
