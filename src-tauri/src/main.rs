@@ -21,9 +21,8 @@ use tauri::Size;
 
 mod sendkey;
 
-
 use std::os::windows::process::CommandExt;
-use std::process::{Command};
+use std::process::Command;
 
 use winapi::ctypes::c_void;
 use winapi::shared::minwindef::BOOL;
@@ -56,16 +55,6 @@ where
 
     let lparam = closure_pointer_pointer as LPARAM;
     unsafe { EnumWindows(Some(enumerate_callback), lparam) };
-}
-
-// IS_SCRCPY_HWND_MAP
-use std::collections::HashMap;
-
-lazy_static! {
-    static ref IS_SCRCPY_HWND_MAP: Mutex<HashMap<usize, bool>> = {
-        let mut m = HashMap::new();
-        Mutex::new(m)
-    };
 }
 
 static mut MAIN_WINDOW: Option<tauri::Window> = None;
@@ -183,8 +172,7 @@ fn watch_window_size_and_position_and_order(pid: DWORD) {
 
     use winapi::um::winuser::{
         SetWinEventHook, EVENT_OBJECT_DESTROY, EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_REORDER,
-        WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS,
-        WINEVENT_SKIPOWNTHREAD,
+        WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS, WINEVENT_SKIPOWNTHREAD,
     };
 
     unsafe {
@@ -220,8 +208,6 @@ fn watch_window_size_and_position_and_order(pid: DWORD) {
     };
 }
 
-
-
 fn get_hwnd_by_pid(pid: DWORD) -> HWND {
     fn get_window_thread_process_id(hwnd: HWND) -> DWORD {
         let mut pid: DWORD = 0;
@@ -247,11 +233,44 @@ fn adb_devices_l() -> String {
     let output = std::process::Command::new("adb")
         .arg("devices")
         .arg("-l")
+        .creation_flags(0x08000000)
         .output()
         .expect("failed to execute process");
     let output = String::from_utf8(output.stdout).unwrap();
     println!("output: {}", &output);
     output
+}
+
+fn get_adb_devices() -> Vec<String> {
+    let output = std::process::Command::new("adb")
+        .arg("devices")
+        .arg("-l")
+        .creation_flags(0x08000000)
+        .output()
+        .expect("failed to execute process");
+    let output = String::from_utf8(output.stdout).unwrap();
+    dbg!("output: {}", &output);
+
+    let mut devices = Vec::new();
+    for line in output.lines() {
+        if line.starts_with("List") {
+            continue;
+        }
+
+        if line.len() == 0 {
+            break;
+        }
+
+        let mut iter = line.split_whitespace();
+        let device = iter.next().unwrap();
+        if device == "List" {
+            continue;
+        }
+
+        devices.push(device.to_string());
+    }
+
+    devices
 }
 
 #[tauri::command]
@@ -260,16 +279,19 @@ fn lanuch_self(args: Vec<String>) {
 
     println!("lanuch_self: {:?}", self_path);
 
-    let mut cmd = Command::new(self_path);
-    cmd.args(args);
-
-    cmd.spawn().unwrap();
+    Command::new(self_path).args(args).creation_flags(0x08000000).spawn().unwrap();
 }
 
-
 #[tauri::command]
-async fn get_exec_mode() -> String {
+fn get_exec_mode(app: tauri::AppHandle) -> String {
     println!("get_exec_mode");
+
+    let main_window = app.get_window("main").unwrap();
+    main_window.show().unwrap();
+
+    let splashscreen_window = app.get_window("splashscreen").unwrap();
+    splashscreen_window.close().unwrap();
+
     unsafe {
         if IS_TOOL_MODE {
             match &mut MAIN_WINDOW {
@@ -294,23 +316,23 @@ async fn get_exec_mode() -> String {
                 Some(window) => {
                     println!("get_exec_mode, home mode, set window size");
 
-                    window
-                        .set_size(Size::Logical(LogicalSize {
-                            width: 800.0,
-                            height: 600.0,
-                        }))
-                        .unwrap();
+                    // window
+                    //     .set_size(Size::Logical(LogicalSize {
+                    //         width: 800.0,
+                    //         height: 600.0,
+                    //     }))
+                    //     .unwrap();
 
-                    window
-                        .set_position(Position::Logical(LogicalPosition::new(0.0, 0.0)))
-                        .unwrap();
+                    // window
+                    //     .set_position(Position::Logical(LogicalPosition::new(0.0, 0.0)))
+                    //     .unwrap();
 
                     window.set_decorations(true).unwrap();
                     window.set_resizable(true).unwrap();
+                    window.set_skip_taskbar(false).unwrap();
                 }
                 None => {}
             }
-
 
             return "home".to_string();
         }
@@ -328,11 +350,10 @@ async fn sendkey(
     unsafe { sendkey::sendkey(HWND, key_code, scan_code, extend_key_flag, is_alt, is_shift) }
 }
 
-
 static mut IS_TOOL_MODE: bool = false;
 static mut HWND: usize = 0;
 
-fn run_scrcpy(pars:&Vec<String>) -> Option<(u32, usize)> {
+fn run_scrcpy(pars: &Vec<String>) -> Option<(u32, usize)> {
     // noconsole
     let child = Command::new("scrcpy.exe")
         .stdout(Stdio::null())
@@ -341,13 +362,6 @@ fn run_scrcpy(pars:&Vec<String>) -> Option<(u32, usize)> {
         .creation_flags(0x08000000)
         .spawn()
         .unwrap();
-
-    // let child = Command::new("scrcpy.exe")
-    //     // .stdout(Stdio::null())
-    //     // .stderr(Stdio::null())
-    //     .args(pars)
-    //     .spawn()
-    //     .unwrap();
 
     println!("Launched scrcpy");
 
@@ -377,80 +391,156 @@ fn run_scrcpy(pars:&Vec<String>) -> Option<(u32, usize)> {
     Some((pid, hwnd_usize))
 }
 
+#[tauri::command]
+async fn init(app:  tauri::AppHandle) -> String{
+    // let loading_window = 
+
+    return "ok".to_string();
+}
+
+fn init_handle(main_window:  tauri::Window) -> String{
+    // let loading_window = 
+
+    // return "ok".to_string();
+    let devices_ids = get_adb_devices();
+    let mut window = main_window;
+    let mut have_device_arg_flag = false;
+
+    let mut args: Vec<String> = env::args().collect();
+    if devices_ids.len() > 0 {
+        for arg in &args {
+            for device_id in &devices_ids {
+                if arg == &format!("--serial {}", device_id)
+                    || arg == &format!("--serial={}", device_id)
+                    || arg == &format!("-s{}", device_id)
+                    || arg.starts_with("--tcpip")
+                    // TODO: check next -s arg
+                    || arg == "-s"
+                {
+                    have_device_arg_flag = true;
+                    break;
+                }
+            }
+        }
+    } else if devices_ids.len() == 0 {
+        println!("no device");
+        have_device_arg_flag = false;
+    }
+
+    if devices_ids.len() == 1 {
+        let mut no_device_flag = true;
+        for arg in &args {
+            if arg.starts_with("--serial") || arg.starts_with("-s") {
+                no_device_flag = false;
+                break;
+            }
+        }
+        if no_device_flag {
+            have_device_arg_flag = true;
+        }
+    }
+
+    if have_device_arg_flag {
+        dbg!("haveDeviceArgFlag");
+    } else {
+        dbg!("no haveDeviceArgFlag");
+    }
+
+    // have_device_arg_flag = true;
+
+    if !have_device_arg_flag {
+        unsafe {
+            IS_TOOL_MODE = false;
+        }
+    } else {
+        let mut pid = 0;
+        unsafe {
+            args.remove(0);
+            println!("args: {:?}", &args);
+
+            match run_scrcpy(&args) {
+                Some((scrcpy_pid, hwnd)) => {
+                    pid = scrcpy_pid;
+                    HWND = hwnd;
+                }
+                None => {
+                    pid = 0;
+                    HWND = 0;
+                }
+            }
+        }
+
+        // using scrcpy running state to determine if it is tool mode
+        
+
+        unsafe {
+            if HWND == 0 {
+                // panic!("Failed to get hwnd");
+                IS_TOOL_MODE = false;
+            } else {
+                IS_TOOL_MODE = true;
+            }
+
+            if IS_TOOL_MODE {
+                window.set_title("SPW Tool").unwrap();
+                // TODO: set window size by items count
+                window
+                    .set_size(Size::Logical(LogicalSize {
+                        width: 1.0,
+                        height: 1.0,
+                    }))
+                    .unwrap();
+                window.set_decorations(false).unwrap();
+                window.set_resizable(false).unwrap();
+
+                window
+                    .set_position(Position::Logical(LogicalPosition { x: 0.0, y: 0.0 }))
+                    .unwrap();
+
+                window.set_skip_taskbar(true).unwrap();
+
+                println!("a3");
+                println!("PID: {}", pid);
+
+                watch_window_size_and_position_and_order(pid);
+                set_window_loc_by_hwnd(HWND, &mut window);
+                window.set_always_on_top(true).unwrap();
+                window.set_always_on_top(false).unwrap();
+
+                println!("HWND: 0x{:x}", HWND);
+            }
+        }
+
+        
+    }
+    unsafe{
+        MAIN_WINDOW = Some(window);
+    }   
+
+    "ok".to_string()
+
+}
 
 fn main() {
     tauri::Builder::default()
-        .setup(|app| {
-        
-            let mut pid = 0;
-            unsafe {
-                let mut args: Vec<String> = env::args().collect();
-                args.remove(0);
-                println!("args: {:?}", &args);
-
-                match run_scrcpy(&args) {
-                    Some((scrcpy_pid, hwnd)) => {
-                        pid = scrcpy_pid;
-                        HWND = hwnd;
-                    },
-                    None => {
-                        pid = 0;
-                        HWND = 0;
-                    }
-                }
-            }
-
-            // using scrcpy running state to determine if it is tool mode
-            let mut window = app.get_window("main").unwrap();
-
-            unsafe {
-                if HWND == 0 {
-                    // panic!("Failed to get hwnd");
-                    IS_TOOL_MODE = false;
-                } else {
-                    IS_TOOL_MODE = true;
-                }
-
-                if IS_TOOL_MODE {
-                    window.set_title("SPW Tool").unwrap();
-                    // TODO: set window size by items count
-                    window
-                        .set_size(Size::Logical(LogicalSize {
-                            width: 1.0,
-                            height: 1.0,
-                        }))
-                        .unwrap();
-                    window.set_decorations(false).unwrap();
-                    window.set_resizable(false).unwrap();
-
-                    window
-                        .set_position(Position::Logical(LogicalPosition { x: 0.0, y: 0.0 }))
-                        .unwrap();
-
-                    window.set_skip_taskbar(true).unwrap();
+        .on_page_load(|window, payload| {
+            println!("page loaded, window: {:?}", window.label());
+            if window.label() == "main" {
+                init_handle(window);
+            } else {
+                println!("not main window");
                 
-                    println!("a3");
-                    println!("PID: {}", pid);
-
-                    watch_window_size_and_position_and_order(pid);
-                    set_window_loc_by_hwnd(HWND, &mut window);
-                    window.set_always_on_top(true).unwrap();
-                    window.set_always_on_top(false).unwrap();
-
-                    
-                    println!("HWND: 0x{:x}", HWND);
-                }
-
-                MAIN_WINDOW = Some(window);
             }
 
-            Ok(())
+            
+            println!("page loaded");
         })
         .invoke_handler(tauri::generate_handler![
             adb_devices_l,
             get_exec_mode,
             sendkey,
-            lanuch_self
+            lanuch_self,
+            init
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");

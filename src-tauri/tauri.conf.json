@@ -42,7 +42,8 @@
         "providerShortName": null,
         "signingIdentity": null
       },
-      "resources": [],
+      "resources": [
+      ],
       "shortDescription": "",
       "targets": "all",
       "windows": {
@@ -58,16 +59,30 @@
       "active": false
     },
     "windows": [
+      
       {
         "fullscreen": false,
-        "height": 1,
+        "height": 600,
         "resizable": false,
-        "title": "scrcpy-partner-win",
-        "width": 1,
-        "x": 9999999,
-        "y": 9999999,
-        "decorations": false
+        "title": "Scrcpy Partner",
+        "width": 800,
+        "label": "main",
+        "decorations": false,
+        "skipTaskbar": true,
+        "center": true,
+        "visible": false
+      },
+      {
+        "width": 400,
+        "height": 200,
+        "decorations": false,
+        "url": "splashscreen.html",
+        "label": "splashscreen",
+        "title": "Scrcpy Partner Splashscreen",
+        "center": true
+        
       }
+      
     ]
     
   }
