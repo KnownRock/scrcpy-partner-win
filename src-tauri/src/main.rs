@@ -289,8 +289,18 @@ fn get_exec_mode(app: tauri::AppHandle) -> String {
     let main_window = app.get_window("main").unwrap();
     main_window.show().unwrap();
 
-    let splashscreen_window = app.get_window("splashscreen").unwrap();
-    splashscreen_window.close().unwrap();
+    // let splashscreen_window = app.get_window("splashscreen").unwrap();
+    // splashscreen_window.close().unwrap();
+
+    
+    match app.get_window("splashscreen") {
+        Some(splashscreen_window) => {
+            splashscreen_window.close().unwrap();
+        }
+        None => {
+            println!("get_exec_mode, splashscreen_window is none");
+        }
+    }
 
     unsafe {
         if IS_TOOL_MODE {
@@ -352,6 +362,7 @@ async fn sendkey(
 
 static mut IS_TOOL_MODE: bool = false;
 static mut HWND: usize = 0;
+static mut PID: u32 = 0;
 
 fn run_scrcpy(pars: &Vec<String>) -> Option<(u32, usize)> {
     // noconsole
@@ -399,6 +410,22 @@ async fn init(app:  tauri::AppHandle) -> String{
 }
 
 fn init_handle(main_window:  tauri::Window) -> String{
+
+    unsafe{
+        // close scrcpy if exist
+        let scrcpy_pid = PID;
+        if scrcpy_pid != 0 {
+            println!("kill scrcpy");
+            let _ = Command::new("taskkill")
+                .arg("/F")
+                .arg("/T")
+                .arg("/PID")
+                .arg(scrcpy_pid.to_string())
+                .output();
+        }
+        
+    }
+
     // let loading_window = 
 
     // return "ok".to_string();
@@ -482,6 +509,8 @@ fn init_handle(main_window:  tauri::Window) -> String{
             }
 
             if IS_TOOL_MODE {
+                PID = pid;
+
                 window.set_title("SPW Tool").unwrap();
                 // TODO: set window size by items count
                 window
@@ -521,15 +550,43 @@ fn init_handle(main_window:  tauri::Window) -> String{
 
 }
 
+
+static mut IS_MAIN_WINDOW_LOADED : bool = false;
+
 fn main() {
-    tauri::Builder::default()
+    tauri::Builder::default().setup(|app| {
+        let splashscreen_window = app.get_window("splashscreen").unwrap();
+        let main_window = app.get_window("main").unwrap();
+        // we perform the initialization code on a new task so the app doesn't freeze
+        tauri::async_runtime::spawn(async move {
+          
+        });
+        Ok(())
+      })
         .on_page_load(|window, payload| {
             println!("page loaded, window: {:?}", window.label());
             if window.label() == "main" {
                 init_handle(window);
+                // unsafe{
+                //     MAIN_WINDOW_ON_LOAD = Some(window);
+                // }
+                dbg!("** main window");
+
+                unsafe{
+                    IS_MAIN_WINDOW_LOADED = true;
+                }
+
             } else {
-                println!("not main window");
-                
+                dbg!("** non main window");
+                unsafe{
+                    if window.label() == "splashscreen" {
+                        if IS_MAIN_WINDOW_LOADED {
+                            window.close();
+                        }
+                    }
+                }
+               
+            
             }
 
             
