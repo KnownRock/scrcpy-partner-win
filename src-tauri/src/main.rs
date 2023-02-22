@@ -282,72 +282,72 @@ fn lanuch_self(args: Vec<String>) {
     Command::new(self_path).args(args).creation_flags(0x08000000).spawn().unwrap();
 }
 
-#[tauri::command]
-fn get_exec_mode(app: tauri::AppHandle) -> String {
-    println!("get_exec_mode");
+// #[tauri::command]
+// fn get_exec_mode(app: tauri::AppHandle) -> String {
+//     println!("get_exec_mode");
 
-    let main_window = app.get_window("main").unwrap();
-    main_window.show().unwrap();
+//     let main_window = app.get_window("main").unwrap();
+//     main_window.show().unwrap();
 
-    // let splashscreen_window = app.get_window("splashscreen").unwrap();
-    // splashscreen_window.close().unwrap();
+//     // let splashscreen_window = app.get_window("splashscreen").unwrap();
+//     // splashscreen_window.close().unwrap();
 
     
-    match app.get_window("splashscreen") {
-        Some(splashscreen_window) => {
-            splashscreen_window.close().unwrap();
-        }
-        None => {
-            println!("get_exec_mode, splashscreen_window is none");
-        }
-    }
+//     match app.get_window("splashscreen") {
+//         Some(splashscreen_window) => {
+//             splashscreen_window.close().unwrap();
+//         }
+//         None => {
+//             println!("get_exec_mode, splashscreen_window is none");
+//         }
+//     }
 
-    unsafe {
-        if IS_TOOL_MODE {
-            match &mut MAIN_WINDOW {
-                // TODO: set window size by items count
-                Some(window) => {
-                    window
-                        .set_size(Size::Logical(LogicalSize {
-                            width: 48.0,
-                            height: 600.0,
-                        }))
-                        .unwrap();
-                }
-                None => {}
-            }
+//     unsafe {
+//         if IS_TOOL_MODE {
+//             match &mut MAIN_WINDOW {
+//                 // TODO: set window size by items count
+//                 Some(window) => {
+//                     window
+//                         .set_size(Size::Logical(LogicalSize {
+//                             width: 48.0,
+//                             height: 600.0,
+//                         }))
+//                         .unwrap();
+//                 }
+//                 None => {}
+//             }
 
-            return "tool".to_string();
-        } else {
-            println!("get_exec_mode, home mode");
+//             return "tool".to_string();
+//         } else {
+//             println!("get_exec_mode, home mode");
 
-            match &mut MAIN_WINDOW {
-                // TODO: set window size by items count
-                Some(window) => {
-                    println!("get_exec_mode, home mode, set window size");
+//             match &mut MAIN_WINDOW {
+//                 // TODO: set window size by items count
+//                 Some(window) => {
+//                     println!("get_exec_mode, home mode, set window size");
 
-                    // window
-                    //     .set_size(Size::Logical(LogicalSize {
-                    //         width: 800.0,
-                    //         height: 600.0,
-                    //     }))
-                    //     .unwrap();
+//                     // window
+//                     //     .set_size(Size::Logical(LogicalSize {
+//                     //         width: 800.0,
+//                     //         height: 600.0,
+//                     //     }))
+//                     //     .unwrap();
 
-                    // window
-                    //     .set_position(Position::Logical(LogicalPosition::new(0.0, 0.0)))
-                    //     .unwrap();
+//                     // window
+//                     //     .set_position(Position::Logical(LogicalPosition::new(0.0, 0.0)))
+//                     //     .unwrap();
 
-                    window.set_decorations(true).unwrap();
-                    window.set_resizable(true).unwrap();
-                    window.set_skip_taskbar(false).unwrap();
-                }
-                None => {}
-            }
+//                     window.set_decorations(true).unwrap();
+//                     window.set_resizable(true).unwrap();
+//                     window.set_skip_taskbar(false).unwrap();
+//                 }
+//                 None => {}
+//             }
 
-            return "home".to_string();
-        }
-    }
-}
+//             return "home".to_string();
+//         }
+//     }
+// }
 
 #[tauri::command]
 async fn sendkey(
@@ -409,6 +409,41 @@ async fn init(app:  tauri::AppHandle) -> String{
     return "ok".to_string();
 }
 
+fn init_tool(tool_window : tauri::Window) -> String{
+    let window = tool_window;
+    unsafe {
+        window.set_title("SPW Tool").unwrap();
+        // TODO: set window size by items count
+        window
+            .set_size(Size::Logical(LogicalSize {
+                width: 1.0,
+                height: 1.0,
+            }))
+            .unwrap();
+        window.set_decorations(false).unwrap();
+        window.set_resizable(false).unwrap();
+
+        window
+            .set_position(Position::Logical(LogicalPosition { x: 0.0, y: 0.0 }))
+            .unwrap();
+
+        window.set_skip_taskbar(true).unwrap();
+
+        println!("a3");
+        println!("PID: {}", pid);
+
+        watch_window_size_and_position_and_order(pid);
+        set_window_loc_by_hwnd(HWND, &mut window);
+        window.set_always_on_top(true).unwrap();
+        window.set_always_on_top(false).unwrap();
+
+        println!("HWND: 0x{:x}", HWND);
+    }
+
+
+}
+
+// TODO: refact this
 fn init_handle(main_window:  tauri::Window) -> String{
 
     unsafe{
@@ -426,9 +461,6 @@ fn init_handle(main_window:  tauri::Window) -> String{
         
     }
 
-    // let loading_window = 
-
-    // return "ok".to_string();
     let devices_ids = get_adb_devices();
     let mut window = main_window;
     let mut have_device_arg_flag = false;
@@ -511,6 +543,8 @@ fn init_handle(main_window:  tauri::Window) -> String{
             if IS_TOOL_MODE {
                 PID = pid;
 
+
+
                 window.set_title("SPW Tool").unwrap();
                 // TODO: set window size by items count
                 window
@@ -551,53 +585,48 @@ fn init_handle(main_window:  tauri::Window) -> String{
 }
 
 
-static mut IS_MAIN_WINDOW_LOADED : bool = false;
+#[tauri::command]
+async fn init_main_window(app: tauri::AppHandle) -> String{
+    let main_window = tauri::WindowBuilder::new(
+        &app,
+        "main",
+        tauri::WindowUrl::App("index.html".into())
+    )
+        .center()
+        .visible(false)
+        .build()
+        .unwrap();
+
+
+    "ok".to_string()
+}
+
+
+// static mut TAURI_APP : Option<&mut tauri::App> = None;
 
 fn main() {
-    tauri::Builder::default().setup(|app| {
-        let splashscreen_window = app.get_window("splashscreen").unwrap();
-        let main_window = app.get_window("main").unwrap();
-        // we perform the initialization code on a new task so the app doesn't freeze
-        tauri::async_runtime::spawn(async move {
-          
-        });
-        Ok(())
-      })
+
+    let app_handle =  tauri::Builder::default();
+    app_handle
+        .setup(|app| {
+            Ok(())
+        })
         .on_page_load(|window, payload| {
-            println!("page loaded, window: {:?}", window.label());
-            if window.label() == "main" {
-                init_handle(window);
-                // unsafe{
-                //     MAIN_WINDOW_ON_LOAD = Some(window);
-                // }
-                dbg!("** main window");
-
-                unsafe{
-                    IS_MAIN_WINDOW_LOADED = true;
+                println!("page loaded, window: {:?}", window.label());
+                if window.label() == "main" {
+                    init_handle(window);
+                } else {
+                    dbg!("** non main window");
                 }
-
-            } else {
-                dbg!("** non main window");
-                unsafe{
-                    if window.label() == "splashscreen" {
-                        if IS_MAIN_WINDOW_LOADED {
-                            window.close();
-                        }
-                    }
-                }
-               
-            
-            }
-
-            
-            println!("page loaded");
+                println!("page loaded");
         })
         .invoke_handler(tauri::generate_handler![
             adb_devices_l,
-            get_exec_mode,
+            // get_exec_mode,
             sendkey,
             lanuch_self,
-            init
+            init,
+            init_main_window
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");

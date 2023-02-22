@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import sveltePreprocess from "svelte-preprocess";
-
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
@@ -32,5 +31,12 @@ export default defineConfig({
     minify: !process.env.TAURI_DEBUG ? "esbuild" : false,
     // produce sourcemaps for debug builds
     sourcemap: !!process.env.TAURI_DEBUG,
+
+    rollupOptions: {
+      input:{
+        main: new URL('./index.html', import.meta.url).pathname,
+        splashscreen: new URL('./splashscreen.html', import.meta.url).pathname
+      }
+    }
   },
 });

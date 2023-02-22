@@ -61,25 +61,14 @@
     "windows": [
       
       {
-        "fullscreen": false,
-        "height": 600,
-        "resizable": false,
-        "title": "Scrcpy Partner",
-        "width": 800,
-        "label": "main",
-        "decorations": false,
-        "skipTaskbar": true,
-        "center": true,
-        "visible": false
-      },
-      {
         "width": 400,
         "height": 200,
         "decorations": false,
         "url": "splashscreen.html",
         "label": "splashscreen",
         "title": "Scrcpy Partner Splashscreen",
-        "center": true
+        "center": true,
+        "resizable": false
         
       }
       
