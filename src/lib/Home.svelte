@@ -1,17 +1,15 @@
 <script lang="ts">
   import Devices from './Devices.svelte'
-  import "svelte-material-ui/bare.css"
-
-
-  import Tab, { Icon, Label } from '@smui/tab';
-  import TabBar from '@smui/tab-bar';
+  import 'svelte-material-ui/bare.css'
+  import Tab from '@smui/tab'
+  import TabBar from '@smui/tab-bar'
 
   type TabEntry = {
     k: string;
     label: string;
   };
 
-  const key = (tab: TabEntry) => tab.k;
+  const key = (tab: TabEntry) => tab.k
 
   const tabs: TabEntry[] = [
     // {
@@ -20,16 +18,15 @@
     // },
     {
       k: 'devices',
-      label: 'Devices',
-    },
+      label: 'Devices'
+    }
     // {
     //   k: 'components',
     //   label: 'Components',
     // },
-  ];
-  let active = tabs[0];
+  ]
+  let active = tabs[0]
 
-  
 </script>
 
 <main class="container">

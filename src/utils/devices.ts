@@ -1,28 +1,33 @@
-import { invoke } from "@tauri-apps/api/tauri"
+import { invoke } from '@tauri-apps/api/tauri'
+import { callTauriFunction } from './tauri'
 
-export type Device = {
-  name: string,
-  id: string,
-  model: string,
+export interface Device {
+  name: string
+  id: string
+  model: string
   device: string
   deviceProduct: string
   transportId: string
 }
 
-export async function getDevices(): Promise<Device[]> {
-  const rawOutput = await invoke("adb_devices_l") as string;  
-  const lines = rawOutput.split("\n");
-  const deviceLines = lines.slice(1, lines.length).filter(line => line.match(/\S/));
+export async function getDevices (): Promise<Device[]> {
+  const rawOutput = (await callTauriFunction<string>('adb_devices_l'))
+
+  const lines = rawOutput.split('\n')
+  const deviceLines = lines.slice(1, lines.length).filter(line => /\S/.exec(line))
 
   return deviceLines.map(line => {
-    const [,id, deviceProduct, model, device, transportId] = 
-      line.match(/(\S+)\s+device product:(\S+) model:(\S+) device:(\S+) transport_id:(\S+)/);
-    const name = id;
-    return { name, id, model, device, deviceProduct, transportId };
-  }); 
+    const matched = (/(\S+)\s+device product:(\S+) model:(\S+) device:(\S+) transport_id:(\S+)/.exec(line))
+    if (matched == null) {
+      throw new Error(`Failed to parse device line: ${line}`)
+    }
+    const [,id, deviceProduct, model, device, transportId] = matched
 
+    const name = id
+    return { name, id, model, device, deviceProduct, transportId }
+  })
 }
 
-export async function lanuchSelf(args) {
-  await invoke("lanuch_self", { args });
+export async function lanuchSelf (args: string[]): Promise<void> {
+  await invoke('lanuch_self', { args })
 }

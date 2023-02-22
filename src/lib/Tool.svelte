@@ -1,109 +1,109 @@
 <script lang="ts">
-  import IconButton from '@smui/icon-button';
+  import IconButton from '@smui/icon-button'
 
-  import { invoke } from '@tauri-apps/api/tauri';
+  import { invoke } from '@tauri-apps/api/tauri'
 
   const commandKeyDict = {
-    'volume_up': {
+    volume_up: {
       keyCode: 0x26,
       scanCode: 0x48,
       extendKeyFlag: 1,
-      isAlt : true,
+      isAlt: true,
       isShift: false
     },
-    'volume_down': {
+    volume_down: {
       keyCode: 0x28,
       scanCode: 0x50,
       extendKeyFlag: 1,
-      isAlt : true,
+      isAlt: true,
       isShift: false
     },
-    'rotate_left': {
+    rotate_left: {
       keyCode: 0x25,
       scanCode: 0x4B,
       extendKeyFlag: 1,
-      isAlt : true,
+      isAlt: true,
       isShift: false
     },
-    'rotate_right': {
+    rotate_right: {
       keyCode: 0x27,
       scanCode: 0x4D,
       extendKeyFlag: 1,
-      isAlt : true,
+      isAlt: true,
       isShift: false
     },
-    'home': {
+    home: {
       // alt h
       keyCode: 0x48,
       scanCode: 0x23,
       extendKeyFlag: 1,
-      isAlt : true,
+      isAlt: true,
       isShift: false
-    
+  
     },
-    'app_switch': {
+    app_switch: {
       // alt s
       keyCode: 0x53,
       scanCode: 0x1F,
       extendKeyFlag: 1,
-      isAlt : true,
+      isAlt: true,
       isShift: false
     },
-    'back':{
+    back: {
       // alt b
       keyCode: 0x42,
       scanCode: 0x30,
       extendKeyFlag: 0,
-      isAlt : true,
+      isAlt: true,
       isShift: false
     },
-    'screen_on':{
+    screen_on: {
       // shift alt o
       keyCode: 0x4F,
       scanCode: 0x18,
       extendKeyFlag: 0,
-      isAlt : true,
+      isAlt: true,
       isShift: true
     },
-    'screen_off':{
+    screen_off: {
       // alt o
       keyCode: 0x4F,
       scanCode: 0x18,
       extendKeyFlag: 0,
-      isAlt : true,
+      isAlt: true,
       isShift: false
     },
-    'expend_notification':{
+    expend_notification: {
       // alt n
       keyCode: 0x4E,
       scanCode: 0x31,
       extendKeyFlag: 0,
-      isAlt : true,
+      isAlt: true,
       isShift: false
     },
-    'aspect_ratio':{
+    aspect_ratio: {
       // alt w
       keyCode: 0x57,
       scanCode: 0x11,
       extendKeyFlag: 0,
-      isAlt : true,
+      isAlt: true,
       isShift: false
     },
-    'power':{
+    power: {
       // alt p
       keyCode: 0x50,
       scanCode: 0x19,
       extendKeyFlag: 0,
-      isAlt : true,
+      isAlt: true,
       isShift: false
-    },
-    
+    }
+  
   }
 
-  async function sendKey(command: string) {
-    const opt = commandKeyDict[command];
+  async function sendKey (command: string) {
+    const opt = commandKeyDict[command]
     if (opt) {
-      await invoke('sendkey', opt);
+      await invoke('sendkey', opt)
     }
   }
 

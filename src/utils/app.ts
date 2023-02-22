@@ -1,7 +1,5 @@
-import { invoke } from "@tauri-apps/api/tauri"
+import { callTauriFunction } from './tauri'
 
-export async function getExecMode(): Promise<string> {
-  const rawOutput = await invoke("get_exec_mode") as string;  
-
-  return rawOutput;
+export async function getExecMode (): Promise<string> {
+  return await callTauriFunction<string>('get_exec_mode')
 }

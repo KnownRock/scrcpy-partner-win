@@ -1,40 +1,35 @@
 <script lang="ts">
-
-
-  import LayoutGrid, { Cell } from '@smui/layout-grid';
-  import Button, { Label } from '@smui/button';
+  import LayoutGrid, { Cell } from '@smui/layout-grid'
+  import Button, { Label } from '@smui/button'
   import Card, {
     Content,
     PrimaryAction,
-    Media,
-    MediaContent,
     Actions,
     ActionButtons,
-    ActionIcons,
-  } from '@smui/card';
-  import IconButton, { Icon } from '@smui/icon-button';
+    ActionIcons
+  } from '@smui/card'
+  import IconButton from '@smui/icon-button'
 
-  import {getDevices, lanuchSelf} from "../utils/devices";
-  import type { Device  } from "../utils/devices";
+  import { getDevices, lanuchSelf } from '../utils/devices'
+  import type { Device } from '../utils/devices'
 
-  import Config from './Config.svelte';
+  import Config from './Config.svelte'
 
-  let devices : Device[] = [];
+  let devices : Device[] = []
 
   let showConfig = false
-  let currentDeviceId : string = ""
+  let currentDeviceId : string = ''
 
-  async function setDevices() {
+  async function setDevices () {
     devices = await getDevices()
   }
 
-  async function lanuchScrcpy(deviceId: string) {
-    lanuchSelf([ `-s${deviceId}` ])
+  async function lanuchScrcpy (deviceId: string) {
+    lanuchSelf([`-s${deviceId}`])
   }
 
-  setDevices();
+  setDevices()
 
-  
 </script>
 
 <div>
@@ -53,7 +48,7 @@
     {#each devices as device}
       <Cell>
         <Card>
-          <PrimaryAction on:click={() =>1}>
+          <PrimaryAction on:click={() => 1}>
             <!-- <Media class="card-media-16x9" aspectRatio="16x9" /> -->
             <Content class="mdc-typography--body2">
               <h2 class="mdc-typography--headline6" style="margin: 0;">
@@ -77,9 +72,9 @@
             <ActionIcons>
               <IconButton
                 class="material-icons"
-                on:click={() => { 
-                  showConfig = true;
-                  currentDeviceId = device.id;
+                on:click={() => {
+                  showConfig = true
+                  currentDeviceId = device.id
                 }}
                 title="More options">more_vert
               </IconButton>

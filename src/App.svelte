@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { getExecMode } from "./utils/app";
+  import { getExecMode } from './utils/app'
 
-  import "./style.css"
+  import './style.css'
   
-  import Home from "./lib/Home.svelte";
-  import Tool from "./lib/Tool.svelte"
+  import Home from './lib/Home.svelte'
+  import Tool from './lib/Tool.svelte'
 
 </script>
 
@@ -14,10 +14,10 @@
   {#await getExecMode()}
     <p>loading</p>
   {:then execMode}
-    {#if execMode === "tool"}
+    {#if execMode === 'tool'}
       <Tool />
     {/if}
-    {#if execMode === "home"}
+    {#if execMode === 'home'}
       <Home />
     {/if}
   {/await}
