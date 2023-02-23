@@ -1,7 +1,10 @@
 <script lang="ts">
+  import 'svelte-material-ui/bare.css'
   import IconButton from '@smui/icon-button'
 
   import { invoke } from '@tauri-apps/api/tauri'
+  import { onMount } from 'svelte'
+  import { showToolWindow } from '../utils/app'
 
   const commandKeyDict = {
     volume_up: {
@@ -106,6 +109,10 @@
       await invoke('sendkey', opt)
     }
   }
+
+  onMount(async () => {
+    showToolWindow()
+  })
 
 </script>
 <div class="tool-container">

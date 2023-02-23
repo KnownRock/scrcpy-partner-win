@@ -16,5 +16,6 @@
     "checkJs": true,
     "isolatedModules": true,
     "strictNullChecks": true,
-  }
+  },
+  "exclude": ["./dist/**/*", "./src-tauri/**/*"],
 }

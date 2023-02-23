@@ -1,7 +1,8 @@
 <div style="
 display: flex; justify-content: center;
-height: 100vh; align-items: center;
-width: 100vw; flex-direction: column;
+height: calc(100vh - 2px) ; align-items: center;
+width: calc(100vw - 2px); flex-direction: column;
+border: 1px solid #ccc;
 ">
   <h1>Scrcpy Partner</h1>
   <!-- <h1>Loading...</h1> -->
@@ -12,16 +13,14 @@ width: 100vw; flex-direction: column;
 <script lang="ts">
   import 'svelte-material-ui/bare.css'
   import CircularProgress from '@smui/circular-progress'
-  import { invoke } from '@tauri-apps/api'
 
   import { onMount } from 'svelte'
-
-  // const loading = true
+  import { init } from '../utils/app'
 
   onMount(async () => {
     setTimeout(() => {
-      invoke('init_main_window')
-    }, 3000)
+      init()
+    }, 2000)
 })
 
 </script>

@@ -3,6 +3,8 @@
   import 'svelte-material-ui/bare.css'
   import Tab from '@smui/tab'
   import TabBar from '@smui/tab-bar'
+  import { onMount } from 'svelte'
+  import { showMainWindow } from '../utils/app'
 
   type TabEntry = {
     k: string;
@@ -26,6 +28,10 @@
     // },
   ]
   let active = tabs[0]
+
+  onMount(() => {
+    showMainWindow()
+  })
 
 </script>
 
