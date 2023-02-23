@@ -234,7 +234,7 @@ async fn show_main_window(app: tauri::AppHandle) {
     }
     match app.get_window("splashscreen") {
         Some(window) => {
-            window.hide().unwrap();
+            window.close().unwrap();
         }
         None => {}
     }
@@ -252,7 +252,7 @@ async fn show_tool_window(app: tauri::AppHandle) {
     }
     match app.get_window("splashscreen") {
         Some(window) => {
-            window.hide().unwrap();
+            window.close().unwrap();
         }
         None => {}
     }
