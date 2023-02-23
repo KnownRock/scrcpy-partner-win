@@ -28,6 +28,7 @@ static mut TOOL_WINDOW: Option<tauri::Window> = None;
 
 fn unhook_all_window_events() {
     unsafe {
+        println!("unhook_all_window_events");
         wins::unhook_all_window_events(vec![
             WIN_EVENT_LOC_HOOK,
             WIN_EVENT_ORDER_HOOK,
@@ -216,6 +217,7 @@ fn init_tool_hooks(tool_window: tauri::Window) {
         match &mut TOOL_WINDOW {
             Some(window) => {
                 set_window_loc_by_hwnd(HWND, window);
+                window.show().unwrap();
             }
             None => {}
         }
@@ -243,8 +245,8 @@ async fn show_main_window(app: tauri::AppHandle) {
 #[tauri::command]
 async fn show_tool_window(app: tauri::AppHandle) {
     match app.get_window("tool") {
-        Some(window) => {
-            window.show().unwrap();
+        Some(_window) => {
+            // window.show().unwrap();
         }
         None => {
             // TODO: error handle
