@@ -15,13 +15,17 @@ fn is_device_valid_args_by_devices(args: Vec<String>, devices_ids: Vec<String>) 
 
     let mut have_device_arg_flag = false;
 
-    for (_, arg) in args.iter().enumerate() {
+    dbg!(args.clone());
+
+    for (i, arg) in args.iter().enumerate() {
         for device_id in &devices_ids {
             if arg == &format!("--serial={}", device_id)
                 || arg == &format!("-s{}", device_id)
                 || arg == &format!("--serial {}", device_id)
                 || arg == &format!("-s {}", device_id)
                 || arg.starts_with("--tcpip")
+                || (arg == "-s" && args.len() > i + 1 && &args[i + 1] == device_id)
+                || (arg == "--serial" && args.len() > i + 1 && &args[i + 1] == device_id)
             {
                 have_device_arg_flag = true;
                 break;
@@ -88,4 +92,21 @@ fn test_is_device_valid_args_by_devices() {
         ),
         false
     );
+
+    assert_eq!(
+        is_device_valid_args_by_devices(
+            vec!["scrcpy.exe".to_string(), "-s".to_string(), "123".to_string()],
+            vec!["1234567890".to_string(), "123".to_string()]
+        ),
+        true
+    );
+
+    assert_eq!(
+        is_device_valid_args_by_devices(
+            vec!["scrcpy.exe".to_string(), "--serial".to_string(), "123".to_string()],
+            vec!["1234567890".to_string(), "123".to_string()]
+        ),
+        true
+    );
+
 }
