@@ -290,11 +290,6 @@ $: open &&
   </Header>
   <Content id="fullscreen-content">
     <LayoutGrid>
-      <!-- {#each Array(9) as _unused, i}
-        <Cell>
-          <div class="demo-cell">Cell {i + 1}</div>
-        </Cell>
-      {/each} -->
       {#each form as formItem (formItem.name)}
         {#if formItem.type === 'header'}
           <Cell span={12}>
@@ -385,19 +380,8 @@ $: open &&
         {/if}
       {/each}
     </LayoutGrid>
-
-    <!-- <div style="height:25em;">
-      <Autocomplete
-        options={devices.map((d) => d.id)}
-        bind:value={currentDeviceId}
-        label="Device"
-      />
-    </div> -->
   </Content>
   <Actions>
-    <!-- <Button action="Save">
-      <Label>Save</Label>
-    </Button> -->
     <Button action="cancel">
       <Label>Cancel</Label>
     </Button>
@@ -406,17 +390,3 @@ $: open &&
     </Button>
   </Actions>
 </Dialog>
-
-<!-- 
-<Button on:click={() => (open = true)}>
-  <Label>Open Dialog</Label>
-</Button>
-
-<IconButton
-  class="material-icons"
-  on:click={() => (open = true)}
-  title="More options">more_vert
-</IconButton>
-
-<pre class="status">Response: {response}</pre>
- -->

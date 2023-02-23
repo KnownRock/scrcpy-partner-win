@@ -63,7 +63,6 @@
       <h1>Components</h1>
     {/if} 
   </div>
-  <!-- <link rel="stylesheet" href="node_modules/svelte-material-ui/bare.css" /> -->
 </main>
 
 <style>
