@@ -53,7 +53,7 @@ where
     unsafe { EnumWindows(Some(enumerate_callback), lparam) };
 }
 
-static mut MAIN_WINDOW: Option<tauri::Window> = None;
+static mut TOOL_WINDOW: Option<tauri::Window> = None;
 
 unsafe extern "system" fn win_event_loc_callback(
     _hwin_event_hook: HWINEVENTHOOK,
@@ -74,7 +74,7 @@ unsafe extern "system" fn win_event_loc_callback(
         return;
     }
 
-    match &mut MAIN_WINDOW {
+    match &mut TOOL_WINDOW {
         Some(window) => {
             set_window_loc_by_hwnd(HWND, window);
         }
@@ -99,7 +99,7 @@ unsafe extern "system" fn win_event_order_callback(
     println!("window order changed");
     println!("hwnd: {:?}", _hwnd);
 
-    match &mut MAIN_WINDOW {
+    match &mut TOOL_WINDOW {
         Some(window) => {
             window.set_always_on_top(true).unwrap();
             window.set_always_on_top(false).unwrap();
@@ -107,7 +107,7 @@ unsafe extern "system" fn win_event_order_callback(
         None => {}
     }
 
-    match &mut MAIN_WINDOW {
+    match &mut TOOL_WINDOW {
         Some(window) => {
             set_window_loc_by_hwnd(HWND, window);
         }
@@ -133,6 +133,9 @@ unsafe extern "system" fn win_event_close_callback(
     if hwnd_usize == HWND {
         println!("window close");
         println!("hwnd: {:?}", _hwnd);
+
+        unhook_all_window_events();
+
         std::process::exit(0);
     }
 }
@@ -163,16 +166,51 @@ fn set_window_loc_by_hwnd(hwnd_usize: usize, window: &mut tauri::Window) {
         .unwrap();
 }
 
+// TODO: refactor this, using closure to avoid global variable
+static mut WIN_EVENT_LOC_HOOK: Option<HWINEVENTHOOK> = None;
+static mut WIN_EVENT_ORDER_HOOK: Option<HWINEVENTHOOK> = None;
+static mut WIN_EVENT_CLOSE_HOOK: Option<HWINEVENTHOOK> = None;
+
+use winapi::um::winuser::{
+    SetWinEventHook, UnhookWinEvent, EVENT_OBJECT_DESTROY, EVENT_OBJECT_LOCATIONCHANGE,
+    EVENT_OBJECT_REORDER, WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS, WINEVENT_SKIPOWNTHREAD,
+};
+
+fn unhook_all_window_events() {
+    unsafe {
+        match WIN_EVENT_LOC_HOOK {
+            Some(hook) => {
+                UnhookWinEvent(hook);
+                println!("unhook win event loc")
+            }
+            None => {}
+        }
+
+        match WIN_EVENT_ORDER_HOOK {
+            Some(hook) => {
+                UnhookWinEvent(hook);
+                println!("unhook win event order")
+            }
+            None => {}
+        }
+
+        match WIN_EVENT_CLOSE_HOOK {
+            Some(hook) => {
+                UnhookWinEvent(hook);
+                println!("unhook win event close")
+            }
+            None => {}
+        }
+    }
+}
+
 fn watch_window_size_and_position_and_order(pid: DWORD) {
     println!("watch_window_size_and_position, pid: {}", 0);
 
-    use winapi::um::winuser::{
-        SetWinEventHook, EVENT_OBJECT_DESTROY, EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_REORDER,
-        WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS, WINEVENT_SKIPOWNTHREAD,
-    };
+    unhook_all_window_events();
 
     unsafe {
-        SetWinEventHook(
+        let win_event_loc_hook = SetWinEventHook(
             EVENT_OBJECT_LOCATIONCHANGE,
             EVENT_OBJECT_LOCATIONCHANGE,
             std::ptr::null_mut(),
@@ -182,7 +220,9 @@ fn watch_window_size_and_position_and_order(pid: DWORD) {
             WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD,
         );
 
-        SetWinEventHook(
+        WIN_EVENT_LOC_HOOK = Some(win_event_loc_hook);
+
+        let win_event_order_hook = SetWinEventHook(
             EVENT_OBJECT_REORDER,
             EVENT_OBJECT_REORDER,
             std::ptr::null_mut(),
@@ -192,7 +232,9 @@ fn watch_window_size_and_position_and_order(pid: DWORD) {
             WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD,
         );
 
-        SetWinEventHook(
+        WIN_EVENT_ORDER_HOOK = Some(win_event_order_hook);
+
+        let win_event_close_hook = SetWinEventHook(
             EVENT_OBJECT_DESTROY,
             EVENT_OBJECT_DESTROY,
             std::ptr::null_mut(),
@@ -201,6 +243,8 @@ fn watch_window_size_and_position_and_order(pid: DWORD) {
             0,
             WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD,
         );
+
+        WIN_EVENT_CLOSE_HOOK = Some(win_event_close_hook);
     };
 }
 
@@ -371,20 +415,20 @@ fn is_device_valid_args() -> bool {
         }
     }
 
-    if devices_ids.len() == 1 && !have_device_arg_flag {
-        let mut no_device_flag = true;
-        for arg in &args {
-            // because if have a vaild device will have_device_arg_flag set true
-            // so only check is have -s or --serial arg
-            if arg.starts_with("--serial") || arg.starts_with("-s") {
-                no_device_flag = false;
-                break;
-            }
-        }
-        if no_device_flag {
-            have_device_arg_flag = true;
-        }
-    }
+    // if devices_ids.len() == 1 && !have_device_arg_flag {
+    //     let mut no_device_flag = true;
+    //     for arg in &args {
+    //         // because if have a vaild device will have_device_arg_flag set true
+    //         // so only check is have -s or --serial arg
+    //         if arg.starts_with("--serial") || arg.starts_with("-s") {
+    //             no_device_flag = false;
+    //             break;
+    //         }
+    //     }
+    //     if no_device_flag {
+    //         have_device_arg_flag = true;
+    //     }
+    // }
 
     have_device_arg_flag
 }
@@ -419,9 +463,9 @@ fn init_main_window(app: &tauri::AppHandle) {
 
 fn init_tool_hooks(tool_window: tauri::Window) {
     unsafe {
-        MAIN_WINDOW = Some(tool_window);
+        TOOL_WINDOW = Some(tool_window);
         watch_window_size_and_position_and_order(PID);
-        match &mut MAIN_WINDOW {
+        match &mut TOOL_WINDOW {
             Some(window) => {
                 set_window_loc_by_hwnd(HWND, window);
             }
