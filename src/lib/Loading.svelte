@@ -18,9 +18,10 @@ border: 1px solid #ccc;
   import { init } from '../utils/app'
 
   onMount(async () => {
+    // make time for the splash screen to show before loading the app
     setTimeout(() => {
       init()
-    }, 2000)
+    }, 200)
 })
 
 </script>
