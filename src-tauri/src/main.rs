@@ -217,7 +217,12 @@ fn init_tool_hooks(tool_window: tauri::Window) {
         match &mut TOOL_WINDOW {
             Some(window) => {
                 set_window_loc_by_hwnd(HWND, window);
-                window.show().unwrap();
+
+                tauri::async_runtime::spawn(async move {
+                    // FIXME: find why get wrong position at first time
+                    std::thread::sleep(std::time::Duration::from_millis(200));
+                    window.show().unwrap();
+                });
             }
             None => {}
         }
