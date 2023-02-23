@@ -54,6 +54,47 @@ fn test_get_adb_devices() {
     assert!(devices.len() > 0 || devices.len() == 0);
 }
 
+pub fn get_all_pids() -> Vec<u32> {
+    let output = std::process::Command::new("tasklist")
+        .arg("/FO")
+        .arg("CSV")
+        .arg("/NH")
+        .creation_flags(0x08000000)
+        .output()
+        .expect("failed to execute process");
+    let output = String::from_utf8(output.stdout).unwrap();
+
+    let mut pids = Vec::new();
+    for line in output.lines() {
+        let mut iter = line.split(',');
+        let _name = iter.next().unwrap();
+        let pid = iter.next().unwrap();
+        let pid = pid.replace("\"", "");
+        let pid = pid.parse::<u32>().unwrap();
+        pids.push(pid);
+    }
+    pids
+}
+
+#[test]
+fn test_get_all_pids() {
+    let pids = get_all_pids();
+    assert!(pids.len() > 0);
+}
+
+pub fn is_process_alive(pid: u32) -> bool {
+    let pids = get_all_pids();
+    pids.contains(&pid)
+}
+
+#[test]
+fn test_is_process_alive() {
+    let pids = get_all_pids();
+    let pid = pids[0];
+    let alive = is_process_alive(pid);
+    assert!(alive);
+}
+
 pub fn run_scrcpy(pars: &Vec<String>) -> Option<(u32, usize)> {
     // noconsole
     let child = Command::new("scrcpy.exe")
@@ -65,13 +106,18 @@ pub fn run_scrcpy(pars: &Vec<String>) -> Option<(u32, usize)> {
         .unwrap();
 
     println!("Launched scrcpy");
-
     let pid = child.id();
+
+    let is_scrcpy_process_alive = is_process_alive(pid);
+    if !is_scrcpy_process_alive {
+        return None;
+    }
 
     let mut timeout = 20;
     let mut hwnd_usize: usize = 0;
     while timeout > 0 {
         sleep(Duration::from_millis(100));
+
         let hwnd = get_hwnd_by_pid(pid);
         println!("hwnd: {:?}", hwnd);
 
