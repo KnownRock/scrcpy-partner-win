@@ -52,6 +52,14 @@
         options: string[];
       }
     | {
+        type: 'optional-auto';
+        label: string;
+        name: string;
+        value: string;
+        enable: boolean;
+        options: string[];
+      }
+    | {
         type: 'optional-text';
         label: string;
         name: string;
@@ -103,17 +111,18 @@
       },
       {
         type: 'auto',
-        label: 'FPS',
-        name: 'max-fps',
-        options: ['144', '120', '75', '60', '30', '20', '15', '10', '5'],
-        value: '60'
-      },
-      {
-        type: 'auto',
         label: 'Display Buffer',
         name: 'display-buffer',
         options: ['100', '50', '30', '20', '10', '5', '0'],
         value: '0'
+      },
+      {
+        type: 'optional-auto',
+        label: 'FPS',
+        name: 'max-fps',
+        options: ['144', '120', '75', '60', '30', '20', '15', '10', '5'],
+        value: '60',
+        enable: false
       },
       {
         type: 'optional-number',
@@ -207,11 +216,11 @@
     })
 
     return form
-}
+  }
 
-let response = ''
+  let response = ''
 
-function closeHandler (e: CustomEvent<{ action: string }>) {
+  function closeHandler (e: CustomEvent<{ action: string }>) {
     switch (e.detail.action) {
       case 'close':
         response = 'Closed without response.'
@@ -223,17 +232,17 @@ function closeHandler (e: CustomEvent<{ action: string }>) {
         response = 'Accepted.'
         break
     }
-} ;
+  }
 
-let updateTime = 0
-async function setDevices () {
+  let updateTime = 0
+  async function setDevices () {
     devices = await getDevices()
     form = getForm(devices)
 
     updateTime = Date.now()
-}
+  }
 
-async function start () {
+  async function start () {
     function formToArgs (form: FormItem[]) {
       const args = [] as string[]
       for (const item of form) {
@@ -269,9 +278,9 @@ async function start () {
 
     const args = formToArgs(form)
     lanuchSelf(args)
-}
+  }
 
-$: open &&
+  $: open &&
     (() => {
       setDevices()
     })()
@@ -327,12 +336,29 @@ $: open &&
             {#if formItem.type === 'option'}
               <!-- avoid update devices issue -->
               {#key updateTime}
-                <Select bind:value={formItem.value} label={formItem.label}>
+                <Select 
+                bind:value={formItem.value} 
+                label={formItem.label}
+                >
                   {#each formItem.options as option}
                     <Option value={option.value}>{option.label}</Option>
                   {/each}
                 </Select>
               {/key}
+            {/if}
+
+            {#if formItem.type === 'optional-auto'}
+              <FormField>
+                <Checkbox bind:checked={formItem.enable} />
+                <!-- avoid update devices issue -->
+                <Autocomplete
+                  slot="label"
+                  disabled={!formItem.enable}
+                  options={formItem.options}
+                  bind:value={formItem.value}
+                  label={formItem.label}
+                />
+              </FormField>
             {/if}
 
             {#if formItem.type === 'optional-option'}
@@ -342,8 +368,10 @@ $: open &&
                 {#key updateTime}
                   <Select
                     slot="label"
-                    disabled={!formItem.enable} 
-                    bind:value={formItem.value} label={formItem.label}>
+                    disabled={!formItem.enable}
+                    bind:value={formItem.value}
+                    label={formItem.label}
+                  >
                     {#each formItem.options as option}
                       <Option value={option.value}>{option.label}</Option>
                     {/each}
