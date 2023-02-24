@@ -95,7 +95,11 @@ fn test_is_device_valid_args_by_devices() {
 
     assert_eq!(
         is_device_valid_args_by_devices(
-            vec!["scrcpy.exe".to_string(), "-s".to_string(), "123".to_string()],
+            vec![
+                "scrcpy.exe".to_string(),
+                "-s".to_string(),
+                "123".to_string()
+            ],
             vec!["1234567890".to_string(), "123".to_string()]
         ),
         true
@@ -103,10 +107,33 @@ fn test_is_device_valid_args_by_devices() {
 
     assert_eq!(
         is_device_valid_args_by_devices(
-            vec!["scrcpy.exe".to_string(), "--serial".to_string(), "123".to_string()],
+            vec![
+                "scrcpy.exe".to_string(),
+                "--serial".to_string(),
+                "123".to_string()
+            ],
             vec!["1234567890".to_string(), "123".to_string()]
         ),
         true
     );
 
+    assert_eq!(
+        is_device_valid_args_by_devices(
+            vec![
+                "scrcpy.exe".to_string(),
+                "--tcpip".to_string(),
+                "123".to_string()
+            ],
+            vec!["1234567890".to_string(), "123".to_string()]
+        ),
+        true
+    );
+
+    assert_eq!(
+        is_device_valid_args_by_devices(
+            vec!["scrcpy.exe".to_string(), "--tcpip=123".to_string()],
+            vec!["1234567890".to_string(), "123".to_string()]
+        ),
+        true
+    );
 }
