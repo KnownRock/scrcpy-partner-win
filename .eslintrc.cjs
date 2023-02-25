@@ -9,16 +9,27 @@ module.exports = {
     '@typescript-eslint',
     'svelte3'
   ],
+  // only config tsconfig in overrides is the key to lint both svelte and ts
   overrides: [
     {
       files: ['*.svelte'],
       processor: 'svelte3/svelte3'
+    },
+    {
+      files: [
+        '*.ts'
+      ],
+      extends: [
+        'standard-with-typescript'
+      ],
+      parserOptions: {
+        project: 'tsconfig.json'
+      }
     }
   ],
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module'
-    // project: './tsconfig.node.json'
   },
   rules: {
     // weird bug with svelte? when max = 1
@@ -27,4 +38,6 @@ module.exports = {
   settings: {
     'svelte3/typescript': require('typescript')
   }
+
 }
+
