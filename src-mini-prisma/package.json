@@ -1,0 +1,7 @@
+{
+  "pkg": {
+    "assets": ["../node_modules/.prisma/client/**/*"],
+    "targets": [ "node16-win-x64" ],
+    "output": "dist"
+  }
+}

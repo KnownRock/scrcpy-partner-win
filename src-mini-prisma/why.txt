@@ -1,0 +1,2 @@
+Because 2023/02/24 prisma in rust was complie error
+https://github.com/Brendonovich/prisma-client-rust/issues/256
