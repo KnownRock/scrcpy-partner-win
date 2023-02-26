@@ -11,23 +11,31 @@ datasource db {
   url      = "file:./main.db"
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
+model Device{
+  id       String @id @default(uuid())
+  adbId    String
+  name     String
+  model    String
+  product  String
+  config   DeviceConfig[]
 }
 
-model Post {
-  id        Int     @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean @default(false)
-  author    User    @relation(fields: [authorId], references: [id])
-  authorId  Int
+model DeviceConfig{
+  id       String     @id @default(uuid())
+  name     String
+  device   Device  @relation(fields: [deviceId], references: [id])
+  deviceId String
+  deviceConfigValue DeviceConfigValue[] 
 }
 
+model DeviceConfigValue{
+  id       String     @id @default(uuid())
+  value    String
+  deviceConfig   DeviceConfig  @relation(fields: [deviceConfigId], references: [id])
+  deviceConfigId String
+}
 
+// This only for unit test
 model Test {
   id       Int     @id @default(autoincrement())
   name     String
