@@ -19,12 +19,17 @@ async function main () {
   const { stdout, stderr } = await execAsync('npx prisma generate')
   console.log(stdout)
 
+  const { stdout: stdout1, stderr: stderr1 } = await execAsync('npx prisma migrate dev --name init')
+  console.log(stdout1)
+
+
   const { stdout: stdout2, stderr: stderr2 } = await execAsync(
     'npx pkg -c ./package.json ./main.js',
     {
       cwd: './src-mini-prisma'
     }
   )
+
 
   console.log(stdout2)
 
@@ -57,6 +62,7 @@ async function main () {
 
   console.log('stderr:')
   console.log(stderr)
+  console.log(stderr1)
   console.log(stderr2)
   console.log(stderr3)
   console.log(stderr4)
