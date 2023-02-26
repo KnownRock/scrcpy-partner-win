@@ -1,4 +1,3 @@
-
 <script lang="ts">
   import Button, { Label } from '@smui/button'
   import Card, {
@@ -12,7 +11,7 @@
   // TODO: move all type to global.d.ts
   import { lanuchSelf, type Device } from '../utils/devices'
   import { configForm } from '../store/index'
-  export let device : Device
+  export let device: Device
 
   async function lanuchScrcpy () {
     lanuchSelf([`-s${device.adbId}`])
@@ -22,9 +21,12 @@
     console.log('saveDevice', device)
   }
 
-  export let showConfig = false
-  export let currentDeviceId = ''
-
+  function showConfig () {
+    configForm.set({
+      show: true,
+      deviceId: device.id
+    })
+  }
 </script>
 
 <Card>
@@ -35,18 +37,15 @@
         <!-- A card with media. -->
         {device.name}
       </h2>
-      <h3
-        class="mdc-typography--subtitle2"
-        style="margin: 0; color: #888;"
-      >
+      <h3 class="mdc-typography--subtitle2" style="margin: 0; color: #888;">
         {device.model}
       </h3>
     </Content>
   </PrimaryAction>
   <Actions>
     <ActionButtons>
-      <Button 
-        variant="raised" 
+      <Button
+        variant="raised"
         on:click={() => lanuchScrcpy()}
         title="Start scrcpy"
       >
@@ -57,21 +56,15 @@
       <IconButton
         class="material-icons"
         on:click={() => saveDevice(device)}
-        title="Save">
+        title="Save"
+      >
         save
       </IconButton>
       <IconButton
         class="material-icons"
-        on:click={() => {
-          // showConfig = true
-          // currentDeviceId = device.id
-          debugger
-          configForm.set({
-            show: true,
-            deviceId: device.id
-          })
-        }}
-        title="More options">more_vert
+        on:click={() => showConfig()}
+        title="More options"
+        >more_vert
       </IconButton>
     </ActionIcons>
   </Actions>
