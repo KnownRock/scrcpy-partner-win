@@ -9,83 +9,28 @@
   import FormField from '@smui/form-field'
   import Textfield from '@smui/textfield'
   import LayoutGrid, { Cell } from '@smui/layout-grid'
+  import { dialogForm } from '../../store/index'
 
-  export let open = false
-  export let currentForm : FormItem[] = []
+  let open = false
+  let currentFormItems : FormItem[] = []
+  let buttons: DialogFormButton[] = []
+  let cancelCallback: {
+    (response: string, formItems: FormItem[]): boolean
+  } = () => true
 
-  type FormItem =
-    | {
-        type: 'option';
-        label: string;
-        name: string;
-        options: { label: string; value: string }[];
-        value: string;
-        defaultValue?: string;
-      }
-    | {
-        type: 'switch';
-        label: string;
-        name: string;
-        value: boolean;
-      }
-    | {
-        type: 'text';
-        label: string;
-        name: string;
-        value: string;
-      }
-    | {
-        type: 'number';
-        label: string;
-        name: string;
-        value: number;
-      }
-    | {
-        type: 'auto';
-        label: string;
-        name: string;
-        value: string;
-        options: string[];
-      }
-    | {
-        type: 'optional-auto';
-        label: string;
-        name: string;
-        value: string;
-        enable: boolean;
-        options: string[];
-      }
-    | {
-        type: 'optional-text';
-        label: string;
-        name: string;
-        value: string;
-        enable: boolean;
-      }
-    | {
-        type: 'optional-number';
-        label: string;
-        name: string;
-        value: number;
-        enable: boolean;
-      }
-    | {
-        type: 'optional-option';
-        label: string;
-        name: string;
-        options: { label: string; value: string }[];
-        value: string;
-        defaultValue?: string;
-        enable: boolean;
-      }
-    | {
-        type: 'header';
-        label: string;
-        name: string;
-      };
-
-
+  let updateTime = 0
   let response = ''
+
+  dialogForm.subscribe((value) => {
+    if (value.show) {
+      open = true
+      currentFormItems = value.formItems
+      buttons = value.buttons
+      cancelCallback = value.cancelCallback
+      updateTime++
+    }
+  })
+
 
   function closeHandler (e: CustomEvent<{ action: string }>) {
     switch (e.detail.action) {
@@ -115,7 +60,7 @@
   </Header>
   <Content id="fullscreen-content">
     <LayoutGrid>
-      {#each currentForm as formItem (formItem.name)}
+      {#each currentFormItems as formItem (formItem.name)}
         {#if formItem.type === 'header'}
           <Cell span={12}>
             <h2>{formItem.label}</h2>
@@ -226,11 +171,15 @@
     </LayoutGrid>
   </Content>
   <Actions>
-    <Button action="cancel">
-      <Label>Cancel</Label>
-    </Button>
-    <Button action="start" defaultAction on:click={() => start()}>
-      <Label>Start</Label>
-    </Button>
+    {#each buttons as button}
+      <Button 
+      action={button.action} 
+      defaultAction={!!button.defaultAction}
+      on:click={() => button.callback(
+        currentFormItems
+      )}>
+        <Label>{button.label}</Label>
+      </Button>
+    {/each}
   </Actions>
 </Dialog>
