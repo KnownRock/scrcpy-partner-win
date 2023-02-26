@@ -180,3 +180,91 @@ pub fn kill_process(pid: u32) {
             .output();
     }
 }
+
+#[cfg(debug_assertions)]
+fn get_db_url() -> String {
+    let current_dir = std::env::current_dir().unwrap();
+    let db_path = current_dir.join("../prisma").join("main.db");
+    let db_url = format!("file:{}", db_path.to_str().unwrap());
+    // println!("db_url: {}", db_url);
+    db_url
+}
+#[cfg(not(debug_assertions))]
+fn get_db_url() -> String {
+    let current_dir = std::env::current_dir().unwrap();
+    let db_path = current_dir.join("main.db");
+    let db_url = format!("file:{}", db_path.to_str().unwrap());
+    db_url
+}
+pub fn call_prisma(table: String, func: String, arg_json: String) -> String {
+    let db_url = get_db_url();
+
+    let exe_path;
+    #[cfg(debug_assertions)]
+    {
+        exe_path = "./target/release/mini-prisma.exe";
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        exe_path = "./mini-prisma.exe";
+    }
+
+    let child = Command::new(exe_path)
+        .arg(db_url)
+        .arg(table)
+        .arg(func)
+        .arg(arg_json)
+        .creation_flags(0x08000000)
+        .output()
+        .unwrap();
+
+    let output = String::from_utf8(child.stdout).unwrap();
+    #[cfg(debug_assertions)]
+    {
+        println!("output: \n{}", output);
+        let err_output = String::from_utf8(child.stderr).unwrap();
+        println!("errOutput: \n{}", err_output);
+    }
+
+    output
+}
+
+#[test]
+fn test_call_prisma() {
+    // print exec path
+    let path = std::env::current_exe().unwrap();
+    println!("path: {:?}", path);
+
+    // print working dir
+    let path = std::env::current_dir().unwrap();
+    println!("path: {:?}", path);
+
+    let table = "test".to_string();
+    let func = "deleteMany".to_string();
+    let arg_json = "".to_string();
+    let output = call_prisma(table.clone(), func, arg_json);
+    println!("output: \"{}\"", output);
+    let object = serde_json::from_str::<serde_json::Value>(&output).unwrap();
+    assert!(object["count"].as_u64().unwrap() == 0 || object["count"].as_u64().unwrap() >= 1);
+
+    let func = "findMany".to_string();
+    let arg_json = "".to_string();
+    let output = call_prisma(table.clone(), func, arg_json);
+    println!("output: \"{}\"", output);
+    let objects = serde_json::from_str::<Vec<serde_json::Value>>(&output).unwrap();
+    assert!(objects.len() == 0);
+
+    let func = "create".to_string();
+    let arg_json = r#"{"data":{"name":"test1"}}"#.to_string();
+    let output = call_prisma(table.clone(), func, arg_json);
+    println!("output: \"{}\"", output);
+    let object = serde_json::from_str::<serde_json::Value>(&output).unwrap();
+    assert!(object["name"].as_str().unwrap() == "test1");
+
+    let func = "findMany".to_string();
+    let arg_json = "".to_string();
+    let output = call_prisma(table.clone(), func, arg_json);
+    println!("output: \"{}\"", output);
+    let objects = serde_json::from_str::<Vec<serde_json::Value>>(&output).unwrap();
+    assert!(objects.len() == 1);
+}

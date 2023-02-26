@@ -320,6 +320,11 @@ async fn init(app: tauri::AppHandle) -> String {
     "ok".to_string()
 }
 
+#[tauri::command]
+async fn call_prisma(table: String, func: String, arg_json: String) -> String {
+    println!("call_prisma: {} {} {}", table, func, arg_json);
+    cmds::call_prisma(table, func, arg_json)
+}
 // static mut TAURI_APP : Option<&mut tauri::App> = None;
 
 fn main() {
@@ -340,7 +345,8 @@ fn main() {
             show_tool_window,
             sendkey,
             lanuch_self,
-            init
+            init,
+            call_prisma
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");
