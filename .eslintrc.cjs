@@ -13,7 +13,12 @@ module.exports = {
   overrides: [
     {
       files: ['*.svelte'],
-      processor: 'svelte3/svelte3'
+      processor: 'svelte3/svelte3',
+      rules: {
+        // https://stackoverflow.com/questions/63509978/global-module-definition-for-typescript
+        // https://typescript-eslint.io/linting/troubleshooting/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
+        'no-undef': 'off'
+      }
     },
     {
       files: [
@@ -24,6 +29,9 @@ module.exports = {
       ],
       parserOptions: {
         project: 'tsconfig.json'
+      },
+      rules: {
+        'no-undef': 'off'
       }
     }
   ],
