@@ -1,6 +1,9 @@
 import type { PrismaClient } from '@prisma/client/index'
 import { callTauriFunction } from './tauri'
-const allTables = ['user', 'post', 'test'] as const
+import jsonSchema from '../model/json-schema.json' assert { type: 'json' }
+const allTables = Object.keys(jsonSchema.properties)
+
+// const allTables = ['user', 'post', 'test'] as const
 
 type PrismaAction =
     | 'findUnique'

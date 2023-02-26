@@ -1,16 +1,18 @@
 import { invoke } from '@tauri-apps/api/tauri'
 import { callTauriFunction } from './tauri'
 
-export interface Device {
-  name: string
-  id: string
-  model: string
-  device: string
-  deviceProduct: string
-  transportId: string
-}
+// export interface Device {
+//   name: string
+//   id: string
+//   model: string
+//   device: string
+//   deviceProduct: string
+//   transportId: string
+// }
 
-export async function getDevices (): Promise<Device[]> {
+import type { Device } from '@prisma/client/index.d'
+
+async function getAdbDevices (): Promise<Device[]> {
   const rawOutput = (await callTauriFunction<string>('adb_devices_l'))
 
   const lines = rawOutput.split('\n')
@@ -21,13 +23,27 @@ export async function getDevices (): Promise<Device[]> {
     if (matched == null) {
       throw new Error(`Failed to parse device line: ${line}`)
     }
-    const [,id, deviceProduct, model, device, transportId] = matched
-
-    const name = id
-    return { name, id, model, device, deviceProduct, transportId }
+    const [,adbId, product, model] = matched
+    const name = adbId
+    return {
+      name,
+      adbId,
+      id: '',
+      model,
+      product
+      // transportId
+    }
   })
+}
+
+export async function getDevices (): Promise<Device[]> {
+  const adbDevices = await getAdbDevices()
+
+  return adbDevices
 }
 
 export async function lanuchSelf (args: string[]): Promise<void> {
   await invoke('lanuch_self', { args })
 }
+
+export type { Device } from '@prisma/client/index.d'

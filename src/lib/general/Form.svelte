@@ -7,22 +7,11 @@
   import Switch from '@smui/switch'
   import Autocomplete from '@smui-extra/autocomplete'
   import FormField from '@smui/form-field'
-  import { getDevices, lanuchSelf, type Device } from '../utils/devices'
   import Textfield from '@smui/textfield'
   import LayoutGrid, { Cell } from '@smui/layout-grid'
-  import { configForm } from '../store/index'
 
-  let devices: Device[] = []
-  let open = false
-  let currentDeviceId = ''
-
-  configForm.subscribe((value) => {
-    open = value.show
-    currentDeviceId = value.deviceId
-  })
-  
-
-  let form = getForm(devices)
+  export let open = false
+  export let currentForm : FormItem[] = []
 
   type FormItem =
     | {
@@ -95,135 +84,6 @@
         name: string;
       };
 
-  function getForm (devices: Device[]) {
-    const form: FormItem[] = [
-      {
-        type: 'header',
-        label: 'General',
-        name: 'general'
-      },
-      {
-        type: 'option',
-        label: 'Device',
-        name: 'serial',
-        options: devices.map((d) => ({ label: d.name, value: d.id })),
-        value: currentDeviceId
-      },
-      {
-        type: 'auto',
-        label: 'Bit Rate',
-        name: 'bit-rate',
-        options: ['32M', '16M', '8M', '4M', '2M', '1M', '512K', '256K'],
-        value: '8M'
-      },
-      {
-        type: 'auto',
-        label: 'Display Buffer',
-        name: 'display-buffer',
-        options: ['100', '50', '30', '20', '10', '5', '0'],
-        value: '0'
-      },
-      {
-        type: 'optional-auto',
-        label: 'FPS',
-        name: 'max-fps',
-        options: ['144', '120', '75', '60', '30', '20', '15', '10', '5'],
-        value: '60',
-        enable: false
-      },
-      {
-        type: 'optional-number',
-        label: 'Max Size',
-        name: 'max-size',
-        value: 1080,
-        enable: false
-      },
-      {
-        type: 'optional-option',
-        label: 'Orientation',
-        name: 'lock-video-orientation',
-        options: [
-          { label: 'Natural orientation', value: '0' },
-          { label: '90° counterclockwise', value: '1' },
-          { label: '180° counterclockwise', value: '2' },
-          { label: '90° clockwise', value: '3' }
-        ],
-        value: '0',
-        enable: false
-      },
-      {
-        type: 'header',
-        label: 'Screen',
-        name: 'screen'
-      },
-      {
-        type: 'switch',
-        label: 'Always on top',
-        name: 'always-on-top',
-        value: false
-      },
-      {
-        type: 'switch',
-        label: 'Fullscreen',
-        name: 'fullscreen',
-        value: false
-      },
-      {
-        type: 'switch',
-        label: 'Window Borderless',
-        name: 'window-borderless',
-        value: false
-      },
-      {
-        type: 'optional-text',
-        label: 'Window Title',
-        name: 'title',
-        value: '',
-        enable: false
-      },
-      {
-        type: 'optional-text',
-        label: 'Tcpip',
-        name: 'tcpip',
-        value: '',
-        enable: false
-      },
-      {
-        type: 'header',
-        label: 'Window',
-        name: 'window'
-      },
-      {
-        type: 'optional-number',
-        label: 'Position X',
-        name: 'window-x',
-        value: 0,
-        enable: false
-      },
-      {
-        type: 'optional-number',
-        label: 'Position Y',
-        name: 'window-y',
-        value: 0,
-        enable: false
-      },
-      {
-        type: 'optional-number',
-        label: 'Width',
-        name: 'width',
-        value: 0,
-        enable: false
-      }
-    ]
-
-    form.forEach((item) => {
-      if (item.type === 'option') {
-        item.defaultValue = item.value
-      }
-    })
-
-    return form
-  }
 
   let response = ''
 
@@ -240,57 +100,6 @@
         break
     }
   }
-
-  let updateTime = 0
-  async function setDevices () {
-    devices = await getDevices()
-    form = getForm(devices)
-
-    updateTime = Date.now()
-  }
-
-  async function start () {
-    function formToArgs (form: FormItem[]) {
-      const args = [] as string[]
-      for (const item of form) {
-        if (item.type === 'option') {
-          args.push(`--${item.name}=${item.value}`)
-        } else if (item.type === 'switch') {
-          if (item.value) {
-            args.push(`--${item.name}`)
-          }
-        } else if (item.type === 'auto') {
-          args.push(`--${item.name}=${item.value}`)
-        } else if (item.type === 'text') {
-          args.push(`--${item.name}=${item.value}`)
-        } else if (item.type === 'number') {
-          args.push(`--${item.name}=${item.value}`)
-        } else if (item.type === 'optional-text') {
-          if (item.enable) {
-            args.push(`--${item.name}=${item.value}`)
-          }
-        } else if (item.type === 'optional-number') {
-          if (item.enable) {
-            args.push(`--${item.name}=${item.value}`)
-          }
-        } else if (item.type === 'optional-option') {
-          if (item.enable) {
-            args.push(`--${item.name}=${item.value}`)
-          }
-        }
-      }
-
-      return args
-    }
-
-    const args = formToArgs(form)
-    lanuchSelf(args)
-  }
-
-  $: open &&
-    (() => {
-      setDevices()
-    })()
 </script>
 
 <Dialog
@@ -306,7 +115,7 @@
   </Header>
   <Content id="fullscreen-content">
     <LayoutGrid>
-      {#each form as formItem (formItem.name)}
+      {#each currentForm as formItem (formItem.name)}
         {#if formItem.type === 'header'}
           <Cell span={12}>
             <h2>{formItem.label}</h2>

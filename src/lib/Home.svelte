@@ -36,8 +36,6 @@
 </script>
 
 <main class="container">
-  <!-- <h1>Main</h1> -->
-
   <TabBar {tabs} let:tab {key} bind:active> 
     <Tab
     

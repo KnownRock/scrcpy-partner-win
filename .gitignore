@@ -25,3 +25,4 @@ dist-ssr
 prisma/main.db
 prisma/migrations
 prisma/main.db-journal
+src/model/json-schema.json
