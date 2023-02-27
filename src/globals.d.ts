@@ -1,9 +1,13 @@
 
 interface DialogFormButton {
   label: string
-  callback: (formItems: FormItem[]) => boolean
+  callback: (
+    // TODO: make this type more specific
+    entity: Record<FormItem['name'], FormItem['value']>,
+    formItems: FormItem[]
+  ) => Promise<boolean> | boolean
   defaultAction?: boolean
-  action?: 'submit' | 'cancel'
+  action?: string
 }
 
 type FormItem = {
@@ -13,24 +17,28 @@ type FormItem = {
   options: Array<{ label: string, value: string }>
   value: string
   defaultValue?: string
+  disabled?: boolean
 }
 | {
   type: 'switch'
   label: string
   name: string
   value: boolean
+  disabled?: boolean
 }
 | {
   type: 'text'
   label: string
   name: string
   value: string
+  disabled?: boolean
 }
 | {
   type: 'number'
   label: string
   name: string
   value: number
+  disabled?: boolean
 }
 | {
   type: 'auto'
@@ -38,6 +46,7 @@ type FormItem = {
   name: string
   value: string
   options: string[]
+  disabled?: boolean
 }
 | {
   type: 'optional-auto'
@@ -46,6 +55,7 @@ type FormItem = {
   value: string
   enable: boolean
   options: string[]
+  disabled?: boolean
 }
 | {
   type: 'optional-text'
@@ -53,6 +63,7 @@ type FormItem = {
   name: string
   value: string
   enable: boolean
+  disabled?: boolean
 }
 | {
   type: 'optional-number'
@@ -60,6 +71,7 @@ type FormItem = {
   name: string
   value: number
   enable: boolean
+  disabled?: boolean
 }
 | {
   type: 'optional-option'
@@ -69,9 +81,11 @@ type FormItem = {
   value: string
   defaultValue?: string
   enable: boolean
+  disabled?: boolean
 }
 | {
   type: 'header'
   label: string
   name: string
+  disabled?: boolean
 }
