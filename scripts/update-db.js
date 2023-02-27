@@ -58,14 +58,15 @@ async function main () {
   console.log(stdout3)
 
 
-  // const { stdout: stdout4, stderr: stderr4 } = await execAsync(
-  //   'copy  .\\main.exe ..\\src-tauri\\target\\release\\mini-prisma.exe',
-  //   {
-  //     cwd: './src-mini-prisma'
-  //   }
-  // )
+  // when in dev mode use this location mini-prisma.exe
+  const { stdout: stdout4, stderr: stderr4 } = await execAsync(
+    'copy  .\\main.exe ..\\src-tauri\\target\\release\\mini-prisma.exe',
+    {
+      cwd: './src-mini-prisma'
+    }
+  )
 
-  // console.log(stdout4)
+  console.log(stdout4)
 
   const { stdout: stdout5, stderr: stderr5 } = await execAsync(
     'del .\\main.exe',
@@ -81,7 +82,7 @@ async function main () {
   console.log(stderr1)
   console.log(stderr2)
   console.log(stderr3)
-  // console.log(stderr4)
+  console.log(stderr4)
   console.log(stderr5)
 }
 
