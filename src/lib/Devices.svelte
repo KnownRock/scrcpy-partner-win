@@ -1,12 +1,12 @@
 <script lang="ts">
   import LayoutGrid, { Cell } from '@smui/layout-grid'
 
-  import { getDevices, type Device } from '../utils/devices'
+  import { getDevices, type DeviceExt } from '../utils/devices'
 
   import DeviceCard from './DeviceCard.svelte'
   import Form from './general/Form.svelte'
 
-  let devices : Device[] = []
+  let devices : DeviceExt[] = []
 
   async function setDevices () {
     devices = await getDevices()
