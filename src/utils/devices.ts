@@ -1,6 +1,9 @@
 import { invoke } from '@tauri-apps/api/tauri'
 import { callTauriFunction } from './tauri'
 
+import type { Device } from '@prisma/client/index.d'
+import prismaClientLike from './prisma-like-client'
+
 // export interface Device {
 //   name: string
 //   id: string
@@ -9,8 +12,9 @@ import { callTauriFunction } from './tauri'
 //   deviceProduct: string
 //   transportId: string
 // }
-
-import type { Device } from '@prisma/client/index.d'
+type DeviceExt = Device & {
+  isConnected: boolean
+}
 
 async function getAdbDevices (): Promise<Device[]> {
   const rawOutput = (await callTauriFunction<string>('adb_devices_l'))
@@ -36,10 +40,49 @@ async function getAdbDevices (): Promise<Device[]> {
   })
 }
 
-export async function getDevices (): Promise<Device[]> {
-  const adbDevices = await getAdbDevices()
+export async function saveDevice (device: Device): Promise<void> {
+  const deviceInDb = await prismaClientLike.device.findUnique({
+    where: {
+      adbId: device.adbId
+    }
+  })
 
-  return adbDevices
+  if (deviceInDb == null) {
+    await prismaClientLike.device.create({
+      data: device
+    })
+  } else {
+    await prismaClientLike.device.update({
+      where: {
+        adbId: device.adbId
+      },
+      data: device
+    })
+  }
+}
+
+export async function getDevices (): Promise<DeviceExt[]> {
+  const adbDevices = await getAdbDevices()
+  const savedDevices = await prismaClientLike.device.findMany()
+
+  const unsavedAdbDevices = adbDevices.filter(adbDevice => {
+    return savedDevices.find(savedDevice => savedDevice.adbId === adbDevice.adbId) == null
+  }).map(adbDevice => {
+    return {
+      ...adbDevice,
+      isConnected: true
+    }
+  })
+
+  const savedDevicesExt = savedDevices.map(savedDevice => {
+    const adbDevice = adbDevices.find(adbDevice => adbDevice.adbId === savedDevice.adbId)
+    return {
+      ...savedDevice,
+      isConnected: adbDevice != null
+    }
+  })
+
+  return [...unsavedAdbDevices, ...savedDevicesExt]
 }
 
 export async function lanuchSelf (args: string[]): Promise<void> {
@@ -47,3 +90,4 @@ export async function lanuchSelf (args: string[]): Promise<void> {
 }
 
 export type { Device } from '@prisma/client/index.d'
+export type { DeviceExt }
