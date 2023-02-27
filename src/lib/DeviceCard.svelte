@@ -9,22 +9,27 @@
   } from '@smui/card'
   import IconButton from '@smui/icon-button'
   // TODO: move all type to global.d.ts
-  import { lanuchSelf, type Device } from '../utils/devices'
-  import { configForm } from '../store/index'
-  export let device: Device
+  import { lanuchSelf, type Device, type DeviceExt } from '../utils/devices'
+  import { configForm, deviceForm } from '../store/index'
+  
+  export let device: DeviceExt
 
   async function lanuchScrcpy () {
     lanuchSelf([`-s${device.adbId}`])
   }
 
   async function saveDevice (device) {
-    console.log('saveDevice', device)
+    // console.log('saveDevice', device)
+    deviceForm.set({
+      show: true,
+      deviceAdbId: device.adbId
+    })
   }
 
   function showConfig () {
     configForm.set({
       show: true,
-      deviceId: device.id
+      deviceAdbId: device.adbId
     })
   }
 </script>
@@ -40,6 +45,7 @@
       <h3 class="mdc-typography--subtitle2" style="margin: 0; color: #888;">
         {device.model}
       </h3>
+      <h5>{ device.isConnected ? 'Connected' : 'Disconnected'}</h5>
     </Content>
   </PrimaryAction>
   <Actions>
