@@ -1,7 +1,11 @@
 export {
-  default as dialogForm
-} from './dialog-form'
+  default as generalDialogForm
+} from './general-dialog-form'
 
 export {
   default as configForm
 } from './config-form'
+
+export {
+  default as deviceForm
+} from './device-form'

@@ -9,19 +9,21 @@
   import FormField from '@smui/form-field'
   import Textfield from '@smui/textfield'
   import LayoutGrid, { Cell } from '@smui/layout-grid'
-  import { dialogForm } from '../../store/index'
+  
+  import { generalDialogForm } from '../../store/index'
 
   let open = false
   let currentFormItems : FormItem[] = []
   let buttons: DialogFormButton[] = []
   let cancelCallback: {
-    (response: string, formItems: FormItem[]): boolean
+    (response: string, formItems: FormItem[]): boolean | Promise<boolean>
   } = () => true
 
   let updateTime = 0
   let response = ''
+  const title = 'Form'
 
-  dialogForm.subscribe((value) => {
+  generalDialogForm.subscribe((value) => {
     if (value.show) {
       open = true
       currentFormItems = value.formItems
@@ -32,7 +34,7 @@
   })
 
 
-  function closeHandler (e: CustomEvent<{ action: string }>) {
+  async function closeHandler (e: CustomEvent<{ action: string }>) {
     switch (e.detail.action) {
       case 'close':
         response = 'Closed without response.'
@@ -44,7 +46,55 @@
         response = 'Accepted.'
         break
     }
+
+    // FIXME: fix will close dialog when click cancel button in dialog when return false
+    const isClose = await cancelCallback(response, currentFormItems)
+    if (isClose) {
+      open = false
+    }
   }
+
+  async function buttonHandler (button: DialogFormButton) {
+    const isClose = await button.callback(
+      formToEntity(currentFormItems),
+      currentFormItems
+    )
+    if (isClose) {
+      open = false
+    }
+  }
+
+  function formToEntity (form: FormItem[]) {
+    const ent = {}
+    for (const item of form) {
+      if (item.type === 'option') {
+        ent[item.name] = item.value
+      } else if (item.type === 'switch') {
+        ent[item.name] = item.value
+      } else if (item.type === 'auto') {
+        ent[item.name] = item.value
+      } else if (item.type === 'text') {
+        ent[item.name] = item.value
+      } else if (item.type === 'number') {
+        ent[item.name] = item.value
+      } else if (item.type === 'optional-text') {
+        if (item.enable) {
+          ent[item.name] = item.value
+        }
+      } else if (item.type === 'optional-number') {
+        if (item.enable) {
+          ent[item.name] = item.value
+        }
+      } else if (item.type === 'optional-option') {
+        if (item.enable) {
+          ent[item.name] = item.value
+        }
+      }
+    }
+
+    return ent
+  }
+
 </script>
 
 <Dialog
@@ -55,7 +105,7 @@
   on:SMUIDialog:closed={closeHandler}
 >
   <Header>
-    <Title id="fullscreen-title">Config</Title>
+    <Title id="fullscreen-title">{ title }</Title>
     <IconButton action="close" class="material-icons">close</IconButton>
   </Header>
   <Content id="fullscreen-content">
@@ -69,6 +119,7 @@
           <Cell>
             {#if formItem.type === 'auto'}
               <Autocomplete
+                disabled={formItem.disabled}
                 options={formItem.options}
                 bind:value={formItem.value}
                 label={formItem.label}
@@ -76,18 +127,23 @@
             {/if}
 
             {#if formItem.type === 'switch'}
-              <FormField align="start">
+              <FormField 
+                disabled={formItem.disabled}
+                align="start">
                 <Switch bind:checked={formItem.value} />
                 <span slot="label">{formItem.label}</span>
               </FormField>
             {/if}
 
             {#if formItem.type === 'text'}
-              <Textfield bind:value={formItem.value} label={formItem.label} />
+              <Textfield 
+                disabled={formItem.disabled}
+                bind:value={formItem.value} label={formItem.label} />
             {/if}
 
             {#if formItem.type === 'number'}
               <Textfield
+                disabled={formItem.disabled}
                 bind:value={formItem.value}
                 label={formItem.label}
                 type="number"
@@ -98,8 +154,9 @@
               <!-- avoid update devices issue -->
               {#key updateTime}
                 <Select 
-                bind:value={formItem.value} 
-                label={formItem.label}
+                  disabled={formItem.disabled}
+                  bind:value={formItem.value} 
+                  label={formItem.label}
                 >
                   {#each formItem.options as option}
                     <Option value={option.value}>{option.label}</Option>
@@ -109,7 +166,7 @@
             {/if}
 
             {#if formItem.type === 'optional-auto'}
-              <FormField>
+              <FormField disabled={formItem.disabled}>
                 <Checkbox bind:checked={formItem.enable} />
                 <!-- avoid update devices issue -->
                 <Autocomplete
@@ -123,7 +180,7 @@
             {/if}
 
             {#if formItem.type === 'optional-option'}
-              <FormField>
+              <FormField disabled={formItem.disabled}>
                 <Checkbox bind:checked={formItem.enable} />
                 <!-- avoid update devices issue -->
                 {#key updateTime}
@@ -142,7 +199,7 @@
             {/if}
 
             {#if formItem.type === 'optional-text'}
-              <FormField>
+              <FormField disabled={formItem.disabled}>
                 <Checkbox bind:checked={formItem.enable} />
                 <Textfield
                   slot="label"
@@ -154,7 +211,7 @@
             {/if}
 
             {#if formItem.type === 'optional-number'}
-              <FormField>
+              <FormField disabled={formItem.disabled}>
                 <Checkbox bind:checked={formItem.enable} />
                 <Textfield
                   slot="label"
@@ -175,9 +232,7 @@
       <Button 
       action={button.action} 
       defaultAction={!!button.defaultAction}
-      on:click={() => button.callback(
-        currentFormItems
-      )}>
+        on:click={() => buttonHandler(button)}>
         <Label>{button.label}</Label>
       </Button>
     {/each}
