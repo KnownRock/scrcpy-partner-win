@@ -24,5 +24,6 @@ dist-ssr
 *.sw?
 prisma/main.db
 prisma/migrations
-prisma/main.db-journal
 src/model/json-schema.json
+prisma/*.db
+prisma/*.db-journal

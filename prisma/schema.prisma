@@ -12,9 +12,9 @@ generator jsonSchema {
 
 datasource db {
   provider = "sqlite"
-  // url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
   // for dev
-  url      = "file:./main.db"
+  // url      = "file:./main.db"
 }
 
 model Device{
