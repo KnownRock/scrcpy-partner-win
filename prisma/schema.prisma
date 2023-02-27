@@ -18,8 +18,7 @@ datasource db {
 }
 
 model Device{
-  id       String @id @default(uuid())
-  adbId    String
+  adbId    String @id
   name     String
   model    String
   product  String
@@ -29,7 +28,7 @@ model Device{
 model DeviceConfig{
   id       String     @id @default(uuid())
   name     String
-  device   Device  @relation(fields: [deviceId], references: [id])
+  device   Device  @relation(fields: [deviceId], references: [adbId])
   deviceId String
   deviceConfigValue DeviceConfigValue[] 
 }
