@@ -3,7 +3,8 @@ import { callTauriFunction } from './tauri'
 
 import type { Device } from '@prisma/client/index.d'
 import prismaClientLike from './prisma-like-client'
-
+import { getNoAdditionalPropertiesSchema } from './prisma-field-filter'
+import { v4 as uuidv4 } from 'uuid'
 // export interface Device {
 //   name: string
 //   id: string
@@ -14,6 +15,7 @@ import prismaClientLike from './prisma-like-client'
 // }
 type DeviceExt = Device & {
   isConnected: boolean
+  isSaved: boolean
 }
 
 async function getAdbDevices (): Promise<Device[]> {
@@ -32,45 +34,66 @@ async function getAdbDevices (): Promise<Device[]> {
     return {
       name,
       adbId,
-      id: '',
+      id: uuidv4(),
       model,
-      product
-      // transportId
+      product,
+      createdAt: null,
+      updatedAt: null,
+      lastSeenAt: null
     }
   })
 }
 
-export async function saveDevice (device: Device): Promise<void> {
+export async function deleteDevice (deviceId: string): Promise<void> {
+  await prismaClientLike.device.delete({
+    where: {
+      id: deviceId
+    }
+  })
+}
+
+export async function saveDevice (device: Device): Promise<Device> {
+  const clearDevice = getNoAdditionalPropertiesSchema<Device>('Device', device)
+
   const deviceInDb = await prismaClientLike.device.findUnique({
     where: {
-      adbId: device.adbId
+      id: device.id
     }
   })
 
+  let newOrUpdatedDevice: Device
   if (deviceInDb == null) {
-    await prismaClientLike.device.create({
-      data: device
+    newOrUpdatedDevice = await prismaClientLike.device.create({
+      data: {
+        ...clearDevice,
+        updatedAt: undefined,
+        id: undefined
+      }
     })
   } else {
-    await prismaClientLike.device.update({
+    newOrUpdatedDevice = await prismaClientLike.device.update({
       where: {
-        adbId: device.adbId
+        id: device.id
       },
-      data: device
+      data: clearDevice
     })
   }
+
+  return newOrUpdatedDevice
 }
 
-export async function getDevices (): Promise<DeviceExt[]> {
+export async function getDevices (
+  queryMode: 'all' | 'only adb' | 'only saved' | 'only unsaved' = 'all'
+): Promise<DeviceExt[]> {
   const adbDevices = await getAdbDevices()
   const savedDevices = await prismaClientLike.device.findMany()
-
   const unsavedAdbDevices = adbDevices.filter(adbDevice => {
     return savedDevices.find(savedDevice => savedDevice.adbId === adbDevice.adbId) == null
   }).map(adbDevice => {
     return {
       ...adbDevice,
-      isConnected: true
+      isConnected: true,
+      isSaved: false
     }
   })
 
@@ -78,11 +101,36 @@ export async function getDevices (): Promise<DeviceExt[]> {
     const adbDevice = adbDevices.find(adbDevice => adbDevice.adbId === savedDevice.adbId)
     return {
       ...savedDevice,
-      isConnected: adbDevice != null
+      isConnected: adbDevice != null,
+      isSaved: true
     }
   })
 
-  return [...unsavedAdbDevices, ...savedDevicesExt]
+  // return [
+  //   ...(isHaveUnsavedDevices ? unsavedAdbDevices : []),
+  //   ...savedDevicesExt
+  // ]
+
+  if (queryMode === 'all') {
+    return [
+      ...unsavedAdbDevices,
+      ...savedDevicesExt
+    ]
+  } else if (queryMode === 'only unsaved') {
+    return unsavedAdbDevices
+  } else if (queryMode === 'only saved') {
+    return savedDevicesExt
+  } else if (queryMode === 'only adb') {
+    return adbDevices.map(adbDevice => {
+      return {
+        ...adbDevice,
+        isConnected: true,
+        isSaved: false
+      }
+    })
+  } else {
+    return []
+  }
 }
 
 export async function lanuchSelf (args: string[]): Promise<void> {

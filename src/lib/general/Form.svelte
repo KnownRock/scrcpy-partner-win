@@ -21,7 +21,7 @@
 
   let updateTime = 0
   let response = ''
-  const title = 'Form'
+  let title = 'Form'
 
   generalDialogForm.subscribe((value) => {
     if (value.show) {
@@ -30,6 +30,7 @@
       buttons = value.buttons
       cancelCallback = value.cancelCallback
       updateTime++
+      title = value.title ?? 'Form'
     }
   })
 
@@ -111,10 +112,16 @@
   <Content id="fullscreen-content">
     <LayoutGrid>
       {#each currentFormItems as formItem (formItem.name)}
-        {#if formItem.type === 'header'}
-          <Cell span={12}>
-            <h2>{formItem.label}</h2>
-          </Cell>
+        {#if formItem.type === 'header' || formItem.type === 'message'}
+          {#if formItem.type === 'header'}
+            <Cell span={12}>
+              <h2>{formItem.label}</h2>
+            </Cell>
+          {:else}
+            <Cell span={12}>
+              <p>{formItem.value}</p>
+            </Cell>
+          {/if}
         {:else}
           <Cell>
             {#if formItem.type === 'auto'}

@@ -20,6 +20,12 @@ type FormItem = {
   disabled?: boolean
 }
 | {
+  type: 'message'
+  label: string
+  name: string
+  value: string
+}
+| {
   type: 'switch'
   label: string
   name: string

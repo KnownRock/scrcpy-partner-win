@@ -18,17 +18,22 @@ datasource db {
 }
 
 model Device{
-  adbId    String @id
+  id       String @id @default(uuid())
+  adbId    String
   name     String
   model    String
   product  String
   config   DeviceConfig[]
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  lastSeenAt  DateTime?
 }
 
 model DeviceConfig{
   id       String     @id @default(uuid())
   name     String
-  device   Device  @relation(fields: [deviceId], references: [adbId])
+  device   Device  @relation(fields: [deviceId], references: [id])
   deviceId String
   deviceConfigValue DeviceConfigValue[] 
 }

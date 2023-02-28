@@ -17,7 +17,7 @@ function getForm (
     },
     {
       type: 'text',
-      label: 'Serial',
+      label: 'ADB Id',
       name: 'serial',
       value: currentDeviceId,
       disabled: true

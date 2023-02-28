@@ -9,3 +9,7 @@ export {
 export {
   default as deviceForm
 } from './device-form'
+
+export {
+  default as confirmDialog
+} from './confirm-dialog'

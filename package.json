@@ -9,22 +9,24 @@
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "tauri": "tauri",
-
     "update-db": "node ./scripts/update-db.js",
     "build-app": "node ./scripts/build-app.js"
   },
   "dependencies": {
     "@prisma/client": "^4.10.1",
     "@tauri-apps/api": "^1.2.0",
-    "svelte-material-ui": "^7.0.0-beta.0"
+    "svelte-material-ui": "^7.0.0-beta.0",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@smui-extra/autocomplete": "^7.0.0-beta.0",
+    "@smui-extra/badge": "^7.0.0-beta.0",
     "@smui/button": "^7.0.0-beta.0",
     "@smui/card": "^7.0.0-beta.0",
     "@smui/checkbox": "^7.0.0-beta.0",
     "@smui/circular-progress": "^7.0.0-beta.0",
     "@smui/dialog": "^7.0.0-beta.0",
+    "@smui/fab": "^7.0.0-beta.0",
     "@smui/form-field": "^7.0.0-beta.0",
     "@smui/icon-button": "^7.0.0-beta.0",
     "@smui/layout-grid": "^7.0.0-beta.0",

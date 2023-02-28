@@ -1,10 +1,24 @@
 import { writable } from 'svelte/store'
 import { generalDialogForm } from '.'
-import { getDevices, type Device, saveDevice } from '../utils/devices'
-const store = writable({
-  show: false,
-  deviceAdbId: ''
-})
+import { type Device, saveDevice } from '../utils/devices'
+const store = writable<{
+  show: boolean
+  device: Device
+  callback: (device: Device) => void
+}>({
+      show: false,
+      device: {
+        id: '',
+        adbId: '',
+        name: '',
+        model: '',
+        product: '',
+        createdAt: null,
+        updatedAt: null,
+        lastSeenAt: null
+      },
+      callback (device: Device) {}
+    })
 
 function getForm (
   device: Device
@@ -14,8 +28,8 @@ function getForm (
       type: 'text',
       label: 'ADB Id',
       name: 'adbId',
-      value: device.adbId,
-      disabled: true
+      value: device.adbId
+      // disabled: true
     },
     {
       type: 'text',
@@ -27,15 +41,13 @@ function getForm (
       type: 'text',
       label: 'model',
       name: 'model',
-      value: device.model,
-      disabled: true
+      value: device.model
     },
     {
       type: 'text',
       label: 'product',
       name: 'product',
-      value: device.product,
-      disabled: true
+      value: device.product
     }
   ]
 
@@ -51,35 +63,8 @@ function getForm (
 store.subscribe(value => {
   (async () => {
     console.log('config-form.ts: store.subscribe: value:', value)
+    const currentDevice = value.device
 
-    const devices = await getDevices()
-    const currentDevice = devices.find(d => d.adbId === value.deviceAdbId)
-
-    if (currentDevice == null) {
-      const formItems: FormItem[] = [{
-        type: 'header',
-        label: 'Error: Device not found',
-        name: 'error'
-      }]
-
-      generalDialogForm.set({
-        show: value.show,
-        formItems,
-        buttons: [
-          {
-            label: 'Cancel',
-            action: 'cancel',
-            callback: (entity, formItems) => {
-              return true
-            }
-          }
-        ],
-        cancelCallback: (response, formItems) => {
-          return true
-        }
-      })
-      return
-    }
     const formItems = getForm(currentDevice)
 
     generalDialogForm.set({
@@ -99,7 +84,13 @@ store.subscribe(value => {
           action: 'save',
           defaultAction: true,
           callback: async (entity, formItems) => {
-            await saveDevice(entity as Device)
+            const modifiedDevice = {
+              ...currentDevice,
+              ...entity
+            }
+            await saveDevice(modifiedDevice)
+
+            value.callback(modifiedDevice)
 
             return true
           }

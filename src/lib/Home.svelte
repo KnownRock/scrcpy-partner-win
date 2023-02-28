@@ -5,7 +5,7 @@
   import TabBar from '@smui/tab-bar'
   import { onMount } from 'svelte'
   import { showMainWindow } from '../utils/app'
-
+  import Form from './general/Form.svelte'
   type TabEntry = {
     k: string;
     label: string;
@@ -36,6 +36,7 @@
 </script>
 
 <main class="container">
+  <Form />
   <TabBar {tabs} let:tab {key} bind:active> 
     <Tab
     
