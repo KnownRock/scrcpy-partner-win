@@ -10,11 +10,11 @@
   import { deviceForm } from '../store/index'
   import Select, { Option } from '@smui/select'
   
-
+  export let queryType: Parameters<typeof getDevices>[0] = 'all'
   let devices : DeviceExt[] = []
 
   async function freshDevices () {
-    const queriedDevices = await getDevices()
+    const queriedDevices = await getDevices(queryType)
 
     const currentSortKey = currentSort.split('_')[0]
     const currentSortOrder = currentSort.split('_')[1] === 'asc' ? 1 : -1
@@ -47,11 +47,10 @@
 </script>
 
 <div>
-  <div style="
-    display: flex; justify-content: space-between; align-items: center;
+  <LayoutGrid style="
     margin: 0.5em;
   ">
-    <div>
+    <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 4, phone: 1 }}>
 
       <Fab  color="primary" on:click={() => {
         deviceForm.set({
@@ -75,13 +74,14 @@
         <Label>Add</Label>
       </Fab>
       
-    </div>
+    </Cell>
 
-    <div style="display: flex; align-items: center;">
+    <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 4, phone: 3 }}
+     style="display: flex; align-items: center; justify-content: flex-end;">
       <!-- sort by createdAt or updatedAt or lastSeenAt -->
       
       <Select
-        style="margin-right: 0.5em;"
+        style="margin-right: 0.5em; width: min(calc(100% - 56px) , 200px);"
         variant="outlined"
         label="Sort by"
         bind:value={currentSort}
@@ -95,16 +95,20 @@
       </Select>
 
 
-      <Fab  color="primary" on:click={freshDevices} ripple={false}>
+      <!-- fix width -->
+      <Fab  
+      
+      style="min-width: 56px;"
+      color="primary" on:click={freshDevices} ripple={false}>
         <Icon  class="material-icons">refresh</Icon>
       </Fab>
      
 
-    </div>
+    </Cell>
     
 
     
-  </div>
+  </LayoutGrid>
   <LayoutGrid>
     {#each devices as device}
       <Cell>
