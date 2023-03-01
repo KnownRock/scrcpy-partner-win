@@ -21,11 +21,11 @@
     {
       k: 'devices',
       label: 'Devices'
+    },
+    {
+      k: 'adb',
+      label: 'Adb Devices'
     }
-    // {
-    //   k: 'components',
-    //   label: 'Components',
-    // },
   ]
   let active = tabs[0]
 
@@ -57,6 +57,9 @@
     {/if}
     {#if active.k === 'devices'}
       <Devices />
+    {/if}
+    {#if active.k === 'adb'}
+      <Devices queryType="only adb" />
     {/if}
     {#if active.k === 'components'}
       <h1>Components</h1>
