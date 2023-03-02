@@ -131,9 +131,10 @@ fn filterTcpipArgFromArgs(pars: &Vec<String>) -> Vec<String> {
         } else if par.starts_with("--tcpip ") {
             continue;
         } else {
-            if i - 1 >= 0 && pars[i - 1] == "--tcpip" {
-                continue;
-            }
+            if i >= 1 {
+                if pars[i - 1] == "--tcpip" {
+                    continue;
+                }
             new_pars.push(par.clone());
         }
     }
