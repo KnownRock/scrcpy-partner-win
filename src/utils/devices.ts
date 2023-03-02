@@ -122,10 +122,12 @@ export async function getDevices (
     return savedDevicesExt
   } else if (queryMode === 'only adb') {
     return adbDevices.map(adbDevice => {
+      const savedDevice = savedDevices.find(savedDevice => savedDevice.adbId === adbDevice.adbId)
       return {
         ...adbDevice,
+        id: savedDevice?.id ?? uuidv4(),
         isConnected: true,
-        isSaved: false
+        isSaved: savedDevice != null
       }
     })
   } else {
