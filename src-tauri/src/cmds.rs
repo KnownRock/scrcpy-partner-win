@@ -95,7 +95,72 @@ fn test_is_process_alive() {
     assert!(alive);
 }
 
+fn connectTcpIp(device: &str) {
+    let output = std::process::Command::new("adb")
+        .arg("connect")
+        .arg(format!("{}", device))
+        .creation_flags(0x08000000)
+        .output()
+        .expect("failed to execute process");
+    let output = String::from_utf8(output.stdout).unwrap();
+    println!("connectTcpIp: {}", output);
+}
+
+fn getTcpipDevice(pars: &Vec<String>) -> Option<&str> {
+    for (i, par) in pars.iter().enumerate() {
+        if par == "--tcpip" {
+            if i + 1 < pars.len() {
+                return Some(&pars[i + 1]);
+            }
+        } else if par.starts_with("--tcpip=") {
+            return Some(&par[8..]);
+        } else if par.starts_with("--tcpip ") {
+            return Some(&par[8..]);
+        }
+    }
+    None
+}
+
+fn filterTcpipArgFromArgs(pars: &Vec<String>) -> Vec<String> {
+    let mut new_pars = Vec::new();
+    for (i, par) in pars.iter().enumerate() {
+        if par == "--tcpip" {
+            continue;
+        } else if par.starts_with("--tcpip=") {
+            continue;
+        } else if par.starts_with("--tcpip ") {
+            continue;
+        } else {
+            if i - 1 >= 0 && pars[i - 1] == "--tcpip" {
+                continue;
+            }
+            new_pars.push(par.clone());
+        }
+    }
+    new_pars
+}
+
+fn getAddSerialArgByTcpipDevice(device: &str, pars: &Vec<String>) -> Vec<String> {
+    let mut pars = pars.clone();
+    let mut serial = device.to_string();
+    pars.push(format!("--serial={}", serial));
+    pars
+}
+
 pub fn run_scrcpy(pars: &Vec<String>) -> Option<(u32, usize)> {
+    // FIXME: make more safe and robust and check args
+    let mut pars = pars.clone();
+    match getTcpipDevice(&pars) {
+        Some(device) => {
+            connectTcpIp(device);
+            pars = getAddSerialArgByTcpipDevice(device, &pars);
+            pars = filterTcpipArgFromArgs(&pars);
+        }
+        None => {}
+    }
+
+    dbg!("The scrcpy args: {:?}", &pars);
+
     // noconsole
     let child = Command::new("scrcpy.exe")
         // .stdout(Stdio::null())
@@ -108,20 +173,24 @@ pub fn run_scrcpy(pars: &Vec<String>) -> Option<(u32, usize)> {
     println!("Launched scrcpy");
     let pid = child.id();
 
+    // sleep(Duration::from_millis(500));
+
     let is_scrcpy_process_alive = is_process_alive(pid);
     if !is_scrcpy_process_alive {
         return None;
     }
 
-    let mut timeout = 20;
+    // let mut timeout = 100;
     let mut hwnd_usize: usize = 0;
-    while timeout > 0 {
+    loop {
         sleep(Duration::from_millis(100));
+
+        if is_process_alive(pid) == false {
+            return None;
+        }
 
         let hwnd = get_hwnd_by_pid(pid);
         println!("hwnd: {:?}", hwnd);
-
-        timeout -= 1;
 
         if hwnd as usize != 0 {
             hwnd_usize = hwnd as usize;
