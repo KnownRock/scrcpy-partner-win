@@ -32,6 +32,7 @@
     "@smui/layout-grid": "^7.0.0-beta.0",
     "@smui/linear-progress": "^7.0.0-beta.0",
     "@smui/list": "^7.0.0-beta.0",
+    "@smui/menu": "^7.0.0-beta.0",
     "@smui/select": "^7.0.0-beta.0",
     "@smui/switch": "^7.0.0-beta.0",
     "@smui/tab": "^7.0.0-beta.0",
