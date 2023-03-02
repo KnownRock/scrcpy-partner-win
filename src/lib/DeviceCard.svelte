@@ -13,7 +13,8 @@
   import { deleteDevice, lanuchSelf, type DeviceExt } from '../utils/devices'
   import { configForm, confirmDialog, deviceForm } from '../store/index'
   import { getContext } from 'svelte'
-  
+  import Menu from '@smui/menu'
+  import List, { Item, Separator, Text } from '@smui/list'
   const freshDevices = getContext('freshDevices') as () => void
 
   export let device: DeviceExt
@@ -46,6 +47,10 @@
       }
     })
   }
+
+  let clicked = ''
+  let menu: Menu
+  let actionButton
 
   function showConfig () {
     configForm.set({
@@ -102,35 +107,65 @@
     </ActionButtons>
     <ActionIcons>
       {#if !device.isSaved}
-      <IconButton
-        class="material-icons"
-        on:click={() => saveDevice(device)}
-        title="Save"
-      >
-        save
-      </IconButton>
+
+        <IconButton
+          class="material-icons"
+          on:click={() => saveDevice(device)}
+          title="Save"
+        >
+          save
+        </IconButton>
+
       {:else}
-      <IconButton
-        class="material-icons"
-        on:click={() => saveDevice(device)}
-        title="Edit"
-      >
-        edit
-      </IconButton>
-      <IconButton
-        class="material-icons"
-        on:click={() => handleDeleteDevice(device)}
-        title="Delete"
-      >
-        delete
-      </IconButton>
+
+
+        <div>
+          <IconButton
+            bind:this={actionButton}
+            class="material-icons"
+            on:click={() => menu.setOpen(true)}
+            title="More options"
+            >more_vert
+          </IconButton>
+          <Menu 
+            bind:this={menu} 
+            on:SMUI:closed={() => {
+              clicked = ''
+              menu.setOpen(false)
+          }}>
+            <List>
+              <Item on:SMUI:action={() => saveDevice(device)}>
+                <Text>Edit</Text>
+              </Item>
+              <Item on:SMUI:action={() => saveDevice({
+                ...device,
+                id: '',
+                name: `${device.name} (copy)`,
+                updatedAt: null,
+                createdAt: null,
+                seenAt: null
+              })}>
+              
+                <Text>
+                  Duplicate
+                </Text>
+              </Item>
+              <Item on:SMUI:action={() => handleDeleteDevice(device)}>
+                <Text style="color: red;">
+                  Delete
+                </Text>
+              </Item>
+            
+              <Separator />
+              <Item on:SMUI:action={() => showConfig()}>
+                <Text>Config</Text>
+              </Item>
+            </List>
+          </Menu>
+        </div>
+
       {/if}
-      <IconButton
-        class="material-icons"
-        on:click={() => showConfig()}
-        title="More options"
-        >more_vert
-      </IconButton>
+      
     </ActionIcons>
   </Actions>
 </Card>

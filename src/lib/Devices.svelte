@@ -48,7 +48,9 @@
 
 <div>
   <LayoutGrid style="
-    margin: 0.5em;
+    margin: 0 ;
+    padding-bottom: 0;
+
   ">
     <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 4, phone: 1 }}>
 
