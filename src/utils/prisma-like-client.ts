@@ -57,7 +57,7 @@ const prismaClientLike = allTables.reduce(
         [action]: async (arg: any) => {
           // console.log(`prisma.${table}.${action}(${arg})`)
           // return {}
-          let argJson = ''
+          let argJson = '{}'
           if (arg !== undefined && arg !== null) {
             argJson = JSON.stringify(arg)
           }
