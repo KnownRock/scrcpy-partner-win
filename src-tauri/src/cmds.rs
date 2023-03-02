@@ -96,6 +96,11 @@ fn test_is_process_alive() {
 }
 
 fn connectTcpIp(device: &str) {
+    let devices = get_adb_devices();
+    if devices.contains(&device.to_string()) {
+        return;
+    }
+
     let output = std::process::Command::new("adb")
         .arg("connect")
         .arg(format!("{}", device))
@@ -104,6 +109,11 @@ fn connectTcpIp(device: &str) {
         .expect("failed to execute process");
     let output = String::from_utf8(output.stdout).unwrap();
     println!("connectTcpIp: {}", output);
+}
+
+#[test]
+fn test_connectTcpIp() {
+    connectTcpIp("127.0.0.1:5555");
 }
 
 fn getTcpipDevice(pars: &Vec<String>) -> Option<&str> {
@@ -121,6 +131,31 @@ fn getTcpipDevice(pars: &Vec<String>) -> Option<&str> {
     None
 }
 
+#[test]
+fn test_getTcpipDevice() {
+    let pars = vec![
+        "--window-x",
+        "0",
+        "--window-y",
+        "31",
+        "--window-width",
+        "480",
+        "--window-height",
+        "1049",
+        "--max-size",
+        "1080",
+        "--turn-screen-off",
+        "--max-fps=30",
+        "--tcpip=127.0.0.1:5555",
+        "--display-buffer=100",
+    ];
+
+    let pars_strings = pars.iter().map(|s| s.to_string()).collect();
+
+    let device = getTcpipDevice(&pars_strings);
+    assert_eq!(device, Some("10.8.0.8:8888"));
+}
+
 fn filterTcpipArgFromArgs(pars: &Vec<String>) -> Vec<String> {
     let mut new_pars = Vec::new();
     for (i, par) in pars.iter().enumerate() {
@@ -135,10 +170,37 @@ fn filterTcpipArgFromArgs(pars: &Vec<String>) -> Vec<String> {
                 if pars[i - 1] == "--tcpip" {
                     continue;
                 }
+            }
+
             new_pars.push(par.clone());
         }
     }
     new_pars
+}
+
+#[test]
+fn test_filterTcpipArgFromArgs() {
+    let pars = vec![
+        "--window-x",
+        "0",
+        "--window-y",
+        "31",
+        "--window-width",
+        "480",
+        "--window-height",
+        "1049",
+        "--max-size",
+        "1080",
+        "--turn-screen-off",
+        "--max-fps=30",
+        "--tcpip=127.0.0.1:5555",
+        "--display-buffer=100",
+    ];
+
+    let pars_strings = pars.iter().map(|s| s.to_string()).collect();
+
+    let new_pars = filterTcpipArgFromArgs(&pars_strings);
+    assert_eq!(new_pars.len(), 13);
 }
 
 fn getAddSerialArgByTcpipDevice(device: &str, pars: &Vec<String>) -> Vec<String> {
