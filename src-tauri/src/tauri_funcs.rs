@@ -25,11 +25,11 @@ pub fn init_main_window(app: &tauri::AppHandle) {
 pub fn init_tool_window(app: &tauri::AppHandle) {
     let tool_window =
         tauri::WindowBuilder::new(app, "tool", tauri::WindowUrl::App("tool.html".into()))
-            // .center()
             .visible(false)
             .decorations(false)
             .resizable(false)
             .skip_taskbar(true)
+            .position(-99999.0, -99999.0)
             .build()
             .unwrap();
 
@@ -45,10 +45,10 @@ pub fn init_tool_window(app: &tauri::AppHandle) {
 pub fn init_tool_window(app: &tauri::AppHandle) {
     let tool_window =
         tauri::WindowBuilder::new(app, "tool", tauri::WindowUrl::App("tool.html".into()))
-            // .center()
             // .visible(false)
             .decorations(false)
             .resizable(false)
+            .position(-99999.0, -99999.0)
             .skip_taskbar(true)
             .build()
             .unwrap();
