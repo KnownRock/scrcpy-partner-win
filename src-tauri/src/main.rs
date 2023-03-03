@@ -276,11 +276,15 @@ async fn init(app: tauri::AppHandle) -> String {
 
     let mut is_tool_mode = true;
 
+    dbg!(args.clone());
+
     // if not have vaild device arg, will not run scrcpy to save start time
     let is_device_valid = is_device_valid_args(args.clone());
     if !is_device_valid {
         is_tool_mode = false;
     }
+
+    dbg!(is_device_valid);
 
     // if have device arg, will try to run scrcpy
     if is_tool_mode {
