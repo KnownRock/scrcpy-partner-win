@@ -132,7 +132,7 @@ fn test_is_device_valid_args_by_devices() {
     assert_eq!(
         is_device_valid_args_by_devices(
             vec!["scrcpy.exe".to_string(), "--tcpip=123".to_string()],
-            vec!["1234567890".to_string(), "123".to_string()]
+            vec![]
         ),
         true
     );
