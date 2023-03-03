@@ -10,7 +10,7 @@
   } from '@smui/card'
   import IconButton from '@smui/icon-button'
   // TODO: move all type to global.d.ts
-  import { deleteDevice, lanuchSelf, type DeviceExt } from '../utils/devices'
+  import { deleteDevice, lanuchSelf, connectTcpipDevice, type DeviceExt } from '../utils/devices'
   import { configForm, confirmDialog, deviceForm } from '../store/index'
   import { getContext } from 'svelte'
   import Menu from '@smui/menu'
@@ -19,8 +19,29 @@
 
   export let device: DeviceExt
 
+  async function sleep (ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
   async function lanuchScrcpy () {
-    lanuchSelf([`-s${device.adbId}`])
+    lanuchSelf([
+      `-s${device.adbId}`,
+      '--window-title',
+      `${device.name}`
+    ])
+  }
+
+  async function connectAdb () {
+    await connectTcpipDevice(device.adbId)
+    // wait adb devices refresh
+    await sleep(1000)
+    await freshDevices()
+  }
+
+  async function disconnectAdb () {
+    await connectTcpipDevice(device.adbId, false)
+    await sleep(1000)
+    await freshDevices()
   }
 
   async function saveDevice (device) {
@@ -96,8 +117,10 @@
     </Content>
   </PrimaryAction>
   <Actions>
-    <ActionButtons>
+    {#if !device.isTcpipDevice || device.isConnected}
+    <ActionButtons style="margin-right:10px">
       <Button
+        disabled={!device.isConnected}
         variant="raised"
         on:click={() => lanuchScrcpy()}
         title="Start scrcpy"
@@ -105,6 +128,32 @@
         <Label>Start</Label>
       </Button>
     </ActionButtons>
+    {/if}
+    {#if device.isTcpipDevice && !device.isConnected}
+      <ActionButtons>
+        <Button
+          disabled={device.isConnected}
+          variant="raised"
+          on:click={() => connectAdb()}
+          title="Start scrcpy"
+        >
+          <Label>Connect</Label>
+        </Button>
+      </ActionButtons>
+    {/if}
+    {#if device.isTcpipDevice && device.isConnected}
+      <ActionButtons>
+        <Button
+          disabled={!device.isConnected}
+          variant="raised"
+          color="secondary"
+          on:click={() => disconnectAdb()}
+          title="Start scrcpy"
+        >
+          <Label>Disconnect</Label>
+        </Button>
+      </ActionButtons>
+    {/if}
     <ActionIcons>
       {#if !device.isSaved}
 
@@ -169,3 +218,9 @@
     </ActionIcons>
   </Actions>
 </Card>
+
+<style>
+  .device-actions div {
+    margin: 10px;
+  }
+</style>
