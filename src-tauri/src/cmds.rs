@@ -328,41 +328,147 @@ fn get_db_url() -> String {
     let db_url = format!("file:{}", db_path.to_str().unwrap());
     db_url
 }
-pub fn call_prisma(table: String, func: String, arg_json: String) -> String {
-    let db_url = get_db_url();
 
-    let exe_path;
-    #[cfg(debug_assertions)]
-    {
-        exe_path = "./target/release/mini-prisma.exe";
-    }
-    #[cfg(not(debug_assertions))]
-    {
-        exe_path = "./mini-prisma.exe";
-    }
+use tokio::net::windows::named_pipe;
+static mut PRISMA: Option<String> = None;
+use std::error::Error;
+use std::io;
+use tokio::io::Interest;
+use uuid::Uuid;
 
-    let child = Command::new(exe_path)
-        .arg(db_url)
-        .arg(table)
-        .arg(func)
-        .arg(arg_json)
-        .creation_flags(0x08000000)
-        .output()
-        .unwrap();
-
-    let output = String::from_utf8(child.stdout).unwrap();
-    #[cfg(debug_assertions)]
-    {
-        println!("output: \n{}", output);
-        let err_output = String::from_utf8(child.stderr).unwrap();
-        println!("errOutput: \n{}", err_output);
+static mut STATIC_PIPE_NAME: Option<String> = None;
+fn generate_pipe_name() -> String {
+    unsafe {
+        match &mut STATIC_PIPE_NAME {
+            Some(_) => {}
+            None => {
+                let uuid = Uuid::new_v4();
+                let pipe_name = format!("\\\\.\\pipe\\{}", uuid);
+                STATIC_PIPE_NAME = Some(pipe_name);
+            }
+        }
     }
 
-    output
+    unsafe { STATIC_PIPE_NAME.clone().unwrap() }
 }
 
-#[test]
-fn test_call_prisma() {
+pub async fn call_prisma(
+    table: String,
+    func: String,
+    arg_json: String,
+) -> Result<String, Box<dyn Error>> {
+    unsafe {
+        match &mut PRISMA {
+            Some(_) => {}
+            None => {
+                let db_url = get_db_url();
+
+                let current_dir = std::env::current_dir().unwrap();
+                dbg!(current_dir);
+
+                let exe_path;
+                #[cfg(debug_assertions)]
+                {
+                    exe_path = "./target/release/mini-prisma.exe";
+                }
+                #[cfg(not(debug_assertions))]
+                {
+                    exe_path = "./mini-prisma.exe";
+                }
+
+                let pipe_name = generate_pipe_name();
+                // // TODO: add some error handling
+                let child = Command::new(exe_path)
+                    .arg(db_url)
+                    .arg(pipe_name.clone())
+                    .creation_flags(0x08000000)
+                    .spawn()
+                    .unwrap();
+
+                // FIXME: make it more safe
+                tokio::time::sleep(Duration::from_millis(500)).await;
+
+                PRISMA = Some(pipe_name);
+            }
+        }
+    };
+
+    unsafe {
+        let pipe_name = PRISMA.as_ref().unwrap();
+
+        let client = named_pipe::ClientOptions::new().open(pipe_name).unwrap();
+
+        loop {
+            let ready = client
+                .ready(Interest::READABLE | Interest::WRITABLE)
+                .await?;
+
+            if ready.is_writable() {
+                // write a json string to the pipe
+                let json = serde_json::json!({
+                    "table": table,
+                    "func": func,
+                    "arg_json": arg_json
+                });
+
+                let text = json.to_string();
+
+                match client.try_write(text.as_bytes()) {
+                    Ok(n) => {
+                        dbg!("write {} bytes", &n);
+                        dbg!("text: {}", &text);
+                    }
+                    Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                        continue;
+                    }
+                    Err(_) => {
+                        continue;
+                    }
+                }
+
+                break;
+            }
+        }
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+
+        loop {
+            let ready = client
+                .ready(Interest::READABLE | Interest::WRITABLE)
+                .await?;
+
+            dbg!(ready);
+
+            if ready.is_readable() {
+                let mut data = vec![0; 1024];
+
+                match client.try_read(&mut data) {
+                    Ok(n) => {
+                        dbg!("read {} bytes", &n);
+                        let mut text = String::from_utf8(data).unwrap();
+                        text = text.trim_end_matches(char::from(0)).to_string();
+                        if text.len() > 0 {
+                            return Ok(text);
+                        } else {
+                            continue;
+                        }
+                    }
+                    Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                        continue;
+                    }
+                    Err(e) => {
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+
+    Ok("".to_string())
+}
+
+#[tokio::test]
+async fn test_call_prisma() {
     // print exec path
     let path = std::env::current_exe().unwrap();
     println!("path: {:?}", path);
@@ -374,28 +480,28 @@ fn test_call_prisma() {
     let table = "test".to_string();
     let func = "deleteMany".to_string();
     let arg_json = "".to_string();
-    let output = call_prisma(table.clone(), func, arg_json);
+    let output = call_prisma(table.clone(), func, arg_json).await.unwrap();
     println!("output: \"{}\"", output);
     let object = serde_json::from_str::<serde_json::Value>(&output).unwrap();
     assert!(object["count"].as_u64().unwrap() == 0 || object["count"].as_u64().unwrap() >= 1);
 
     let func = "findMany".to_string();
     let arg_json = "".to_string();
-    let output = call_prisma(table.clone(), func, arg_json);
+    let output = call_prisma(table.clone(), func, arg_json).await.unwrap();
     println!("output: \"{}\"", output);
     let objects = serde_json::from_str::<Vec<serde_json::Value>>(&output).unwrap();
     assert!(objects.len() == 0);
 
     let func = "create".to_string();
     let arg_json = r#"{"data":{"name":"test1"}}"#.to_string();
-    let output = call_prisma(table.clone(), func, arg_json);
+    let output = call_prisma(table.clone(), func, arg_json).await.unwrap();
     println!("output: \"{}\"", output);
     let object = serde_json::from_str::<serde_json::Value>(&output).unwrap();
     assert!(object["name"].as_str().unwrap() == "test1");
 
     let func = "findMany".to_string();
     let arg_json = "".to_string();
-    let output = call_prisma(table.clone(), func, arg_json);
+    let output = call_prisma(table.clone(), func, arg_json).await.unwrap();
     println!("output: \"{}\"", output);
     let objects = serde_json::from_str::<Vec<serde_json::Value>>(&output).unwrap();
     assert!(objects.len() == 1);

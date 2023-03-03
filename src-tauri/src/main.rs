@@ -335,7 +335,7 @@ async fn init(app: tauri::AppHandle) -> String {
 #[tauri::command]
 async fn call_prisma(table: String, func: String, arg_json: String) -> String {
     println!("call_prisma: {} {} {}", table, func, arg_json);
-    cmds::call_prisma(table, func, arg_json)
+    cmds::call_prisma(table, func, arg_json).await.unwrap()
 }
 // static mut TAURI_APP : Option<&mut tauri::App> = None;
 
