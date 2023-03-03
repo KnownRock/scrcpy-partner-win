@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid'
 type DeviceExt = Device & {
   isConnected: boolean
   isSaved: boolean
+  isTcpipDevice: boolean
 }
 
 async function getAdbDevices (): Promise<Device[]> {
@@ -93,7 +94,8 @@ export async function getDevices (
     return {
       ...adbDevice,
       isConnected: true,
-      isSaved: false
+      isSaved: false,
+      isTcpipDevice: adbDevice.adbId.match(/(\d{1,3}\.){3}\d{1,3}:\d{1,5}/) != null
     }
   })
 
@@ -102,7 +104,8 @@ export async function getDevices (
     return {
       ...savedDevice,
       isConnected: adbDevice != null,
-      isSaved: true
+      isSaved: true,
+      isTcpipDevice: savedDevice.adbId.match(/(\d{1,3}\.){3}\d{1,3}:\d{1,5}/) != null
     }
   })
 
@@ -127,7 +130,8 @@ export async function getDevices (
         ...adbDevice,
         id: savedDevice?.id ?? uuidv4(),
         isConnected: true,
-        isSaved: savedDevice != null
+        isSaved: savedDevice != null,
+        isTcpipDevice: adbDevice.adbId.match(/(\d{1,3}\.){3}\d{1,3}:\d{1,5}/) != null
       }
     })
   } else {
@@ -137,6 +141,10 @@ export async function getDevices (
 
 export async function lanuchSelf (args: string[]): Promise<void> {
   await invoke('lanuch_self', { args })
+}
+
+export async function connectTcpipDevice (ip: string, isConnect: boolean = true): Promise<void> {
+  await invoke('connect_tcpip_device', { ip, isConnect })
 }
 
 export type { Device } from '@prisma/client/index.d'
