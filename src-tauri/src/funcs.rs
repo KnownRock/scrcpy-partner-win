@@ -9,21 +9,26 @@ pub fn is_device_valid_args(args: Vec<String>) -> bool {
 }
 
 fn is_device_valid_args_by_devices(args: Vec<String>, devices_ids: Vec<String>) -> bool {
-    if devices_ids.len() == 0 {
-        return false;
-    }
+    // could be a adb device
+    // if devices_ids.len() == 0 {
+    //     return false;
+    // }
 
     let mut have_device_arg_flag = false;
 
     dbg!(args.clone());
 
     for (i, arg) in args.iter().enumerate() {
+        if arg.starts_with("--tcpip") || arg.starts_with("-t") {
+            have_device_arg_flag = true;
+            break;
+        }
+
         for device_id in &devices_ids {
             if arg == &format!("--serial={}", device_id)
                 || arg == &format!("-s{}", device_id)
                 || arg == &format!("--serial {}", device_id)
                 || arg == &format!("-s {}", device_id)
-                || arg.starts_with("--tcpip")
                 || (arg == "-s" && args.len() > i + 1 && &args[i + 1] == device_id)
                 || (arg == "--serial" && args.len() > i + 1 && &args[i + 1] == device_id)
             {
