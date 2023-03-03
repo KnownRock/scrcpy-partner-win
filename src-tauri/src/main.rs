@@ -197,6 +197,19 @@ fn lanuch_self(args: Vec<String>) {
 }
 
 #[tauri::command]
+fn connect_tcpip_device(ip: String, is_connect: bool) {
+    let mut adb = Command::new("adb");
+    if is_connect {
+        adb.arg("connect");
+    } else {
+        adb.arg("disconnect");
+    }
+    adb.arg(ip);
+
+    adb.spawn().unwrap();
+}
+
+#[tauri::command]
 async fn sendkey(
     key_code: usize,
     scan_code: usize,
@@ -217,12 +230,7 @@ fn init_tool_hooks(tool_window: tauri::Window) {
         match &mut TOOL_WINDOW {
             Some(window) => {
                 set_window_loc_by_hwnd(HWND, window);
-
-                tauri::async_runtime::spawn(async move {
-                    // FIXME: find why get wrong position at first time
-                    std::thread::sleep(std::time::Duration::from_millis(200));
-                    window.show().unwrap();
-                });
+                window.show().unwrap();
             }
             None => {}
         }
@@ -350,7 +358,8 @@ fn main() {
             sendkey,
             lanuch_self,
             init,
-            call_prisma
+            call_prisma,
+            connect_tcpip_device
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");
