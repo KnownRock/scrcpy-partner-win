@@ -1,5 +1,6 @@
 <script lang="ts">
   import Devices from './Devices.svelte'
+  import Configs from './Configs.svelte'
   import 'svelte-material-ui/bare.css'
   import Tab from '@smui/tab'
   import TabBar from '@smui/tab-bar'
@@ -14,10 +15,10 @@
   const key = (tab: TabEntry) => tab.k
 
   const tabs: TabEntry[] = [
-    // {
-    //   k: 'config',
-    //   label: 'Config',
-    // },
+    {
+      k: 'config',
+      label: 'Config'
+    },
     {
       k: 'devices',
       label: 'Devices'
@@ -53,7 +54,7 @@
 
   <div class="row">
     {#if active.k === 'config'}
-      <h1>Config</h1>
+      <Configs />
     {/if}
     {#if active.k === 'devices'}
       <Devices />
