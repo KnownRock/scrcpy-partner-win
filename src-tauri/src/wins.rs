@@ -59,6 +59,8 @@ pub fn set_window_loc_by_hwnd(hwnd_usize: usize, window: &mut tauri::Window) {
         winapi::um::winuser::GetWindowRect(hwnd, &mut rect);
     }
 
+    dbg!(rect.left, rect.top, rect.right, rect.bottom);
+
     window
         .set_position(Position::Logical(LogicalPosition::new(
             (rect.right - 8) as f64,
