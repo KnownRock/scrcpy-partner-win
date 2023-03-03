@@ -26,9 +26,9 @@ async function main () {
 
       console.log(jsonBuffer.toString())
 
-      const { table, func, arg_json } = JSON.parse(jsonBuffer.toString())
+      const { table, func, arg_json: json } = JSON.parse(jsonBuffer.toString())
 
-      const argJson = arg_json ? JSON.parse(arg_json) : undefined
+      const argJson = json ? JSON.parse(json) : undefined
 
 
       console.log(table, func, argJson)
