@@ -11,7 +11,7 @@
   import IconButton from '@smui/icon-button'
   // TODO: move all type to global.d.ts
   import { deleteDevice, lanuchSelf, connectTcpipDevice, type DeviceExt } from '../utils/devices'
-  import { configForm, confirmDialog, deviceForm } from '../store/index'
+  import { configForm, configSelectForm, confirmDialog, deviceForm } from '../store/index'
   import { getContext } from 'svelte'
   import Menu from '@smui/menu'
   import List, { Item, Separator, Text } from '@smui/list'
@@ -74,9 +74,9 @@
   let actionButton
 
   function showConfig () {
-    configForm.set({
+    configSelectForm.set({
       show: true,
-      deviceAdbId: device.adbId
+      deviceId: device.id
     })
   }
 </script>

@@ -4,45 +4,51 @@
   import 'svelte-material-ui/bare.css'
   import LayoutGrid, { Cell } from '@smui/layout-grid'
   import Fab, { Label, Icon } from '@smui/fab'
-  import { getDevices, type DeviceExt } from '../utils/devices'
   
   import DeviceCard from './DeviceCard.svelte'
   import { deviceForm } from '../store/index'
   import Select, { Option } from '@smui/select'
+  import { getConfigs, type DeviceConfigExt } from '../utils/configs'
+  import { getDevices, type DeviceExt } from '../utils/devices'
   
-  export let queryType: Parameters<typeof getDevices>[0] = 'all'
-  let devices : DeviceExt[] = []
+  let configs: DeviceConfigExt[] = []
+  let devices: DeviceExt[] = []
+  const currentDeviceId = ''
 
-  async function freshDevices () {
-    const queriedDevices = await getDevices(queryType)
+  async function freshConfigs () {
+    devices = await getDevices('only saved')
+    configs = await getConfigs(currentDeviceId)
+    // const queriedDevices = await getConfigs(currentDeviceId)
 
-    const currentSortKey = currentSort.split('_')[0]
-    const currentSortOrder = currentSort.split('_')[1] === 'asc' ? 1 : -1
+    // const currentSortKey = currentSort.split('_')[0]
+    // const currentSortOrder = currentSort.split('_')[1] === 'asc' ? 1 : -1
 
-    devices = queriedDevices.sort((a, b) => {
-      if (a[currentSortKey] == null && b[currentSortKey] == null) return 0
-      if (a[currentSortKey] == null) return 1 * currentSortOrder
-      if (b[currentSortKey] == null) return -1 * currentSortOrder
+    // devices = queriedDevices.sort((a, b) => {
+    //   if (a[currentSortKey] == null && b[currentSortKey] == null) return 0
+    //   if (a[currentSortKey] == null) return 1 * currentSortOrder
+    //   if (b[currentSortKey] == null) return -1 * currentSortOrder
 
-      const aValue = new Date(a[currentSortKey]).getTime()
-      const bValue = new Date(b[currentSortKey]).getTime()
+    //   const aValue = new Date(a[currentSortKey]).getTime()
+    //   const bValue = new Date(b[currentSortKey]).getTime()
 
-      console.log(aValue - bValue)
-      console.log((aValue - bValue) * currentSortOrder)
+    //   console.log(aValue - bValue)
+    //   console.log((aValue - bValue) * currentSortOrder)
 
-      return (aValue - bValue) * currentSortOrder
-    })
+    //   return (aValue - bValue) * currentSortOrder
+    // })
   }
 
   let currentSort = 'createdAt'
 
   $: currentSort && (function () {
-    freshDevices()
+    freshConfigs()
   })()
 
-  setContext('freshDevices', freshDevices)
+  // setContext('freshDevices', freshDevices)
 
-  freshDevices()
+  // freshDevices()
+
+  freshConfigs()
 
 </script>
 
@@ -52,7 +58,7 @@
     padding-bottom: 0;
 
   ">
-    <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 4, phone: 1 }}>
+    <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 2, phone: 1 }}>
 
       <Fab  color="primary" on:click={() => {
         deviceForm.set({
@@ -68,7 +74,7 @@
             lastSeenAt: null
           },
           callback: async (device) => {
-            await freshDevices()
+            await freshConfigs()
           }
         })
       }} extended  ripple={false}>
@@ -78,12 +84,17 @@
       
     </Cell>
 
-    <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 4, phone: 3 }}
+    <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 6, phone: 4 }}
      style="display: flex; align-items: center; justify-content: flex-end;">
-      <!-- sort by createdAt or updatedAt or lastSeenAt -->
       
+     <Select label="filter by device" variant="outlined" style="width: min(calc(50% - 56px) , 200px);">
+        {#each devices as device}
+          <Option value={device.id}>{device.name}</Option>
+        {/each}
+      </Select>
+
       <Select
-        style="margin-right: 0.5em; width: min(calc(100% - 56px) , 200px);"
+        style="margin: 0 0.5em; width: min(calc(50% - 56px) , 200px);"
         variant="outlined"
         label="Sort by"
         bind:value={currentSort}
@@ -97,11 +108,12 @@
       </Select>
 
 
+
       <!-- fix width -->
       <Fab  
       
       style="min-width: 56px;"
-      color="primary" on:click={freshDevices} ripple={false}>
+      color="primary" on:click={freshConfigs} ripple={false}>
         <Icon  class="material-icons">refresh</Icon>
       </Fab>
      
