@@ -352,6 +352,7 @@ fn generate_pipe_name() -> String {
     unsafe { STATIC_PIPE_NAME.clone().unwrap() }
 }
 
+// FIXME: kill prisma process after main process is killed in spec conditions
 pub async fn call_prisma(
     table: String,
     func: String,
