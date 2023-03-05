@@ -1,53 +1,36 @@
 import { writable } from 'svelte/store'
-import { generalDialogForm } from '.'
-import { lanuchSelf } from '../utils/devices'
+import { configForm, generalDialogForm } from '.'
+import prismaClientLike from '../utils/prisma-like-client'
 const store = writable({
   show: false,
-  deviceAdbId: ''
+  deviceId: ''
 })
 
-function getForm (
+async function getForm (
   currentDeviceId: string
-): FormItem[] {
+): Promise<FormItem[]> {
+  const options = await prismaClientLike.deviceConfig.findMany({
+    where: {
+      deviceId: currentDeviceId
+    }
+  })
+
   const form: FormItem[] = [
     {
       type: 'header',
       label: 'General',
       name: 'general'
     }
-  ]
 
-  form.forEach((item) => {
-    if (item.type === 'option') {
-      item.defaultValue = item.value
-    }
-  })
+  ]
 
   return form
 }
 
-function formEntityToArgs (entity: Parameters<DialogFormButton['callback']>[0]): string[] {
-  const args: string[] = []
-  Object.keys(entity).forEach((key) => {
-    const value = entity[key]
-    if (value === undefined) {
-      return
-    }
-    if (value === true) {
-      args.push(`--${key}`)
-    } else if (value !== false) {
-      args.push(`--${key}=${value as string | number}`)
-    }
-  })
-  return args
-}
-
 store.subscribe(value => {
   (async () => {
-    console.log('config-form.ts: store.subscribe: value:', value)
-
-    const formItems = getForm(value.deviceAdbId)
-
+    const formItems = await getForm(value.deviceId)
+    // debugger
     generalDialogForm.set({
       title: 'Config',
       show: value.show,
@@ -61,12 +44,30 @@ store.subscribe(value => {
           }
         },
         {
-          label: 'Start',
-          action: 'start',
+          label: 'new',
+          action: 'new',
           defaultAction: true,
           callback: async (entity, formItems) => {
-            const args = formEntityToArgs(entity)
-            await lanuchSelf(args)
+            // const args = formEntityToArgs(entity)
+            // await lanuchSelf(args)
+            // FIXME: this is a hack to make the form show up
+            setTimeout(() => {
+              configForm.set({
+                show: true,
+                deviceId: value.deviceId
+              })
+            }, 100)
+
+            return true
+          }
+        },
+        {
+          label: 'edit',
+          action: 'edit',
+          defaultAction: true,
+          callback: async (entity, formItems) => {
+            // const args = formEntityToArgs(entity)
+            // await lanuchSelf(args)
             return true
           }
         }
@@ -76,9 +77,9 @@ store.subscribe(value => {
       }
     })
   })().then(() => {
-    console.log('config-form.ts: store.subscribe: then')
+    console.log('config-select-form.ts: store.subscribe: then')
   }).catch(error => {
-    console.log('config-form.ts: store.subscribe: catch: error:', error)
+    console.error(error)
   })
 })
 

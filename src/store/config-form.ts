@@ -1,27 +1,60 @@
 import { writable } from 'svelte/store'
 import { generalDialogForm } from '.'
-import { lanuchSelf } from '../utils/devices'
-const store = writable({
+import { getDevices, lanuchSelf } from '../utils/devices'
+import { saveConfig, type DeviceConfigExt } from '../utils/configs'
+const store = writable<{
+  show: boolean
+  deviceId: string
+} | {
+  show: boolean
+  deviceConfigId: string
+} | {
+  show: boolean
+}>({
   show: false,
-  deviceAdbId: ''
+  deviceId: ''
 })
 
-function getForm (
+async function getForm (
   currentDeviceId: string
-): FormItem[] {
+): Promise<FormItem[]> {
+  const devices = await getDevices('only saved')
+  const currentDevice = devices.find((device) => device.id === currentDeviceId)
+  // debugger
   const form: FormItem[] = [
+    {
+      type: 'header',
+      label: 'Info',
+      name: 'info'
+    },
+    {
+      type: 'option',
+      label: 'Device',
+      name: 'device',
+      options: devices.map((device) => {
+        return { label: device.name, value: device.id }
+      }),
+      value: currentDeviceId,
+      disabled: currentDevice !== undefined
+    },
+    {
+      type: 'text',
+      label: 'Name',
+      name: 'name',
+      value: 'New Config'
+    },
     {
       type: 'header',
       label: 'General',
       name: 'general'
     },
-    {
-      type: 'text',
-      label: 'ADB Id',
-      name: 'serial',
-      value: currentDeviceId,
-      disabled: true
-    },
+    // {
+    //   type: 'text',
+    //   label: 'ADB Id',
+    //   name: 'serial',
+    //   value: currentDevice?.adbId ?? '',
+    //   disabled: currentDevice?.adbId !== undefined
+    // },
     {
       type: 'auto',
       label: 'Bit Rate',
@@ -94,13 +127,7 @@ function getForm (
       value: '',
       enable: false
     },
-    {
-      type: 'optional-text',
-      label: 'Tcpip',
-      name: 'tcpip',
-      value: '',
-      enable: false
-    },
+
     {
       type: 'header',
       label: 'Window',
@@ -126,6 +153,15 @@ function getForm (
       name: 'width',
       value: 0,
       enable: false
+    }, {
+      type: 'header',
+      label: 'Advanced',
+      name: 'advanced'
+    }, {
+      type: 'switch',
+      label: 'Autosave Location',
+      name: 'spw-autosave-location',
+      value: false
     }
   ]
 
@@ -158,7 +194,7 @@ store.subscribe(value => {
   (async () => {
     console.log('config-form.ts: store.subscribe: value:', value)
 
-    const formItems = getForm(value.deviceAdbId)
+    const formItems = await getForm(value.deviceId)
 
     generalDialogForm.set({
       title: 'Config',
@@ -173,12 +209,28 @@ store.subscribe(value => {
           }
         },
         {
-          label: 'Start',
-          action: 'start',
+          label: 'Save',
+          action: 'save',
           defaultAction: true,
           callback: async (entity, formItems) => {
-            const args = formEntityToArgs(entity)
-            await lanuchSelf(args)
+            const deviceConfigItems = Object.entries(entity)
+              .filter(([key, value]) => {
+                return !['device', 'name'].includes(key)
+              })
+
+            const deviceConfig: DeviceConfigExt = {
+              id: '',
+              deviceId: entity.device,
+              name: entity.name,
+
+              createdAt: null,
+              updatedAt: null,
+              lastSeenAt: null
+
+            }
+
+            await saveConfig(deviceConfig)
+
             return true
           }
         }

@@ -13,3 +13,7 @@ export {
 export {
   default as confirmDialog
 } from './confirm-dialog'
+
+export {
+  default as configSelectForm
+} from './config-select-form'
