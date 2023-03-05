@@ -36,6 +36,10 @@ model DeviceConfig{
   device   Device  @relation(fields: [deviceId], references: [id])
   deviceId String
   deviceConfigValue DeviceConfigValue[] 
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  lastSeenAt  DateTime?
 }
 
 model DeviceConfigValue{
