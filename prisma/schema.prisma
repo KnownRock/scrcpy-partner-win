@@ -45,6 +45,7 @@ model DeviceConfig{
 model DeviceConfigValue{
   id       String     @id @default(uuid())
   value    String
+  key      String
   deviceConfig   DeviceConfig  @relation(fields: [deviceConfigId], references: [id])
   deviceConfigId String
 }
