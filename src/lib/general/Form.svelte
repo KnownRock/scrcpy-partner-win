@@ -9,7 +9,7 @@
   import FormField from '@smui/form-field'
   import Textfield from '@smui/textfield'
   import LayoutGrid, { Cell } from '@smui/layout-grid'
-  
+  import DataTable, { Head, Body, Row, Cell as TableCell } from '@smui/data-table'
   import { generalDialogForm } from '../../store/index'
 
   let open = false
@@ -112,15 +112,54 @@
   <Content id="fullscreen-content">
     <LayoutGrid>
       {#each currentFormItems as formItem (formItem.name)}
-        {#if formItem.type === 'header' || formItem.type === 'message'}
+        {#if formItem.type === 'header' || formItem.type === 'message' || formItem.type === 'table'}
           {#if formItem.type === 'header'}
             <Cell span={12}>
               <h2>{formItem.label}</h2>
             </Cell>
-          {:else}
+          {:else if formItem.type === 'message'}
             <Cell span={12}>
               <p>{formItem.value}</p>
             </Cell>
+          {:else if formItem.type === 'table'}
+          <Cell span={12}>
+          <DataTable table$aria-label="People list" style="width: 100%;">
+            <Head>
+              <Row style="width: 100%">
+                <!-- <TableCell>Name</TableCell>
+                <TableCell>Favorite Color</TableCell>
+                <TableCell numeric>Favorite Number</TableCell> -->
+                {#each formItem.columns as column (column.name)}
+                  <TableCell style="width: 100%">{column.label}</TableCell>
+                {/each}
+              </Row>
+            </Head>
+            <Body>
+              <!-- <Row>
+                <TableCell>Steve</TableCell>
+                <TableCell>Red</TableCell>
+                <TableCell numeric>45</TableCell>
+              </Row> -->
+              {#each formItem.value as row (row.name)}
+                <Row>
+                  {#each formItem.columns as column (column.name)}
+                    {#if column.buttons}
+                      <TableCell>
+                        {#each column.buttons as button (button.label)}
+                          <Button on:click={() => button.callback(row)} >
+                            <Label>{button.label}</Label>
+                          </Button>
+                        {/each}
+                      </TableCell>
+                    {:else}
+                    <TableCell>{row[column.name]}</TableCell>
+                    {/if}
+                  {/each}
+                </Row>
+              {/each}
+            </Body>
+          </DataTable>
+        </Cell>
           {/if}
         {:else}
           <Cell>
