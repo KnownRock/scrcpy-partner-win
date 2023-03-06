@@ -95,3 +95,19 @@ type FormItem = {
   name: string
   disabled?: boolean
 }
+| {
+  type: 'table'
+  label: string
+  name: string
+  value: Array<Record<string, string>>
+  disabled?: boolean
+  columns: Array<{
+    label: string
+    name: string
+    buttons?: Array<{
+      label: string
+      callback: (row: Record<string, string>) => void
+    }>
+  }>
+
+}
