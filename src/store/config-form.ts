@@ -1,22 +1,26 @@
 import { writable } from 'svelte/store'
 import { generalDialogForm } from '.'
 import { getDevices, lanuchSelf } from '../utils/devices'
-import { saveConfig, type DeviceConfigExt } from '../utils/configs'
+import { saveConfig, type DeviceConfigExt, getConfig } from '../utils/configs'
 const store = writable<{
   show: boolean
   deviceId: string
+  type: 'new-by-device'
 } | {
   show: boolean
   deviceConfigId: string
+  type: 'edit'
 } | {
   show: boolean
+  type: 'new'
 }>({
   show: false,
-  deviceId: ''
+  type: 'new'
 })
 
 async function getForm (
-  currentDeviceId: string
+  currentDeviceId: string,
+  currentDeviceConfig?: DeviceConfigExt
 ): Promise<FormItem[]> {
   const devices = await getDevices('only saved')
   const currentDevice = devices.find((device) => device.id === currentDeviceId)
@@ -41,7 +45,7 @@ async function getForm (
       type: 'text',
       label: 'Name',
       name: 'name',
-      value: 'New Config'
+      value: currentDeviceConfig?.name ?? 'New Config'
     },
     {
       type: 'header',
@@ -194,7 +198,13 @@ store.subscribe(value => {
   (async () => {
     console.log('config-form.ts: store.subscribe: value:', value)
 
-    const formItems = await getForm(value.deviceId)
+    let formItems: FormItem[] = []
+    if (value.type === 'new-by-device') {
+      formItems = await getForm(value.deviceId)
+    } else if (value.type === 'edit') {
+      const config = await getConfig({ id: value.deviceConfigId })
+      formItems = await getForm(config?.deviceId ?? '', config ?? undefined)
+    }
 
     generalDialogForm.set({
       title: 'Config',

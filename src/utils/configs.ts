@@ -1,4 +1,4 @@
-import type { DeviceConfig } from '@prisma/client'
+import type { DeviceConfig, DeviceConfigValue } from '@prisma/client'
 import prismaClientLike from './prisma-like-client'
 import { getNoAdditionalPropertiesSchema } from './prisma-field-filter'
 
@@ -43,10 +43,35 @@ export async function saveConfig (
   }
 }
 
+export async function saveConfigItems (
+  items: DeviceConfigValue[]
+): Promise<void> {
+  for (const item of items) {
+    await prismaClientLike.deviceConfigValue.upsert({
+      where: {
+        id: item.id
+      },
+      create: {
+        deviceConfig: {
+          connect: {
+            id: item.deviceConfigId
+          }
+        },
+        key: item.key,
+        value: item.value
+      },
+      update: {
+        key: item.key,
+        value: item.value
+      }
+    })
+  }
+}
+
 export async function getConfig (
   where: {
-    deviceId: string
-    id: string
+    deviceId?: string
+    id?: string
   }
 ): Promise<DeviceConfigExt | null> {
   return await prismaClientLike.deviceConfig.findFirst({

@@ -9,7 +9,7 @@ const store = writable({
 async function getForm (
   currentDeviceId: string
 ): Promise<FormItem[]> {
-  const options = await prismaClientLike.deviceConfig.findMany({
+  const configs = await prismaClientLike.deviceConfig.findMany({
     where: {
       deviceId: currentDeviceId
     }
@@ -20,6 +20,35 @@ async function getForm (
       type: 'header',
       label: 'General',
       name: 'general'
+    },
+    {
+      type: 'table',
+      label: 'Configs',
+      name: 'configs',
+      value: configs,
+      columns: [
+        {
+          label: 'Name',
+          name: 'name'
+        },
+        {
+          buttons: [{
+            label: 'Edit',
+            callback: (row) => {
+              console.log('edit', row)
+              setTimeout(() => {
+                configForm.set({
+                  show: true,
+                  deviceConfigId: row.id,
+                  type: 'edit'
+                })
+              }, 100)
+            }
+          }],
+          name: 'actions',
+          label: 'Actions'
+        }
+      ]
     }
 
   ]
@@ -54,20 +83,11 @@ store.subscribe(value => {
             setTimeout(() => {
               configForm.set({
                 show: true,
-                deviceId: value.deviceId
+                deviceId: value.deviceId,
+                type: 'new-by-device'
               })
             }, 100)
 
-            return true
-          }
-        },
-        {
-          label: 'edit',
-          action: 'edit',
-          defaultAction: true,
-          callback: async (entity, formItems) => {
-            // const args = formEntityToArgs(entity)
-            // await lanuchSelf(args)
             return true
           }
         }
