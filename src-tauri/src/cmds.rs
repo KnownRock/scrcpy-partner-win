@@ -95,7 +95,7 @@ fn test_is_process_alive() {
     assert!(alive);
 }
 
-fn connectTcpIp(device: &str) {
+fn connect_tcpip(device: &str) {
     let devices = get_adb_devices();
     if devices.contains(&device.to_string()) {
         return;
@@ -108,15 +108,15 @@ fn connectTcpIp(device: &str) {
         .output()
         .expect("failed to execute process");
     let output = String::from_utf8(output.stdout).unwrap();
-    println!("connectTcpIp: {}", output);
+    println!("connect_tcpip: {}", output);
 }
 
 #[test]
-fn test_connectTcpIp() {
-    connectTcpIp("127.0.0.1:5555");
+fn test_connect_tcpip() {
+    connect_tcpip("127.0.0.1:5555");
 }
 
-fn getTcpipDevice(pars: &Vec<String>) -> Option<&str> {
+fn get_tcpip_device(pars: &Vec<String>) -> Option<&str> {
     for (i, par) in pars.iter().enumerate() {
         if par == "--tcpip" {
             if i + 1 < pars.len() {
@@ -132,7 +132,7 @@ fn getTcpipDevice(pars: &Vec<String>) -> Option<&str> {
 }
 
 #[test]
-fn test_getTcpipDevice() {
+fn test_get_tcpip_device() {
     let pars = vec![
         "--window-x",
         "0",
@@ -152,11 +152,11 @@ fn test_getTcpipDevice() {
 
     let pars_strings = pars.iter().map(|s| s.to_string()).collect();
 
-    let device = getTcpipDevice(&pars_strings);
+    let device = get_tcpip_device(&pars_strings);
     assert_eq!(device, Some("10.8.0.8:8888"));
 }
 
-fn filterTcpipArgFromArgs(pars: &Vec<String>) -> Vec<String> {
+fn filter_tcpip_arg_from_args(pars: &Vec<String>) -> Vec<String> {
     let mut new_pars = Vec::new();
     for (i, par) in pars.iter().enumerate() {
         if par == "--tcpip" {
@@ -179,7 +179,7 @@ fn filterTcpipArgFromArgs(pars: &Vec<String>) -> Vec<String> {
 }
 
 #[test]
-fn test_filterTcpipArgFromArgs() {
+fn test_filter_tcpip_arg_from_args() {
     let pars = vec![
         "--window-x",
         "0",
@@ -199,13 +199,37 @@ fn test_filterTcpipArgFromArgs() {
 
     let pars_strings = pars.iter().map(|s| s.to_string()).collect();
 
-    let new_pars = filterTcpipArgFromArgs(&pars_strings);
+    let new_pars = filter_tcpip_arg_from_args(&pars_strings);
     assert_eq!(new_pars.len(), 13);
 }
 
-fn getAddSerialArgByTcpipDevice(device: &str, pars: &Vec<String>) -> Vec<String> {
+// async fn get_pars_by_config_id(config_id: String) {
+//     let config = call_prisma(
+//         "deviceConfig".to_string(),
+//         "findUnique".to_string(),
+//         serde_json::json!({
+//             "where": {
+//                 "id": config_id,
+//             },
+//         })
+//         .to_string(),
+//     )
+//     .await
+//     .unwrap();
+
+//     println!("config: {:?}", config);
+
+//     let
+// }
+
+// #[tokio::test]
+// async fn test_get_pars_by_config_id() {
+//     get_pars_by_config_id("ckq0q0q0q0000".to_string()).await;
+// }
+
+fn get_add_serial_arg_by_tcpip_device(device: &str, pars: &Vec<String>) -> Vec<String> {
     let mut pars = pars.clone();
-    let mut serial = device.to_string();
+    let serial = device.to_string();
     pars.push(format!("--serial={}", serial));
     pars
 }
@@ -213,11 +237,11 @@ fn getAddSerialArgByTcpipDevice(device: &str, pars: &Vec<String>) -> Vec<String>
 pub fn run_scrcpy(pars: &Vec<String>) -> Option<(u32, usize)> {
     // FIXME: make more safe and robust and check args
     let mut pars = pars.clone();
-    match getTcpipDevice(&pars) {
+    match get_tcpip_device(&pars) {
         Some(device) => {
-            connectTcpIp(device);
-            pars = getAddSerialArgByTcpipDevice(device, &pars);
-            pars = filterTcpipArgFromArgs(&pars);
+            connect_tcpip(device);
+            pars = get_add_serial_arg_by_tcpip_device(device, &pars);
+            pars = filter_tcpip_arg_from_args(&pars);
         }
         None => {}
     }
@@ -244,7 +268,7 @@ pub fn run_scrcpy(pars: &Vec<String>) -> Option<(u32, usize)> {
     }
 
     // let mut timeout = 100;
-    let mut hwnd_usize: usize = 0;
+    let mut hwnd_usize;
     loop {
         sleep(Duration::from_millis(100));
 
@@ -377,14 +401,22 @@ pub async fn call_prisma(
                     exe_path = "./mini-prisma.exe";
                 }
 
-                let pipe_name = generate_pipe_name();
-                // // TODO: add some error handling
-                let child = Command::new(exe_path)
-                    .arg(db_url)
-                    .arg(pipe_name.clone())
-                    .creation_flags(0x08000000)
-                    .spawn()
-                    .unwrap();
+                let mut pipe_name = generate_pipe_name();
+                #[cfg(debug_assertions)]
+                {
+                    pipe_name = format!("\\\\.\\pipe\\{}", "spw-mini-prisma");
+                }
+
+                #[cfg(not(debug_assertions))]
+                {
+                    // // TODO: add some error handling
+                    let child = Command::new(exe_path)
+                        .arg(db_url)
+                        .arg(pipe_name.clone())
+                        .creation_flags(0x08000000)
+                        .spawn()
+                        .unwrap();
+                }
 
                 // FIXME: make it more safe
                 tokio::time::sleep(Duration::from_millis(500)).await;
@@ -430,8 +462,14 @@ pub async fn call_prisma(
                 break;
             }
         }
-
-        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+        #[cfg(debug_assertions)]
+        {
+            tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+        }
 
         loop {
             let ready = client
@@ -441,11 +479,12 @@ pub async fn call_prisma(
             dbg!(ready);
 
             if ready.is_readable() {
-                let mut data = vec![0; 1024];
+                let mut data = vec![0; 1024 * 1024];
 
                 match client.try_read(&mut data) {
                     Ok(n) => {
-                        dbg!("read {} bytes", &n);
+                        println!("read {} bytes", &n);
+                        // println!("data: {:?}", &data);
                         let mut text = String::from_utf8(data).unwrap();
                         text = text.trim_end_matches(char::from(0)).to_string();
                         if text.len() > 0 {
@@ -457,7 +496,7 @@ pub async fn call_prisma(
                     Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
                         continue;
                     }
-                    Err(e) => {
+                    Err(_e) => {
                         continue;
                     }
                 }
@@ -465,7 +504,7 @@ pub async fn call_prisma(
         }
     }
 
-    Ok("".to_string())
+    Ok("{\"error\": \"no data\"}".to_string())
 }
 
 #[tokio::test]
@@ -484,26 +523,38 @@ async fn test_call_prisma() {
     let output = call_prisma(table.clone(), func, arg_json).await.unwrap();
     println!("output: \"{}\"", output);
     let object = serde_json::from_str::<serde_json::Value>(&output).unwrap();
-    assert!(object["count"].as_u64().unwrap() == 0 || object["count"].as_u64().unwrap() >= 1);
+    assert!(
+        object["data"]["count"].as_u64().unwrap() == 0
+            || object["data"]["count"].as_u64().unwrap() >= 1
+    );
 
     let func = "findMany".to_string();
     let arg_json = "".to_string();
     let output = call_prisma(table.clone(), func, arg_json).await.unwrap();
     println!("output: \"{}\"", output);
-    let objects = serde_json::from_str::<Vec<serde_json::Value>>(&output).unwrap();
-    assert!(objects.len() == 0);
+    // data structure {data:[content]}
+
+    let object = serde_json::from_str::<serde_json::Value>(&output).unwrap();
+    assert!(object["data"].as_array().unwrap().len() == 0);
 
     let func = "create".to_string();
     let arg_json = r#"{"data":{"name":"test1"}}"#.to_string();
     let output = call_prisma(table.clone(), func, arg_json).await.unwrap();
     println!("output: \"{}\"", output);
     let object = serde_json::from_str::<serde_json::Value>(&output).unwrap();
-    assert!(object["name"].as_str().unwrap() == "test1");
+    assert!(object["data"]["name"].as_str().unwrap() == "test1");
 
     let func = "findMany".to_string();
     let arg_json = "".to_string();
     let output = call_prisma(table.clone(), func, arg_json).await.unwrap();
     println!("output: \"{}\"", output);
-    let objects = serde_json::from_str::<Vec<serde_json::Value>>(&output).unwrap();
-    assert!(objects.len() == 1);
+    let object = serde_json::from_str::<serde_json::Value>(&output).unwrap();
+    assert!(object["data"].as_array().unwrap().len() == 1);
+
+    let func = "error".to_string();
+    let arg_json = "".to_string();
+    let output = call_prisma(table.clone(), func, arg_json).await.unwrap();
+    println!("output: \"{}\"", output);
+    let object = serde_json::from_str::<serde_json::Value>(&output).unwrap();
+    assert!(object["error"].as_str().unwrap().len() > 0);
 }

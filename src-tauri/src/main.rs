@@ -274,6 +274,11 @@ async fn show_tool_window(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
+async fn get_env_args() -> Vec<String> {
+    env::args().collect()
+}
+
+#[tauri::command]
 async fn init(app: tauri::AppHandle) -> String {
     unsafe {
         kill_process(PID);
@@ -359,7 +364,8 @@ fn main() {
             lanuch_self,
             init,
             call_prisma,
-            connect_tcpip_device
+            connect_tcpip_device,
+            get_env_args
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");

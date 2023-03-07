@@ -99,7 +99,7 @@ type FormItem = {
   type: 'table'
   label: string
   name: string
-  value: Array<Record<string, string>>
+  value: Array<Record<string, any>>
   disabled?: boolean
   columns: Array<{
     label: string

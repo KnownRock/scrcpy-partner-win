@@ -15,9 +15,13 @@
   import { getContext } from 'svelte'
   import Menu from '@smui/menu'
   import List, { Item, Separator, Text } from '@smui/list'
+  import { deleteConfigById, type DeviceConfigExt } from '../utils/configs'
   const freshDevices = getContext('freshDevices') as () => void
 
   export let device: DeviceExt
+
+  // eslint-disable-next-line
+  export let config: DeviceConfigExt | undefined = undefined
 
   async function sleep (ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -44,18 +48,71 @@
     await freshDevices()
   }
 
-  async function saveDevice (device) {
+  async function saveDevice (type? : 'copy') {
     // console.log('saveDevice', device)
+    if (config !== undefined) {
+      if (type === 'copy') {
+        configForm.set({
+          show: true,
+          deviceConfigId: config.id,
+          type: 'copy',
+          callback: () => {
+            freshDevices()
+          }
+        })
+        return
+      }
+
+      configForm.set({
+        show: true,
+        deviceConfigId: config.id,
+        type: 'edit',
+        callback: () => {
+          freshDevices()
+        }
+      })
+      return
+    }
+
+    let editDevice = device
+    if (type === 'copy') {
+      editDevice = {
+        ...device,
+        id: '',
+        name: `${device.name} (copy)`,
+        updatedAt: null,
+        createdAt: null
+        // seenAt: null
+      }
+    }
+
+
     deviceForm.set({
       show: true,
-      device,
+      device: editDevice,
       callback: async (device) => {
         await freshDevices()
       }
     })
   }
 
-  async function handleDeleteDevice (device) {
+  async function handleDeleteDevice () {
+    if (config !== undefined) {
+      confirmDialog.set({
+        show: true,
+        title: 'Delete device',
+        message: `Are you sure to delete config [${config.name}]?`,
+        okCallback: async () => {
+          // console.log('delete device', device)
+          await deleteConfigById(config?.id ?? '')
+
+          await freshDevices()
+        }
+      })
+      return
+    }
+
+
     confirmDialog.set({
       show: true,
       title: 'Delete device',
@@ -86,6 +143,18 @@
     <!-- <Media class="card-media-16x9" aspectRatio="16x9" /> -->
     <Content class="mdc-typography--body2" >
       <div style="display: flex; justify-content: space-between; align-items: center;">
+        {#if config !== undefined}
+        <div >
+          <h2 class="mdc-typography--headline6" style="margin: 0;">
+            <!-- A card with media. -->
+            {config.name}&nbsp;
+          </h2>
+          <h3 class="mdc-typography--subtitle2" style="margin: 0; color: #888;">
+            {device.name}&nbsp;
+          </h3>
+        </div>
+        {:else}
+
         <div >
           <h2 class="mdc-typography--headline6" style="margin: 0;">
             <!-- A card with media. -->
@@ -105,6 +174,9 @@
             </Badge>
           {/if}
         </div>
+
+        {/if}
+
         <div>
           <!-- <h5>{ device.isConnected ? 'USB Connected' : 'USB Disconnected'}</h5> -->
           <Icon class="material-icons" style="font-size: 2em; color: {device.isConnected ? 'green' : 'red'};">
@@ -159,7 +231,7 @@
 
         <IconButton
           class="material-icons"
-          on:click={() => saveDevice(device)}
+          on:click={() => saveDevice()}
           title="Save"
         >
           save
@@ -183,23 +255,15 @@
               menu.setOpen(false)
           }}>
             <List>
-              <Item on:SMUI:action={() => saveDevice(device)}>
+              <Item on:SMUI:action={() => saveDevice()}>
                 <Text>Edit</Text>
               </Item>
-              <Item on:SMUI:action={() => saveDevice({
-                ...device,
-                id: '',
-                name: `${device.name} (copy)`,
-                updatedAt: null,
-                createdAt: null,
-                seenAt: null
-              })}>
-              
+              <Item on:SMUI:action={() => saveDevice('copy')}>
                 <Text>
                   Duplicate
                 </Text>
               </Item>
-              <Item on:SMUI:action={() => handleDeleteDevice(device)}>
+              <Item on:SMUI:action={() => handleDeleteDevice()}>
                 <Text style="color: red;">
                   Delete
                 </Text>

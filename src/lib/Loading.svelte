@@ -15,13 +15,19 @@ border: 1px solid #ccc;
   import CircularProgress from '@smui/circular-progress'
 
   import { onMount } from 'svelte'
-  import { init } from '../utils/app'
+  import { init, getEnvArgs } from '../utils/app'
 
-  onMount(async () => {
-    // make time for the splash screen to show before loading the app
-    setTimeout(() => {
-      init()
+  onMount(() => {
+    setTimeout(async () => {
+      const args = await getEnvArgs()
+      console.log('args', args)
     }, 200)
-})
+
+
+    // make time for the splash screen to show before loading the app
+    // setTimeout(() => {
+    //   init()
+    // }, 200)
+  })
 
 </script>

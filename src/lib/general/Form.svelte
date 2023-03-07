@@ -90,6 +90,10 @@
         if (item.enable) {
           ent[item.name] = item.value
         }
+      } else if (item.type === 'optional-auto') {
+        if (item.enable) {
+          ent[item.name] = item.value
+        }
       }
     }
 
@@ -140,9 +144,10 @@
                 <TableCell>Red</TableCell>
                 <TableCell numeric>45</TableCell>
               </Row> -->
-              {#each formItem.value as row (row.name)}
+              {#each formItem.value as row}
                 <Row>
                   {#each formItem.columns as column (column.name)}
+
                     {#if column.buttons}
                       <TableCell>
                         {#each column.buttons as button (button.label)}
@@ -152,8 +157,9 @@
                         {/each}
                       </TableCell>
                     {:else}
-                    <TableCell>{row[column.name]}</TableCell>
+                      <TableCell>{row[column.name]}</TableCell>
                     {/if}
+
                   {/each}
                 </Row>
               {/each}
@@ -165,6 +171,7 @@
           <Cell>
             {#if formItem.type === 'auto'}
               <Autocomplete
+                combobox 
                 disabled={formItem.disabled}
                 options={formItem.options}
                 bind:value={formItem.value}

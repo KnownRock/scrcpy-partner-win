@@ -1,7 +1,5 @@
-const args = process.argv.slice(2)
-
-const url = args[0]
-const pipeName = args[1]
+const url = 'file:..\\prisma\\main.db'
+const pipeName = '\\\\.\\pipe\\' + 'spw-mini-prisma'
 
 async function main () {
   const init = require('./server')

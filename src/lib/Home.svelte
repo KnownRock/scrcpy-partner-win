@@ -15,10 +15,10 @@
   const key = (tab: TabEntry) => tab.k
 
   const tabs: TabEntry[] = [
-    // {
-    //   k: 'config',
-    //   label: 'Config'
-    // },
+    {
+      k: 'config',
+      label: 'Config'
+    },
     {
       k: 'devices',
       label: 'Devices'

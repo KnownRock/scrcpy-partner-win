@@ -67,7 +67,12 @@ const prismaClientLike = allTables.reduce(
             func: action,
             argJson
           })
-          return JSON.parse(rawOutput as string)
+
+          const result = JSON.parse(rawOutput as string)
+          if ((result.error as object | undefined) != null) {
+            throw new Error(result.error)
+          }
+          return result.data
         }
       }),
       {}

@@ -6,18 +6,42 @@
   import Fab, { Label, Icon } from '@smui/fab'
   
   import DeviceCard from './DeviceCard.svelte'
-  import { deviceForm } from '../store/index'
+  import { configForm } from '../store/index'
   import Select, { Option } from '@smui/select'
   import { getConfigs, type DeviceConfigExt } from '../utils/configs'
   import { getDevices, type DeviceExt } from '../utils/devices'
   
   let configs: DeviceConfigExt[] = []
   let devices: DeviceExt[] = []
-  const currentDeviceId = ''
+  let virtualDevices: {
+    device: DeviceExt,
+    config: DeviceConfigExt
+  }[] = []
+  
+  let currentDeviceId = 'all'
 
   async function freshConfigs () {
+    let queryDeviceId : undefined | string = currentDeviceId
+    if (currentDeviceId === 'all') {
+      queryDeviceId = undefined
+    }
+
     devices = await getDevices('only saved')
-    configs = await getConfigs(currentDeviceId)
+    configs = await getConfigs(queryDeviceId)
+
+    const deviceDict = {}
+    devices.forEach(device => {
+      deviceDict[device.id] = device
+    })
+
+    virtualDevices = configs.map(config => {
+      return {
+        device: deviceDict[config.deviceId],
+        config
+      }
+    })
+
+
     // const queriedDevices = await getConfigs(currentDeviceId)
 
     // const currentSortKey = currentSort.split('_')[0]
@@ -40,15 +64,15 @@
 
   let currentSort = 'createdAt'
 
-  $: currentSort && (function () {
+  $: (currentSort || currentDeviceId) && (function () {
     freshConfigs()
   })()
 
-  // setContext('freshDevices', freshDevices)
+  setContext('freshDevices', freshConfigs)
 
   // freshDevices()
 
-  freshConfigs()
+  // freshConfigs()
 
 </script>
 
@@ -61,20 +85,14 @@
     <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 2, phone: 1 }}>
 
       <Fab  color="primary" on:click={() => {
-        deviceForm.set({
+        configForm.set({
           show: true,
-          device: {
-            id: '',
-            name: '',
-            adbId: '',
-            model: '',
-            product: '',
-            createdAt: null,
-            updatedAt: null,
-            lastSeenAt: null
-          },
-          callback: async (device) => {
-            await freshConfigs()
+          type: 'new',
+          callback: () => {
+            // FIXME: this is a hack
+            setTimeout(() => {
+              freshConfigs()
+            }, 500)
           }
         })
       }} extended  ripple={false}>
@@ -87,7 +105,10 @@
     <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 6, phone: 4 }}
      style="display: flex; align-items: center; justify-content: flex-end;">
       
-     <Select label="filter by device" variant="outlined" style="width: min(calc(50% - 56px) , 200px);">
+     <Select 
+      bind:value={currentDeviceId}
+      label="filter by device" variant="outlined" style="width: min(calc(50% - 56px) , 200px);">
+        <Option value={'all'}>{'All'}</Option>
         {#each devices as device}
           <Option value={device.id}>{device.name}</Option>
         {/each}
@@ -124,14 +145,12 @@
     
   </LayoutGrid>
   <LayoutGrid>
-    {#each devices as device}
+    {#each virtualDevices as vd}
       <Cell>
-        <DeviceCard 
-          device={device}
-         />
-        
+        <DeviceCard config={vd.config} device={vd.device} />
       </Cell>
     {/each}
+
 
   </LayoutGrid>
 

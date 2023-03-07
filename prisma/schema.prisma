@@ -33,7 +33,7 @@ model Device{
 model DeviceConfig{
   id       String     @id @default(uuid())
   name     String
-  device   Device  @relation(fields: [deviceId], references: [id])
+  device   Device  @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   deviceId String
   deviceConfigValue DeviceConfigValue[] 
 
@@ -46,7 +46,7 @@ model DeviceConfigValue{
   id       String     @id @default(uuid())
   value    String
   key      String
-  deviceConfig   DeviceConfig  @relation(fields: [deviceConfigId], references: [id])
+  deviceConfig   DeviceConfig  @relation(fields: [deviceConfigId], references: [id], onDelete: Cascade)
   deviceConfigId String
 }
 

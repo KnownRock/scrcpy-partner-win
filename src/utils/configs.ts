@@ -2,13 +2,11 @@ import type { DeviceConfig, DeviceConfigValue } from '@prisma/client'
 import prismaClientLike from './prisma-like-client'
 import { getNoAdditionalPropertiesSchema } from './prisma-field-filter'
 
-export async function getConfigs (
-  where: {
-    deviceId: string
-  }
-): Promise<DeviceConfigExt[]> {
+export async function getConfigs (deviceId?: string): Promise<DeviceConfigExt[]> {
   return await prismaClientLike.deviceConfig.findMany({
-    where
+    where: {
+      deviceId
+    }
   })
 }
 
@@ -44,28 +42,46 @@ export async function saveConfig (
 }
 
 export async function saveConfigItems (
+  deviceConfigId: string,
   items: DeviceConfigValue[]
 ): Promise<void> {
+  // delete all items
+  await prismaClientLike.deviceConfigValue.deleteMany({
+    where: {
+      deviceConfigId
+    }
+  })
+
+  // create new items
+  // await Promise.all(items.map(async (item) => {
+  //   await prismaClientLike.deviceConfigValue.create({
+  //     data: {
+  //       deviceConfigId,
+  //       key: item.key,
+  //       value: item.value
+  //     }
+  //   })
+  // }))
+
   for (const item of items) {
-    await prismaClientLike.deviceConfigValue.upsert({
-      where: {
-        id: item.id
-      },
-      create: {
-        deviceConfig: {
-          connect: {
-            id: item.deviceConfigId
-          }
-        },
-        key: item.key,
-        value: item.value
-      },
-      update: {
+    await prismaClientLike.deviceConfigValue.create({
+      data: {
+        deviceConfigId,
         key: item.key,
         value: item.value
       }
     })
   }
+}
+
+export async function getConfigItems (
+  deviceConfigId: string
+): Promise<DeviceConfigValue[]> {
+  return await prismaClientLike.deviceConfigValue.findMany({
+    where: {
+      deviceConfigId
+    }
+  })
 }
 
 export async function getConfig (
@@ -79,5 +95,17 @@ export async function getConfig (
   })
 }
 
+export async function deleteConfigById (
+  id: string
+): Promise<void> {
+  await prismaClientLike.deviceConfig.delete({
+    where: {
+      id
+    }
+  })
+}
+
 export type DeviceConfigExt = DeviceConfig & {
 }
+
+export type DeviceConfigValueExt = DeviceConfigValue & {}
