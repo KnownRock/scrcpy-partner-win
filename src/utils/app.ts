@@ -19,3 +19,11 @@ export async function init (): Promise<void> {
 export async function getEnvArgs (): Promise<string[]> {
   return await callTauriFunction<string[]>('get_env_args')
 }
+
+export async function closeApplication (): Promise<void> {
+  await callTauriFunction('close_application')
+}
+
+export async function runScrcpyCommand (args: string[]): Promise<boolean> {
+  return await callTauriFunction<boolean>('run_scrcpy_command', { args })
+}

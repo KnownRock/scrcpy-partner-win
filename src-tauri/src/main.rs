@@ -279,6 +279,36 @@ async fn get_env_args() -> Vec<String> {
 }
 
 #[tauri::command]
+fn close_application() {
+    unsafe {
+        kill_process(PID);
+        PID = 0;
+    }
+    std::process::exit(0);
+}
+
+#[tauri::command]
+async fn run_scrcpy_command(args: Vec<String>) -> bool {
+    unsafe {
+        if PID != 0 {
+            kill_process(PID);
+            PID = 0;
+        }
+    }
+
+    match run_scrcpy(&args) {
+        Some((scrcpy_pid, hwnd)) => {
+            unsafe {
+                PID = scrcpy_pid;
+                HWND = hwnd;
+            }
+            true
+        }
+        None => false,
+    }
+}
+
+#[tauri::command]
 async fn init(app: tauri::AppHandle) -> String {
     unsafe {
         kill_process(PID);
@@ -365,7 +395,9 @@ fn main() {
             init,
             call_prisma,
             connect_tcpip_device,
-            get_env_args
+            get_env_args,
+            close_application,
+            run_scrcpy_command
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");

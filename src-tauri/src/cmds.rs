@@ -257,18 +257,15 @@ pub fn run_scrcpy(pars: &Vec<String>) -> Option<(u32, usize)> {
         .spawn()
         .unwrap();
 
-    println!("Launched scrcpy");
     let pid = child.id();
 
-    // sleep(Duration::from_millis(500));
-
+    // MEMO: can not use tcpip arg, only can use serial arg and adb connect manually
     let is_scrcpy_process_alive = is_process_alive(pid);
     if !is_scrcpy_process_alive {
         return None;
     }
 
-    // let mut timeout = 100;
-    let mut hwnd_usize;
+    let hwnd_usize;
     loop {
         sleep(Duration::from_millis(100));
 
