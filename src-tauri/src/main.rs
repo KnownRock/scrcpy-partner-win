@@ -119,7 +119,79 @@ unsafe extern "system" fn win_event_close_callback(
 
         unhook_all_window_events();
 
-        std::process::exit(0);
+        unsafe {
+            let rect = wins::get_window_rect_by_hwnd(HWND);
+
+            if IS_AUTO_SAVE_LOCATION_AND_SIZE {
+                dbg!("save window size and position");
+                println!("config id: {:?}", &CONFIG_ID);
+                println!(
+                    "rect: yt:{} xl:{} xr:{}",
+                    &rect.top, &rect.left, &rect.right
+                );
+
+                fn get_prisma_json(config_id: String, key: String, value: String) -> String {
+                    serde_json::json!({
+                        "where": {
+                            "deviceConfigId_key": {
+                                "deviceConfigId": config_id,
+                                "key": key
+                            }
+                        },
+                        "update":{
+                            "value": serde_json::json!(value).to_string()
+                        },
+                        "create": {
+                            "deviceConfigId": config_id,
+                            "key": key,
+                            "value": serde_json::json!(value).to_string()
+                        }
+                    })
+                    .to_string()
+                }
+
+                tokio::runtime::Runtime::new()
+                    .unwrap()
+                    .block_on(async move {
+                        call_prisma(
+                            "deviceConfigValue".to_string(),
+                            "upsert".to_string(),
+                            get_prisma_json(
+                                CONFIG_ID.to_string(),
+                                "window-x".to_string(),
+                                serde_json::json!(rect.left).to_string(),
+                            ),
+                        )
+                        .await;
+
+                        call_prisma(
+                            "deviceConfigValue".to_string(),
+                            "upsert".to_string(),
+                            get_prisma_json(
+                                CONFIG_ID.to_string(),
+                                "window-y".to_string(),
+                                serde_json::json!(rect.top).to_string(),
+                            ),
+                        )
+                        .await;
+
+                        call_prisma(
+                            "deviceConfigValue".to_string(),
+                            "upsert".to_string(),
+                            get_prisma_json(
+                                CONFIG_ID.to_string(),
+                                "window-width".to_string(),
+                                serde_json::json!(rect.right - rect.left).to_string(),
+                            ),
+                        )
+                        .await;
+
+                        std::process::exit(0);
+                    });
+            } else {
+                std::process::exit(0);
+            }
+        }
     }
 }
 
@@ -289,6 +361,8 @@ fn close_application() {
 
 #[tauri::command]
 async fn run_scrcpy_command(args: Vec<String>) -> bool {
+    dbg!(args.clone());
+
     unsafe {
         if PID != 0 {
             kill_process(PID);
@@ -308,54 +382,29 @@ async fn run_scrcpy_command(args: Vec<String>) -> bool {
     }
 }
 
+static mut IS_AUTO_SAVE_LOCATION_AND_SIZE: bool = false;
+static mut CONFIG_ID: String = String::new();
+// static mut C: Option<FnMut(usize, usize, usize, usize)> = None;
+
 #[tauri::command]
-async fn init(app: tauri::AppHandle) -> String {
-    unsafe {
-        kill_process(PID);
-        PID = 0;
-    }
-
-    let mut args: Vec<String> = env::args().collect();
-
-    let mut is_tool_mode = true;
-
-    dbg!(args.clone());
-
-    // if not have vaild device arg, will not run scrcpy to save start time
-    let is_device_valid = is_device_valid_args(args.clone());
-    if !is_device_valid {
-        is_tool_mode = false;
-    }
-
-    dbg!(is_device_valid);
-
-    // if have device arg, will try to run scrcpy
-    if is_tool_mode {
-        unsafe {
-            args.remove(0);
-            println!("args: {:?}", &args);
-
-            match run_scrcpy(&args) {
-                Some((scrcpy_pid, hwnd)) => {
-                    PID = scrcpy_pid;
-                    HWND = hwnd;
-                    is_tool_mode = true;
-                }
-                None => {
-                    PID = 0;
-                    HWND = 0;
-                    is_tool_mode = false;
-                }
-            }
-        }
-    }
-
+async fn init(
+    app: tauri::AppHandle,
+    is_tool_mode: bool,
+    is_auto_save_location_and_size: bool,
+    config_id: String,
+) -> String {
     if is_tool_mode {
         unsafe {
             assert!(HWND != 0, "Failed to get hwnd");
             assert!(PID != 0, "Failed to get pid");
 
             println!("Mode: tool");
+
+            IS_AUTO_SAVE_LOCATION_AND_SIZE = is_auto_save_location_and_size;
+            CONFIG_ID = config_id;
+
+            dbg!(&IS_AUTO_SAVE_LOCATION_AND_SIZE);
+            dbg!(&CONFIG_ID);
 
             init_tool_window(&app);
         }

@@ -41,9 +41,14 @@ fn test_enumerate_windows() {
     });
 }
 
-pub fn set_window_loc_by_hwnd(hwnd_usize: usize, window: &mut tauri::Window) {
+pub fn get_window_rect_by_hwnd(hwnd_usize: usize) -> RECT {
     if hwnd_usize == 0 {
-        return;
+        return RECT {
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+        };
     }
 
     let hwnd = hwnd_usize as HWND;
@@ -58,6 +63,16 @@ pub fn set_window_loc_by_hwnd(hwnd_usize: usize, window: &mut tauri::Window) {
     unsafe {
         winapi::um::winuser::GetWindowRect(hwnd, &mut rect);
     }
+
+    rect
+}
+
+pub fn set_window_loc_by_hwnd(hwnd_usize: usize, window: &mut tauri::Window) {
+    if hwnd_usize == 0 {
+        return;
+    }
+
+    let rect = get_window_rect_by_hwnd(hwnd_usize);
 
     dbg!(rect.left, rect.top, rect.right, rect.bottom);
 

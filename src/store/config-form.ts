@@ -164,10 +164,10 @@ async function getForm (
     },
     {
       type: 'optional-number',
-      label: 'Width',
-      name: 'width',
-      value: formValue.width ?? 0,
-      enable: formValue.width !== undefined
+      label: 'Window Width',
+      name: 'window-width',
+      value: formValue['window-width'] ?? 0,
+      enable: formValue['window-width'] !== undefined
     }, {
       type: 'header',
       label: 'Advanced',
