@@ -48,6 +48,8 @@ model DeviceConfigValue{
   key      String
   deviceConfig   DeviceConfig  @relation(fields: [deviceConfigId], references: [id], onDelete: Cascade)
   deviceConfigId String
+
+  @@unique([deviceConfigId, key])
 }
 
 // This only for unit test
