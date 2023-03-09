@@ -28,6 +28,15 @@
   }
 
   async function lanuchScrcpy () {
+    if (config) {
+      lanuchSelf([
+        `-c${config.id}`
+      ])
+
+      return
+    }
+
+
     lanuchSelf([
       `-s${device.adbId}`,
       '--window-title',
