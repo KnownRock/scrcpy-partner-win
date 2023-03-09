@@ -95,6 +95,19 @@ export async function getConfig (
   })
 }
 
+export async function getConfigById (
+  id: string
+): Promise<DeviceConfigExtC | null> {
+  return await prismaClientLike.deviceConfig.findUnique({
+    where: {
+      id
+    },
+    include: {
+      deviceConfigValue: true
+    }
+  })
+}
+
 export async function deleteConfigById (
   id: string
 ): Promise<void> {
@@ -109,3 +122,7 @@ export type DeviceConfigExt = DeviceConfig & {
 }
 
 export type DeviceConfigValueExt = DeviceConfigValue & {}
+
+export type DeviceConfigExtC = DeviceConfigExt & {
+  deviceConfigValue: DeviceConfigValueExt[]
+}

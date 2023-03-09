@@ -12,8 +12,13 @@ export async function showToolWindow (): Promise<void> {
   await callTauriFunction('show_tool_window')
 }
 
-export async function init (): Promise<void> {
-  await callTauriFunction('init')
+export async function init
+(
+  isToolMode: boolean = false,
+  isAutoSaveLocationAndSize: boolean = false,
+  configId = ''
+): Promise<void> {
+  await callTauriFunction('init', { isToolMode, isAutoSaveLocationAndSize, configId })
 }
 
 export async function getEnvArgs (): Promise<string[]> {

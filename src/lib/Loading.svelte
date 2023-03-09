@@ -27,6 +27,8 @@ border: 1px solid #ccc;
   import { init, getEnvArgs, closeApplication, runScrcpyCommand } from '../utils/app'
   import { connectTcpipDevice, getDevices, type DeviceExt } from '../utils/devices'
   import Button from '@smui/button'
+  import { getConfig, getConfigById } from '../utils/configs'
+  import prismaClientLike from '../utils/prisma-like-client'
 
   let error = ''
 
@@ -37,8 +39,11 @@ border: 1px solid #ccc;
         devicesInArgs.push(args[index + 1])
       } else if (arg === '--serial') {
         devicesInArgs.push(args[index + 1])
-      } else if (arg.match(/^(-s|--serial)=?/)) {
-        devicesInArgs.push(arg.match(/^(-s|--serial)(=|\s)(.*)/)[3])
+      } else {
+        const dev = arg.match(/^(-s|--serial)(=|\s)?(.*)/)?.[3]
+        if (dev) {
+          devicesInArgs.push(dev)
+        }
       }
     })
 
@@ -52,8 +57,11 @@ border: 1px solid #ccc;
         devicesInArgs.push(args[index + 1])
       } else if (arg === '--tcpip') {
         devicesInArgs.push(args[index + 1])
-      } else if (arg.match(/^(-t|--tcpip)=?/)) {
-        devicesInArgs.push(arg.match(/^(-t|--tcpip)(=|\s)(.*)/)[3])
+      } else {
+        const dev = arg.match(/^(-t|--tcpip)(=|\s)?(.*)/)?.[3]
+        if (dev) {
+          devicesInArgs.push(dev)
+        }
       }
     })
 
@@ -66,14 +74,21 @@ border: 1px solid #ccc;
         return '-s'
       } else if (arg === '--tcpip') {
         return '--serial'
-      } else if (arg.match(/^(-t|--tcpip)=?/)) {
-        return arg.replace(/^(-t|--tcpip)(=|\s)(.*)/, '$1$2$3')
+      } else if (arg.match(/^(-t|--tcpip)(=|\s)?(.*)/)) {
+        return arg.replace(/^(-t|--tcpip)(=|\s)?(.*)/, '$1$2$3')
       } else {
         return arg
       }
     })
 
     return newArgs
+  }
+
+  function getConfigIdFromArgs (args) {
+    const configId = args.find(arg => arg.match(/^(-c|--config)=?/))
+    if (configId) {
+      return configId.match(/^(-c|--config)(=|\s)?(.*)/)[3]
+    }
   }
 
   async function getAdbDeviceDict () {
@@ -89,6 +104,7 @@ border: 1px solid #ccc;
 
     return deviceDict
   }
+
 
   onMount(() => {
     setTimeout(async () => {
@@ -107,11 +123,13 @@ border: 1px solid #ccc;
       if (devicesInArgs.length === 1) {
         const device = devicesInArgs[0]
         if (deviceDict[device]) {
-          runScrcpyCommand(args)
-          // init()
+          await runScrcpyCommand(args)
+          init()
         } else {
           error = `Device ${device} not connected`
         }
+
+        return
       }
 
 
@@ -122,12 +140,90 @@ border: 1px solid #ccc;
   
         if (newDeviceDict[device]) {
           const newArgs = replceTcpipArgToSerial(args)
-          // init()
+          await runScrcpyCommand(newArgs)
+          init()
           // change tcpip arg to serial arg
         } else {
           error = `Device ${device} not connected`
         }
+
+        return
       }
+
+      const configId:string = getConfigIdFromArgs(args)
+      if (configId) {
+        console.log('configId', configId)
+
+        const config = await getConfigById(configId)
+
+        console.log('config', config)
+
+        if (!config) {
+          error = `Config ${configId} not found`
+          return
+        }
+
+        const args = config.deviceConfigValue.map(el => {
+          const value = JSON.parse(el.value)
+          if (el.key.startsWith('spw-')) {
+            return null
+          }
+
+          if (value === true) {
+            return `--${el.key}`
+          } else if (value === false) {
+            return null
+          } else {
+            return `--${el.key}=${value}`
+          }
+        })
+          .filter(el => el !== null) as string[]
+  
+        const devices = await getDevices()
+        const device = devices.find(el => el.id === config.deviceId)
+
+        if (!device) {
+          error = `Device ${config.deviceId} not found`
+          return
+        }
+
+        if (device.isTcpipDevice && !device.isConnected) {
+          await connectTcpipDevice(device.adbId)
+        }
+
+        args.unshift('--serial=' + device.adbId)
+        console.log('args', args)
+
+        const isAutoSaveLocationAndSize =
+          config.deviceConfigValue
+            .find(el => el.key === 'spw-autosave-location-size')
+            ?.value === 'true'
+
+
+        await runScrcpyCommand(args)
+
+
+        await init(true, isAutoSaveLocationAndSize, configId)
+
+
+        return
+      }
+
+
+      console.log('normal startup')
+
+
+      // prismaClientLike.deviceConfigValue.update({
+      //   where: {
+      //     key: 'spw-autosave-location-size'
+      //   }
+      //   data: {
+      //     value: JSON.stringify(true)
+      //   }
+      // })
+
+      await init()
+  
 
       // TODO: if is config arg
     }, 200)

@@ -481,9 +481,11 @@ pub async fn call_prisma(
                 match client.try_read(&mut data) {
                     Ok(n) => {
                         println!("read {} bytes", &n);
-                        // println!("data: {:?}", &data);
+
                         let mut text = String::from_utf8(data).unwrap();
                         text = text.trim_end_matches(char::from(0)).to_string();
+                        println!("text: {:?}", &text);
+
                         if text.len() > 0 {
                             return Ok(text);
                         } else {
