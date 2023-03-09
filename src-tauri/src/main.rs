@@ -170,7 +170,7 @@ unsafe extern "system" fn win_event_close_callback(
                             get_prisma_json(
                                 CONFIG_ID.to_string(),
                                 "window-y".to_string(),
-                                serde_json::json!(rect.top + 25 + 4).to_string(),
+                                serde_json::json!(rect.top + 25 + 6).to_string(),
                             ),
                         )
                         .await;
