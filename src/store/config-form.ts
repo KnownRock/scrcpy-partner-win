@@ -138,9 +138,9 @@ async function getForm (
     {
       type: 'optional-text',
       label: 'Window Title',
-      name: 'title',
-      value: formValue.title ?? '',
-      enable: formValue.title !== undefined
+      name: 'window-title',
+      value: formValue['window-title'] ?? '',
+      enable: formValue['window-title'] !== undefined
     },
 
     {
