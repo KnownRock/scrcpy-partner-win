@@ -1,6 +1,5 @@
 import type { DeviceConfig, DeviceConfigValue } from '@prisma/client'
 import prismaClientLike from './prisma-like-client'
-import { getNoAdditionalPropertiesSchema } from './prisma-field-filter'
 
 export async function getConfigs (deviceId?: string): Promise<DeviceConfigExt[]> {
   return await prismaClientLike.deviceConfig.findMany({
@@ -118,10 +117,22 @@ export async function deleteConfigById (
   })
 }
 
-export type DeviceConfigExt = DeviceConfig & {
+export async function updateConfigLastSeenAt (
+  id: string
+): Promise<void> {
+  await prismaClientLike.deviceConfig.update({
+    where: {
+      id
+    },
+    data: {
+      lastSeenAt: new Date()
+    }
+  })
 }
 
-export type DeviceConfigValueExt = DeviceConfigValue & {}
+export type DeviceConfigExt = DeviceConfig
+
+export type DeviceConfigValueExt = DeviceConfigValue
 
 export type DeviceConfigExtC = DeviceConfigExt & {
   deviceConfigValue: DeviceConfigValueExt[]

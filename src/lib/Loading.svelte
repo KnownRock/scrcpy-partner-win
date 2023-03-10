@@ -22,52 +22,29 @@ border: 1px solid #ccc;
 <script lang="ts">
   import 'svelte-material-ui/bare.css'
   import CircularProgress from '@smui/circular-progress'
-
+  import arg, { type Result } from 'arg'
   import { onMount } from 'svelte'
   import { init, getEnvArgs, closeApplication, runScrcpyCommand } from '../utils/app'
-  import { connectTcpipDevice, getDevices, type DeviceExt } from '../utils/devices'
+  import {
+    connectTcpipDevice, getDevices,
+    updateDeviceLastSeenAt
+    , type DeviceExt
+  } from '../utils/devices'
   import Button from '@smui/button'
-  import { getConfig, getConfigById } from '../utils/configs'
-  import prismaClientLike from '../utils/prisma-like-client'
+  import { getConfigById, updateConfigLastSeenAt } from '../utils/configs'
+  import { argsTemplate } from '../utils/scrcpy'
 
   let error = ''
 
-  function getSerialDevicesFromArgs (args) {
-    const devicesInArgs:string[] = []
-    args.forEach((arg, index) => {
-      if (arg === '-s') {
-        devicesInArgs.push(args[index + 1])
-      } else if (arg === '--serial') {
-        devicesInArgs.push(args[index + 1])
-      } else {
-        const dev = arg.match(/^(-s|--serial)(=|\s)?(.*)/)?.[3]
-        if (dev) {
-          devicesInArgs.push(dev)
-        }
-      }
-    })
-
-    return devicesInArgs
+  function getSerialDevicesFromArg (args) {
+    return args['--serial']
   }
 
   function getTcpipDeviceFromArgs (args) {
-    const devicesInArgs:string[] = []
-    args.forEach((arg, index) => {
-      if (arg === '-t') {
-        devicesInArgs.push(args[index + 1])
-      } else if (arg === '--tcpip') {
-        devicesInArgs.push(args[index + 1])
-      } else {
-        const dev = arg.match(/^(-t|--tcpip)(=|\s)?(.*)/)?.[3]
-        if (dev) {
-          devicesInArgs.push(dev)
-        }
-      }
-    })
-
-    return devicesInArgs
+    return args['--tcpip']
   }
 
+  // TODO: replace for new args
   function replceTcpipArgToSerial (args) {
     const newArgs = args.map((arg, index) => {
       if (arg === '-t') {
@@ -84,12 +61,15 @@ border: 1px solid #ccc;
     return newArgs
   }
 
+  // function getAdjustedLocationAndSizeToFitWithTitleBar (arg) {
+
+
+  // }
+
   function getConfigIdFromArgs (args) {
-    const configId = args.find(arg => arg.match(/^(-c|--config)=?/))
-    if (configId) {
-      return configId.match(/^(-c|--config)(=|\s)?(.*)/)[3]
-    }
+    return args['--spw-config-id']
   }
+
 
   async function getAdbDeviceDict () {
     const adbDevices = await getDevices('only adb')
@@ -108,22 +88,43 @@ border: 1px solid #ccc;
 
   onMount(() => {
     setTimeout(async () => {
-      const args = (await getEnvArgs()).slice(1)
+      const rawArgs = (await getEnvArgs()).slice(1)
       const deviceDict = await getAdbDeviceDict()
 
-      const devicesInArgs = getSerialDevicesFromArgs(args)
-      console.log('devicesInArgs', devicesInArgs)
+      let args : Result<typeof argsTemplate> | null = null
+      try {
+        args = arg(argsTemplate, {
+          argv: rawArgs,
+          permissive: true
+        })
+      } catch (e) {
+      }
 
-      const tcpipDevicesInArgs = getTcpipDeviceFromArgs(args)
+      if (!args) {
+        error = 'Invalid arguments'
+        return
+      }
 
-      if (devicesInArgs.length + tcpipDevicesInArgs.length > 1) {
+
+      console.log('args', args)
+
+      const serialDeviceInArgs = getSerialDevicesFromArg(args)
+      console.log('serialDeviceInArgs', serialDeviceInArgs)
+
+
+      const tcpipDeviceInArgs = getTcpipDeviceFromArgs(args)
+      console.log('tcpipDeviceInArgs', tcpipDeviceInArgs)
+
+
+      if (serialDeviceInArgs && tcpipDeviceInArgs) {
         error = 'Only one device can be selected at a time'
       }
 
-      if (devicesInArgs.length === 1) {
-        const device = devicesInArgs[0]
+
+      if (serialDeviceInArgs) {
+        const device = serialDeviceInArgs
         if (deviceDict[device]) {
-          await runScrcpyCommand(args)
+          await runScrcpyCommand(rawArgs)
           init()
         } else {
           error = `Device ${device} not connected`
@@ -133,8 +134,8 @@ border: 1px solid #ccc;
       }
 
 
-      if (tcpipDevicesInArgs.length === 1) {
-        const device = tcpipDevicesInArgs[0]
+      if (tcpipDeviceInArgs) {
+        const device = tcpipDeviceInArgs
         await connectTcpipDevice(device)
         const newDeviceDict = await getAdbDeviceDict()
   
@@ -170,11 +171,11 @@ border: 1px solid #ccc;
           }
 
           if (value === true) {
-            return `--${el.key}`
+            return `${el.key}`
           } else if (value === false) {
             return null
           } else {
-            return `--${el.key}=${value}`
+            return `${el.key}=${value}`
           }
         })
           .filter(el => el !== null) as string[]
@@ -205,6 +206,8 @@ border: 1px solid #ccc;
 
         await init(true, isAutoSaveLocationAndSize, configId)
 
+        updateDeviceLastSeenAt(device.id)
+        updateConfigLastSeenAt(config.id)
 
         return
       }

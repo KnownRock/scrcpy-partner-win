@@ -147,5 +147,16 @@ export async function connectTcpipDevice (ip: string, isConnect: boolean = true)
   await invoke('connect_tcpip_device', { ip, isConnect })
 }
 
+export async function updateDeviceLastSeenAt (deviceId: string): Promise<void> {
+  await prismaClientLike.device.update({
+    where: {
+      id: deviceId
+    },
+    data: {
+      lastSeenAt: new Date()
+    }
+  })
+}
+
 export type { Device } from '@prisma/client/index.d'
 export type { DeviceExt }

@@ -3,6 +3,7 @@ import { writable } from 'svelte/store'
 import { generalDialogForm } from '.'
 import { getDevices } from '../utils/devices'
 import { saveConfig, type DeviceConfigValueExt, type DeviceConfigExt, getConfig, saveConfigItems, getConfigItems } from '../utils/configs'
+import { getFormItems } from '../utils/scrcpy'
 const store = writable<{
   show: boolean
   deviceId: string
@@ -36,157 +37,43 @@ async function getForm (
   }, {})
 
   // debugger
-  const form: FormItem[] = [
-    {
-      type: 'header',
-      label: 'Info',
-      name: 'info'
-    },
-    {
-      type: 'option',
-      label: 'Device',
-      name: 'device',
-      options: devices.map((device) => {
-        return { label: device.name, value: device.id }
-      }),
-      value: currentDeviceId ?? '',
-      disabled: currentDevice !== undefined
-    },
-    {
-      type: 'text',
-      label: 'Name',
-      name: 'name',
-      value: currentDeviceConfig?.name ?? 'New Config'
-    },
-    {
-      type: 'header',
-      label: 'General',
-      name: 'general'
-    },
-    // {
-    //   type: 'text',
-    //   label: 'ADB Id',
-    //   name: 'serial',
-    //   value: currentDevice?.adbId ?? '',
-    //   disabled: currentDevice?.adbId !== undefined
-    // },
-    {
-      type: 'auto',
-      label: 'Bit Rate',
-      name: 'bit-rate',
-      options: ['32M', '16M', '8M', '4M', '2M', '1M', '512K', '256K'],
-      value: formValue['bit-rate'] ?? '8M'
-    },
-    {
-      type: 'auto',
-      label: 'Display Buffer',
-      name: 'display-buffer',
-      options: ['100', '50', '30', '20', '10', '5', '0'],
-      value: formValue['display-buffer'] ?? '0'
-    },
-    {
-      type: 'optional-auto',
-      label: 'FPS',
-      name: 'max-fps',
-      options: ['144', '120', '75', '60', '30', '20', '15', '10', '5'],
-      value: formValue['max-fps'] ?? '60',
-      enable: formValue['max-fps'] !== undefined
-    },
-    {
-      type: 'optional-number',
-      label: 'Max Size',
-      name: 'max-size',
-      value: +formValue['max-size'] ?? 1080,
-      enable: formValue['max-size'] !== undefined
-    },
-    {
-      type: 'optional-option',
-      label: 'Orientation',
-      name: 'lock-video-orientation',
-      options: [
-        { label: 'Natural orientation', value: '0' },
-        { label: '90° counterclockwise', value: '1' },
-        { label: '180° counterclockwise', value: '2' },
-        { label: '90° clockwise', value: '3' }
-      ],
-      value: formValue['lock-video-orientation'] ?? '0',
-      enable: formValue['lock-video-orientation'] !== undefined
-    },
-    {
-      type: 'header',
-      label: 'Screen',
-      name: 'screen'
-    },
-    {
-      type: 'switch',
-      label: 'Always on top',
-      name: 'always-on-top',
-      value: formValue['always-on-top'] ?? false
-    },
-    {
-      type: 'switch',
-      label: 'Fullscreen',
-      name: 'fullscreen',
-      value: formValue.fullscreen ?? false
-    },
-    {
-      type: 'switch',
-      label: 'Window Borderless',
-      name: 'window-borderless',
-      value: formValue['window-borderless'] ?? false
-    },
-    {
-      type: 'optional-text',
-      label: 'Window Title',
-      name: 'title',
-      value: formValue.title ?? '',
-      enable: formValue.title !== undefined
-    },
+  const form = getFormItems(formValue)
 
-    {
-      type: 'header',
-      label: 'Window',
-      name: 'window'
-    },
-    {
-      type: 'optional-number',
-      label: 'Position X',
-      name: 'window-x',
-      value: formValue['window-x'] ?? 0,
-      enable: formValue['window-x'] !== undefined
-    },
-    {
-      type: 'optional-number',
-      label: 'Position Y',
-      name: 'window-y',
-      value: formValue['window-y'] ?? 0,
-      enable: formValue['window-y'] !== undefined
-    },
-    {
-      type: 'optional-number',
-      label: 'Window Width',
-      name: 'window-width',
-      value: formValue['window-width'] ?? 0,
-      enable: formValue['window-width'] !== undefined
-    }, {
-      type: 'header',
-      label: 'Advanced',
-      name: 'advanced'
-    }, {
-      type: 'switch',
-      label: 'Autosave Location & Size',
-      name: 'spw-autosave-location-size',
-      value: formValue['spw-autosave-location-size'] ?? false
-    }
-  ]
+  const deviceFormItems: FormItem[] = [{
+    type: 'header',
+    label: 'Main',
+    name: 'main'
+  },
+  {
+    type: 'option',
+    label: 'Device',
+    name: 'device',
+    options: devices.map((device) => {
+      return { label: device.name, value: device.id }
+    }),
+    value: currentDeviceId ?? '',
+    disabled: currentDevice !== undefined
+  }, {
+    type: 'text',
+    label: 'Name',
+    name: 'name',
+    value: currentDeviceConfig?.name ?? 'New Config'
+  }]
 
-  form.forEach((item) => {
-    if (item.type === 'option') {
-      item.defaultValue = item.value
-    }
-  })
+  const advancedFormItems: FormItem[] = [{
+    type: 'header',
+    label: 'Advanced',
+    name: 'advanced'
+  },
+  {
+    type: 'optional-switch',
+    label: 'Autosave Location & Size',
+    name: 'spw-autosave-location-size',
+    value: formValue['--spw-autosave-location-size'] ?? false,
+    enable: formValue['--spw-autosave-location-size'] !== undefined
+  }]
 
-  return form
+  return [...deviceFormItems, ...form, ...advancedFormItems]
 }
 
 store.subscribe(value => {

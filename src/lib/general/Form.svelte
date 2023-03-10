@@ -11,7 +11,8 @@
   import LayoutGrid, { Cell } from '@smui/layout-grid'
   import DataTable, { Head, Body, Row, Cell as TableCell } from '@smui/data-table'
   import { generalDialogForm } from '../../store/index'
-
+  import Tooltip, { Wrapper } from '@smui/tooltip'
+  import Optional from './Form/Optional.svelte'
   let open = false
   let currentFormItems : FormItem[] = []
   let buttons: DialogFormButton[] = []
@@ -94,6 +95,21 @@
         if (item.enable) {
           ent[item.name] = item.value
         }
+      } else if (item.type === 'optional-switch') {
+        if (item.enable) {
+          ent[item.name] = item.value
+        }
+      } else if (item.type === 'optional-auto-number') {
+        if (item.enable) {
+          ent[item.name] = item.value
+        }
+      } else {
+        if (item.type === 'header' || item.type === 'message' || item.type === 'table') {
+          console.log('no handle form item type: ' + item.type)
+        } else {
+          // throw new Error('Unknown form item type: ' + item.type)
+          throw new Error('Unknown form item: ' + item)
+        }
       }
     }
 
@@ -169,6 +185,7 @@
           {/if}
         {:else}
           <Cell>
+            <Wrapper>
             {#if formItem.type === 'auto'}
               <Autocomplete
                 combobox 
@@ -219,26 +236,56 @@
             {/if}
 
             {#if formItem.type === 'optional-auto'}
-              <FormField disabled={formItem.disabled}>
+              <!-- <FormField disabled={formItem.disabled}>
                 <Checkbox bind:checked={formItem.enable} />
-                <!-- avoid update devices issue -->
+                <div 
+                  on:click={e => { e.stopPropagation() }}
+                  on:mousedown={e => e.stopPropagation()}
+                  on:mouseup={e => e.stopPropagation()}
+                >
+                  <Autocomplete
+                    type="text"
+                    slot="label"
+                    disabled={!formItem.enable}
+                    onclick={e => {
+                      e.stopPropagation()
+                    }}
+
+                    options={formItem.options}
+                    bind:value={formItem.value}
+                    label={formItem.label}
+                  />
+                </div>
+                
+              </FormField> -->
+              <Optional bind:disabled={formItem.disabled} bind:enable={formItem.enable} >
                 <Autocomplete
-                  slot="label"
-                  disabled={!formItem.enable}
+                  type="text"
+                  disabled={!formItem.enable || formItem.disabled}
                   options={formItem.options}
                   bind:value={formItem.value}
                   label={formItem.label}
                 />
-              </FormField>
+              </Optional>
+            {/if}
+
+            {#if formItem.type === 'optional-auto-number'}
+              <Optional bind:disabled={formItem.disabled} bind:enable={formItem.enable} >
+                <Autocomplete
+                  type="number"
+                  disabled={!formItem.enable || formItem.disabled}
+                  options={formItem.options}
+                  bind:value={formItem.value}
+                  label={formItem.label}
+                />
+              </Optional>
             {/if}
 
             {#if formItem.type === 'optional-option'}
-              <FormField disabled={formItem.disabled}>
-                <Checkbox bind:checked={formItem.enable} />
+              <Optional bind:disabled={formItem.disabled} bind:enable={formItem.enable} >
                 <!-- avoid update devices issue -->
                 {#key updateTime}
                   <Select
-                    slot="label"
                     disabled={!formItem.enable}
                     bind:value={formItem.value}
                     label={formItem.label}
@@ -248,33 +295,51 @@
                     {/each}
                   </Select>
                 {/key}
-              </FormField>
+
+              </Optional>
             {/if}
 
             {#if formItem.type === 'optional-text'}
-              <FormField disabled={formItem.disabled}>
-                <Checkbox bind:checked={formItem.enable} />
+              <Optional bind:disabled={formItem.disabled} bind:enable={formItem.enable} >
                 <Textfield
-                  slot="label"
                   disabled={!formItem.enable}
                   bind:value={formItem.value}
                   label={formItem.label}
                 />
-              </FormField>
+              </Optional>
+            {/if}
+
+            {#if formItem.type === 'optional-switch'}
+              <Optional bind:disabled={formItem.disabled} bind:enable={formItem.enable} >
+                <FormField
+                  align="start"
+                >
+                  <Switch 
+                    disabled={!formItem.enable} 
+                    bind:checked={formItem.value} />
+                  <span slot="label">{formItem.label}</span>
+                </FormField>
+              </Optional>
+              
             {/if}
 
             {#if formItem.type === 'optional-number'}
-              <FormField disabled={formItem.disabled}>
-                <Checkbox bind:checked={formItem.enable} />
+              <Optional bind:disabled={formItem.disabled} bind:enable={formItem.enable} >
                 <Textfield
-                  slot="label"
                   disabled={!formItem.enable}
                   bind:value={formItem.value}
                   label={formItem.label}
                   type="number"
                 />
-              </FormField>
+              </Optional>
             {/if}
+            {#if formItem.description}
+              <Tooltip xPos="start" yPos="above">
+                {formItem.description}
+              </Tooltip>
+            {/if}
+            </Wrapper>
+
           </Cell>
         {/if}
       {/each}

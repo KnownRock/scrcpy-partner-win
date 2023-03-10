@@ -10,7 +10,9 @@
   } from '@smui/card'
   import IconButton from '@smui/icon-button'
   // TODO: move all type to global.d.ts
-  import { deleteDevice, lanuchSelf, connectTcpipDevice, type DeviceExt } from '../utils/devices'
+  import {
+    deleteDevice, lanuchSelf, connectTcpipDevice, type DeviceExt
+  } from '../utils/devices'
   import { configForm, configSelectForm, confirmDialog, deviceForm } from '../store/index'
   import { getContext } from 'svelte'
   import Menu from '@smui/menu'
@@ -30,7 +32,7 @@
   async function lanuchScrcpy () {
     if (config) {
       lanuchSelf([
-        `-c${config.id}`
+        `--spw-config-id=${config.id}`
       ])
 
       return
@@ -38,7 +40,7 @@
 
 
     lanuchSelf([
-      `-s${device.adbId}`,
+      `--serial=${device.adbId}`,
       '--window-title',
       `${device.name}`
     ])
