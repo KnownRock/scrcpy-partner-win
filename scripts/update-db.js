@@ -78,12 +78,12 @@ async function main () {
   console.log(stdout5)
 
   console.log('stderr:')
-  console.log(stderr)
-  console.log(stderr1)
-  console.log(stderr2)
-  console.log(stderr3)
-  console.log(stderr4)
-  console.log(stderr5)
+  console.error(stderr)
+  console.error(stderr1)
+  console.error(stderr2)
+  console.error(stderr3)
+  console.error(stderr4)
+  console.error(stderr5)
 }
 
 main()
