@@ -248,14 +248,14 @@ pub fn run_scrcpy(pars: &Vec<String>) -> Option<(u32, usize)> {
 
     dbg!("The scrcpy args: {:?}", &pars);
 
-    // noconsole
+    #[cfg(not(debug_assertions))]
     let child = Command::new("scrcpy.exe")
-        // .stdout(Stdio::null())
-        // .stderr(Stdio::null())
         .args(pars)
         .creation_flags(0x08000000)
         .spawn()
         .unwrap();
+    #[cfg(debug_assertions)]
+    let child = Command::new("scrcpy.exe").args(pars).spawn().unwrap();
 
     let pid = child.id();
 
