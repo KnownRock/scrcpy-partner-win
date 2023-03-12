@@ -4,7 +4,7 @@
 
   import { invoke } from '@tauri-apps/api/tauri'
   import { onMount } from 'svelte'
-  import { showToolWindow } from '../utils/app'
+  import { exit, showToolWindow } from '../utils/app'
 
   const commandKeyDict = {
     volume_up: {
@@ -153,6 +153,11 @@
   </IconButton>
   <IconButton class="material-icons" on:click={() => sendKey('app_switch')}>
     crop_square
+  </IconButton>
+
+  <!-- close -->
+  <IconButton class="material-icons" on:click={() => exit()}>
+    close
   </IconButton>
 
 </div>
