@@ -52,17 +52,7 @@ export async function saveConfigItems (
   })
 
   // create new items
-  // await Promise.all(items.map(async (item) => {
-  //   await prismaClientLike.deviceConfigValue.create({
-  //     data: {
-  //       deviceConfigId,
-  //       key: item.key,
-  //       value: item.value
-  //     }
-  //   })
-  // }))
-
-  for (const item of items) {
+  await Promise.all(items.map(async (item) => {
     await prismaClientLike.deviceConfigValue.create({
       data: {
         deviceConfigId,
@@ -70,7 +60,17 @@ export async function saveConfigItems (
         value: item.value
       }
     })
-  }
+  }))
+
+  // for (const item of items) {
+  //   await prismaClientLike.deviceConfigValue.create({
+  //     data: {
+  //       deviceConfigId,
+  //       key: item.key,
+  //       value: item.value
+  //     }
+  //   })
+  // }
 }
 
 export async function getConfigItems (
