@@ -4,5 +4,5 @@
 [ ] fix sidebar size
 [ ] generate links for config open
 [ ] fix mini prisma server close after app close
-[ ] add a shortcut add function
+[v] add a shortcut add function
 [ ] fix ipc pipe startup issue
