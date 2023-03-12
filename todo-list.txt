@@ -2,7 +2,10 @@
 [ ] fix windows borders size magic number
 [ ] move init logical from loading.svelte to utils
 [ ] fix sidebar size
-[ ] generate links for config open
+[v] generate links for config open
 [ ] fix mini prisma server close after app close
 [v] add a shortcut add function
-[ ] fix ipc pipe startup issue
+[ ] fix ipc pipe startup issue in dev mode?
+[ ] add adb scripts management
+[ ] add sidebar buttons management
+[ ] add mouse events recoding
