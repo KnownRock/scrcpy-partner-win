@@ -278,9 +278,7 @@
           }}>
             <List>
               <!-- createMsLink -->
-              <Item on:SMUI:action={() => createLink()}>
-                <Text>Create Link</Text>
-              </Item>
+              
 
               <Item on:SMUI:action={() => saveDevice()}>
                 <Text>Edit</Text>
@@ -295,11 +293,20 @@
                   Delete
                 </Text>
               </Item>
+
+              <Item on:SMUI:action={() => createLink()}>
+                <Text style="color: blue;">
+                Create Link</Text>
+              </Item>
+
+              {#if !config}
             
               <Separator />
               <Item on:SMUI:action={() => showConfig()}>
                 <Text>Config</Text>
               </Item>
+
+              {/if}
             </List>
           </Menu>
         </div>
