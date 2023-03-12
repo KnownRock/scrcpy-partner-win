@@ -473,7 +473,7 @@ pub async fn call_prisma(
                 .ready(Interest::READABLE | Interest::WRITABLE)
                 .await?;
 
-            dbg!(ready);
+            // dbg!(ready);
 
             if ready.is_readable() {
                 let mut data = vec![0; 1024 * 1024];
