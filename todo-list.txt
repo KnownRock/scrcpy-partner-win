@@ -9,3 +9,5 @@
 [ ] add adb scripts management
 [ ] add sidebar buttons management
 [ ] add mouse events recoding
+[ ] config default name
+[ ] fix autocomplete input issue
