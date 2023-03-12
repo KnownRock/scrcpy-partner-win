@@ -34,6 +34,10 @@ border: 1px solid #ccc;
   import { getConfigById, updateConfigLastSeenAt } from '../utils/configs'
   import { argsTemplate } from '../utils/scrcpy'
 
+  async function sleep (ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
   let error = ''
 
   function getSerialDevicesFromArg (args) {
@@ -44,30 +48,51 @@ border: 1px solid #ccc;
     return args['--tcpip']
   }
 
-  // TODO: replace for new args
-  function replceTcpipArgToSerial (args) {
-    const newArgs = args.map((arg, index) => {
-      if (arg === '-t') {
-        return '-s'
-      } else if (arg === '--tcpip') {
-        return '--serial'
-      } else if (arg.match(/^(-t|--tcpip)(=|\s)?(.*)/)) {
-        return arg.replace(/^(-t|--tcpip)(=|\s)?(.*)/, '$1$2$3')
-      } else {
-        return arg
-      }
-    })
-
-    return newArgs
-  }
-
-  // function getAdjustedLocationAndSizeToFitWithTitleBar (arg) {
-
-
-  // }
-
   function getConfigIdFromArgs (args) {
     return args['--spw-config-id']
+  }
+
+  function getScrcpyArgsFromArgs (args) {
+    const isWindowBorderless = args['--window-borderless'] === true
+
+
+    return Object.keys(args).reduce((acc, cur) => {
+      if (cur.startsWith('--spw-')) {
+        return acc
+      }
+
+      if (cur.startsWith('--tcpip')) {
+        return acc
+      }
+
+      if (cur === '_') {
+        console.warn('additional args', args[cur])
+
+        return acc
+      }
+
+      if (args[cur] === true) {
+        return [...acc, cur]
+      } else if (args[cur] === false) {
+        return acc
+      } else {
+        // windows board magic number
+        if (!isWindowBorderless) {
+          if (cur === '--window-y') {
+            // FIXME: windows borader size magic number
+            return [...acc, cur, (args[cur] + 31) + '']
+          } else if (cur === '--window-height') {
+            return [...acc, cur, (args[cur] - 31) + '']
+          } else if (cur === '--window-width') {
+            return [...acc, cur, (args[cur] - 2 * 0) + '']
+          } else if (cur === '--window-x') {
+            return [...acc, cur, (args[cur] + 1 * 0) + '']
+          }
+        }
+
+        return [...acc, cur, args[cur] + '']
+      }
+    }, [])
   }
 
 
@@ -85,26 +110,27 @@ border: 1px solid #ccc;
     return deviceDict
   }
 
+  function getArgsFromRawArgs (rawArgs) {
+    let args : Result<typeof argsTemplate> | null = null
+    try {
+      args = arg(argsTemplate, {
+        argv: rawArgs,
+        permissive: true
+      })
+    } catch (e) {
+    }
+
+    return args
+  }
+
 
   onMount(() => {
+    // TODO: move logic to utils
     setTimeout(async () => {
       const rawArgs = (await getEnvArgs()).slice(1)
       const deviceDict = await getAdbDeviceDict()
 
-      let args : Result<typeof argsTemplate> | null = null
-      try {
-        args = arg(argsTemplate, {
-          argv: rawArgs,
-          permissive: true
-        })
-      } catch (e) {
-      }
-
-      if (!args) {
-        error = 'Invalid arguments'
-        return
-      }
-
+      const args = getArgsFromRawArgs(rawArgs)
 
       console.log('args', args)
 
@@ -124,8 +150,8 @@ border: 1px solid #ccc;
       if (serialDeviceInArgs) {
         const device = serialDeviceInArgs
         if (deviceDict[device]) {
-          await runScrcpyCommand(rawArgs)
-          init()
+          await runScrcpyCommand(getScrcpyArgsFromArgs(args))
+          init(true)
         } else {
           error = `Device ${device} not connected`
         }
@@ -140,9 +166,8 @@ border: 1px solid #ccc;
         const newDeviceDict = await getAdbDeviceDict()
   
         if (newDeviceDict[device]) {
-          const newArgs = replceTcpipArgToSerial(args)
-          await runScrcpyCommand(newArgs)
-          init()
+          await runScrcpyCommand(getScrcpyArgsFromArgs(args).concat(['--serial', device]))
+          init(true)
           // change tcpip arg to serial arg
         } else {
           error = `Device ${device} not connected`
@@ -164,9 +189,9 @@ border: 1px solid #ccc;
           return
         }
 
-        const args = config.deviceConfigValue.map(el => {
+        const rawArgs = config.deviceConfigValue.map(el => {
           const value = JSON.parse(el.value)
-          if (el.key.startsWith('spw-')) {
+          if (el.key.startsWith('--spw-')) {
             return null
           }
 
@@ -190,21 +215,23 @@ border: 1px solid #ccc;
 
         if (device.isTcpipDevice && !device.isConnected) {
           await connectTcpipDevice(device.adbId)
+          await sleep(1000)
         }
 
-        args.unshift('--serial=' + device.adbId)
-        console.log('args', args)
+        rawArgs.unshift('--serial=' + device.adbId)
+        console.log('rawArgs', rawArgs)
 
         const isAutoSaveLocationAndSize =
           config.deviceConfigValue
-            .find(el => el.key === 'spw-autosave-location-size')
+            .find(el => el.key === '--spw-autosave-location-size')
             ?.value === 'true'
 
+        const args = getArgsFromRawArgs(rawArgs)
+        const isWindowBorderless = args?.['--window-borderless'] === true
+  
+        await runScrcpyCommand(getScrcpyArgsFromArgs(getArgsFromRawArgs(rawArgs)))
 
-        await runScrcpyCommand(args)
-
-
-        await init(true, isAutoSaveLocationAndSize, configId)
+        await init(true, isAutoSaveLocationAndSize, isWindowBorderless, configId)
 
         updateDeviceLastSeenAt(device.id)
         updateConfigLastSeenAt(config.id)
@@ -215,27 +242,8 @@ border: 1px solid #ccc;
 
       console.log('normal startup')
 
-
-      // prismaClientLike.deviceConfigValue.update({
-      //   where: {
-      //     key: 'spw-autosave-location-size'
-      //   }
-      //   data: {
-      //     value: JSON.stringify(true)
-      //   }
-      // })
-
       await init()
-  
-
-      // TODO: if is config arg
-    }, 200)
-
-
-    // make time for the splash screen to show before loading the app
-    // setTimeout(() => {
-    //   init()
-    // }, 200)
+    }, 10)
   })
 
 </script>
