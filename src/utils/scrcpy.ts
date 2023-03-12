@@ -39,11 +39,12 @@ export const argsTemplate = {
   '-t': '--show-touches',
   '--disable-screensaver': Boolean,
 
-  '--hid-keyboard': Boolean,
-  '-K': '--hid-keyboard',
-  '--hid-mouse': Boolean,
-  '-M': '--hid-mouse',
-  '--otg': Boolean,
+  // unsupported in windows
+  // '--hid-keyboard': Boolean,
+  // '-K': '--hid-keyboard',
+  // '--hid-mouse': Boolean,
+  // '-M': '--hid-mouse',
+  // '--otg': Boolean,
 
   '--prefer-text': Boolean,
   '--raw-key-events': Boolean,

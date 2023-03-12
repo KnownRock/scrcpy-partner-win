@@ -43,6 +43,11 @@ async function getForm (
     type: 'header',
     label: 'Main',
     name: 'main'
+  }, {
+    type: 'text',
+    label: 'Name',
+    name: 'name',
+    value: currentDeviceConfig?.name ?? 'New Config'
   },
   {
     type: 'option',
@@ -53,11 +58,6 @@ async function getForm (
     }),
     value: currentDeviceId ?? '',
     disabled: currentDevice !== undefined
-  }, {
-    type: 'text',
-    label: 'Name',
-    name: 'name',
-    value: currentDeviceConfig?.name ?? 'New Config'
   }]
 
   const advancedFormItems: FormItem[] = [{
@@ -68,7 +68,7 @@ async function getForm (
   {
     type: 'optional-switch',
     label: 'Autosave Location & Size',
-    name: 'spw-autosave-location-size',
+    name: '--spw-autosave-location-size',
     value: formValue['--spw-autosave-location-size'] ?? false,
     enable: formValue['--spw-autosave-location-size'] !== undefined
   }]
