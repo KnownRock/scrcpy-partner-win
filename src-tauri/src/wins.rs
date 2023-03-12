@@ -67,7 +67,11 @@ pub fn get_window_rect_by_hwnd(hwnd_usize: usize) -> RECT {
     rect
 }
 
-pub fn set_window_loc_by_hwnd(hwnd_usize: usize, window: &mut tauri::Window) {
+pub fn set_window_loc_by_hwnd(
+    hwnd_usize: usize,
+    window: &mut tauri::Window,
+    is_window_borderless: bool,
+) {
     if hwnd_usize == 0 {
         return;
     }
@@ -76,9 +80,14 @@ pub fn set_window_loc_by_hwnd(hwnd_usize: usize, window: &mut tauri::Window) {
 
     dbg!(rect.left, rect.top, rect.right, rect.bottom);
 
+    let mut new_right = rect.right;
+    if !is_window_borderless {
+        new_right = rect.right - 8;
+    }
+
     window
         .set_position(Position::Logical(LogicalPosition::new(
-            (rect.right - 8) as f64,
+            (new_right) as f64,
             (rect.top + 40i32) as f64,
         )))
         .unwrap();
