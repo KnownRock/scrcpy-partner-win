@@ -15,13 +15,11 @@ use winapi::shared::ntdef::LONG;
 use winapi::shared::windef::HWINEVENTHOOK;
 
 mod cmds;
-mod funcs;
 mod sendkey;
 mod tauri_funcs;
 mod wins;
 
 use cmds::{kill_process, run_scrcpy};
-use funcs::is_device_valid_args;
 use tauri_funcs::{init_main_window, init_tool_window};
 use wins::set_window_loc_by_hwnd;
 static mut TOOL_WINDOW: Option<tauri::Window> = None;
@@ -59,7 +57,7 @@ unsafe extern "system" fn win_event_loc_callback(
 
     match &mut TOOL_WINDOW {
         Some(window) => {
-            set_window_loc_by_hwnd(HWND, window);
+            set_window_loc_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
         }
         None => {}
     }
@@ -92,7 +90,7 @@ unsafe extern "system" fn win_event_order_callback(
 
     match &mut TOOL_WINDOW {
         Some(window) => {
-            set_window_loc_by_hwnd(HWND, window);
+            set_window_loc_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
         }
         None => {}
     }
@@ -153,13 +151,25 @@ unsafe extern "system" fn win_event_close_callback(
                 tokio::runtime::Runtime::new()
                     .unwrap()
                     .block_on(async move {
+                        let new_top = rect.top;
+                        let mut new_left = rect.left;
+                        let mut new_height = rect.bottom - rect.top;
+                        let mut new_width = rect.right - rect.left;
+
+                        // FIXME: windows borader size magic number
+                        if !IS_WINDOW_BORDERLESS {
+                            new_left = new_left + 8;
+                            new_height = new_height - 8;
+                            new_width = new_width - 16;
+                        }
+
                         call_prisma(
                             "deviceConfigValue".to_string(),
                             "upsert".to_string(),
                             get_prisma_json(
                                 CONFIG_ID.to_string(),
-                                "window-x".to_string(),
-                                serde_json::json!(rect.left).to_string(),
+                                "--window-x".to_string(),
+                                serde_json::json!(new_left).to_string(),
                             ),
                         )
                         .await;
@@ -169,22 +179,36 @@ unsafe extern "system" fn win_event_close_callback(
                             "upsert".to_string(),
                             get_prisma_json(
                                 CONFIG_ID.to_string(),
-                                "window-y".to_string(),
-                                serde_json::json!(rect.top).to_string(),
+                                "--window-y".to_string(),
+                                serde_json::json!(new_top).to_string(),
                             ),
                         )
                         .await;
 
-                        call_prisma(
-                            "deviceConfigValue".to_string(),
-                            "upsert".to_string(),
-                            get_prisma_json(
-                                CONFIG_ID.to_string(),
-                                "window-width".to_string(),
-                                serde_json::json!(rect.right - rect.left).to_string(),
-                            ),
-                        )
-                        .await;
+                        if new_width > 0 {
+                            call_prisma(
+                                "deviceConfigValue".to_string(),
+                                "upsert".to_string(),
+                                get_prisma_json(
+                                    CONFIG_ID.to_string(),
+                                    "--window-width".to_string(),
+                                    serde_json::json!(new_width).to_string(),
+                                ),
+                            )
+                            .await;
+                        }
+                        if new_height > 0 {
+                            call_prisma(
+                                "deviceConfigValue".to_string(),
+                                "upsert".to_string(),
+                                get_prisma_json(
+                                    CONFIG_ID.to_string(),
+                                    "--window-height".to_string(),
+                                    serde_json::json!(new_height).to_string(),
+                                ),
+                            )
+                            .await;
+                        }
 
                         std::process::exit(0);
                     });
@@ -256,6 +280,17 @@ fn adb_devices_l() -> String {
 }
 
 #[tauri::command]
+fn create_ms_link(link: String, args: Vec<String>) {
+    let home_path = std::env::var("USERPROFILE").unwrap();
+
+    let target = std::env::current_exe().unwrap();
+    let mut sl = mslnk::ShellLink::new(target.clone()).unwrap();
+    sl.set_arguments(Some(args.join(" ")));
+    sl.create_lnk(&format!("{}\\Desktop\\{}.lnk", home_path, link))
+        .unwrap();
+}
+
+#[tauri::command]
 fn lanuch_self(args: Vec<String>) {
     let self_path = std::env::current_exe().unwrap();
 
@@ -266,6 +301,18 @@ fn lanuch_self(args: Vec<String>) {
         .creation_flags(0x08000000)
         .spawn()
         .unwrap();
+}
+
+#[tauri::command]
+fn exit() {
+    unsafe {
+        if PID != 0 {
+            kill_process(PID);
+            PID = 0;
+        }
+    }
+
+    std::process::exit(0);
 }
 
 #[tauri::command]
@@ -301,7 +348,7 @@ fn init_tool_hooks(tool_window: tauri::Window) {
         watch_window_size_and_position_and_order(PID);
         match &mut TOOL_WINDOW {
             Some(window) => {
-                set_window_loc_by_hwnd(HWND, window);
+                set_window_loc_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
                 window.show().unwrap();
             }
             None => {}
@@ -383,6 +430,7 @@ async fn run_scrcpy_command(args: Vec<String>) -> bool {
 }
 
 static mut IS_AUTO_SAVE_LOCATION_AND_SIZE: bool = false;
+static mut IS_WINDOW_BORDERLESS: bool = false;
 static mut CONFIG_ID: String = String::new();
 // static mut C: Option<FnMut(usize, usize, usize, usize)> = None;
 
@@ -391,6 +439,8 @@ async fn init(
     app: tauri::AppHandle,
     is_tool_mode: bool,
     is_auto_save_location_and_size: bool,
+    // isWindowBorderless
+    is_window_borderless: bool,
     config_id: String,
 ) -> String {
     if is_tool_mode {
@@ -401,6 +451,7 @@ async fn init(
             println!("Mode: tool");
 
             IS_AUTO_SAVE_LOCATION_AND_SIZE = is_auto_save_location_and_size;
+            IS_WINDOW_BORDERLESS = is_window_borderless;
             CONFIG_ID = config_id;
 
             dbg!(&IS_AUTO_SAVE_LOCATION_AND_SIZE);
@@ -446,7 +497,9 @@ fn main() {
             connect_tcpip_device,
             get_env_args,
             close_application,
-            run_scrcpy_command
+            run_scrcpy_command,
+            create_ms_link,
+            exit
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");

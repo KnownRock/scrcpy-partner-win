@@ -18,6 +18,7 @@
   import Menu from '@smui/menu'
   import List, { Item, Separator, Text } from '@smui/list'
   import { deleteConfigById, type DeviceConfigExt } from '../utils/configs'
+  import { createMsLink } from '../utils/app'
   const freshDevices = getContext('freshDevices') as () => void
 
   export let device: DeviceExt
@@ -57,6 +58,16 @@
     await connectTcpipDevice(device.adbId, false)
     await sleep(1000)
     await freshDevices()
+  }
+
+  async function createLink () {
+    if (config) {
+      createMsLink(`spw-[${config.name}]`,
+        [`--spw-config-id=${config.id}`])
+    } else {
+      createMsLink(`spw-[${device.name}]`,
+        [`--serial=${device.adbId}`])
+    }
   }
 
   async function saveDevice (type? : 'copy') {
@@ -266,6 +277,11 @@
               menu.setOpen(false)
           }}>
             <List>
+              <!-- createMsLink -->
+              <Item on:SMUI:action={() => createLink()}>
+                <Text>Create Link</Text>
+              </Item>
+
               <Item on:SMUI:action={() => saveDevice()}>
                 <Text>Edit</Text>
               </Item>
