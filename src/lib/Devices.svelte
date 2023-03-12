@@ -54,6 +54,7 @@
   ">
     <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 4, phone: 1 }}>
 
+      {#if queryType !== 'only adb'}
       <Fab  color="primary" on:click={() => {
         deviceForm.set({
           show: true,
@@ -75,6 +76,7 @@
         <Icon  class="material-icons">add</Icon>
         <Label>Add</Label>
       </Fab>
+      {/if}
       
     </Cell>
 
