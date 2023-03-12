@@ -36,7 +36,7 @@ pub fn init_tool_window(app: &tauri::AppHandle) {
     tool_window
         .set_size(Size::Logical(LogicalSize {
             width: 48.0,
-            height: 600.0,
+            height: 650.0,
         }))
         .unwrap();
 }
@@ -56,7 +56,7 @@ pub fn init_tool_window(app: &tauri::AppHandle) {
     tool_window
         .set_size(Size::Logical(LogicalSize {
             width: 48.0,
-            height: 600.0,
+            height: 650.0,
         }))
         .unwrap();
 }
