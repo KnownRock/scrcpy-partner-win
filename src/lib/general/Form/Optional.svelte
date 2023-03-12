@@ -11,9 +11,11 @@
   <Checkbox bind:checked={enable} />
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div slot="label"
-    on:click={e => { e.stopPropagation() }}
-    on:mousedown={e => e.stopPropagation()}
-    on:mouseup={e => e.stopPropagation()}
+    on:click={e => {
+      e.stopPropagation()
+      e.preventDefault()
+    }}
+    
   >
     <slot />
   </div>
