@@ -7,7 +7,7 @@
 [v] add a shortcut add function
 [ ] fix ipc pipe startup issue in dev mode?
 [ ] add adb scripts management
-[ ] add sidebar buttons management
+[ ] add sidebar buttons management & settings
 [ ] add mouse events recoding
 [ ] config default name
 [ ] fix autocomplete input issue
