@@ -7,6 +7,10 @@
   import { onMount } from 'svelte'
   import { showMainWindow } from '../utils/app'
   import Form from './general/Form.svelte'
+  import Message from './general/Message.svelte'
+  import Loading from './general/Loading.svelte'
+  import Sidebar from './Sidebar.svelte'
+
   type TabEntry = {
     k: string;
     label: string;
@@ -16,17 +20,21 @@
 
   const tabs: TabEntry[] = [
     {
+      k: 'sidebar',
+      label: 'Sidebar'
+    },
+    {
       k: 'config',
       label: 'Config'
     },
     {
       k: 'devices',
       label: 'Devices'
-    },
-    {
-      k: 'adb',
-      label: 'Adb Devices'
     }
+    // {
+    //   k: 'adb',
+    //   label: 'Adb Devices'
+    // }
   ]
   let active = tabs[0]
 
@@ -38,6 +46,8 @@
 
 <main class="container">
   <Form />
+  <Message />
+  <Loading />
   <TabBar {tabs} let:tab {key} bind:active> 
     <Tab
     
@@ -53,6 +63,10 @@
   </TabBar>
 
   <div class="row">
+    {#if active.k === 'sidebar'}
+      <Sidebar />
+    {/if}
+
     {#if active.k === 'config'}
       <Configs />
     {/if}

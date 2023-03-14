@@ -66,7 +66,9 @@ border: 1px solid #ccc;
       }
 
       if (cur === '_') {
-        console.warn('additional args', args[cur])
+        if (args._.length > 0) {
+          console.warn('additional args', args._)
+        }
 
         return acc
       }

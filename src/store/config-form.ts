@@ -1,6 +1,6 @@
 
 import { writable } from 'svelte/store'
-import { generalDialogForm } from '.'
+import { generalDialogForm, generalLoading, generalMsg } from '.'
 import { getDevices } from '../utils/devices'
 import { saveConfig, type DeviceConfigValueExt, type DeviceConfigExt, getConfig, saveConfigItems, getConfigItems } from '../utils/configs'
 import { getFormItems } from '../utils/scrcpy'
@@ -119,6 +119,24 @@ store.subscribe(value => {
                   return !['device', 'name'].includes(key)
                 })
 
+              if ((await getDevices('only saved')).find((device) => device.id === entity.device) === undefined) {
+                generalMsg.set({
+                  show: true,
+                  msg: 'Device not found',
+                  type: 'error',
+                  buttons: [
+                    {
+                      label: 'OK',
+                      callback: () => {
+                        return true
+                      }
+                    }
+                  ]
+                })
+
+                return false
+              }
+
               let deviceConfig: DeviceConfigExt = {
                 id: '',
                 deviceId: entity.device,
@@ -143,6 +161,10 @@ store.subscribe(value => {
                 }
               }
 
+              generalLoading.set({
+                show: true
+              })
+
               const config = await saveConfig(deviceConfig)
 
               // const configItems = await getConfigItems(
@@ -165,6 +187,10 @@ store.subscribe(value => {
               })
 
               await saveConfigItems(config.id, configItems)
+
+              generalLoading.set({
+                show: false
+              })
 
               value.callback?.()
 

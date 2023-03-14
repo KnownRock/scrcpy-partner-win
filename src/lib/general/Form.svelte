@@ -1,7 +1,6 @@
 <script lang="ts">
   import Select, { Option } from '@smui/select'
-  import Checkbox from '@smui/checkbox'
-  import Dialog, { Header, Title, Content, Actions } from '@smui/dialog'
+  import Dialog, { Header, Title, Content } from '@smui/dialog'
   import IconButton from '@smui/icon-button'
   import Button, { Label } from '@smui/button'
   import Switch from '@smui/switch'
@@ -260,6 +259,7 @@
               </FormField> -->
               <Optional bind:disabled={formItem.disabled} bind:enable={formItem.enable} >
                 <Autocomplete
+                  combobox
                   type="text"
                   disabled={!formItem.enable || formItem.disabled}
                   options={formItem.options}
@@ -272,6 +272,7 @@
             {#if formItem.type === 'optional-auto-number'}
               <Optional bind:disabled={formItem.disabled} bind:enable={formItem.enable} >
                 <Autocomplete
+                  combobox
                   type="number"
                   disabled={!formItem.enable || formItem.disabled}
                   options={formItem.options}
@@ -345,14 +346,23 @@
       {/each}
     </LayoutGrid>
   </Content>
-  <Actions>
-    {#each buttons as button}
-      <Button 
-      action={button.action} 
-      defaultAction={!!button.defaultAction}
-        on:click={() => buttonHandler(button)}>
-        <Label>{button.label}</Label>
-      </Button>
-    {/each}
-  </Actions>
+  <!-- <Actions> -->
+
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <div  on:click={e => {
+        e.stopPropagation()
+        e.preventDefault()
+      }} style="display: flex; justify-content: flex-end; padding:  1rem 1rem 0.5rem 1rem;">
+
+ 
+      {#each buttons as button}
+        <Button 
+        action={button.action} 
+        defaultAction={!!button.defaultAction}
+          on:click={() => buttonHandler(button)}>
+          <Label>{button.label}</Label>
+        </Button>
+      {/each}
+    </div>
+  <!-- </Actions> -->
 </Dialog>

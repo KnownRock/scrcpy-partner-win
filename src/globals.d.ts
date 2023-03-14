@@ -10,6 +10,12 @@ interface DialogFormButton {
   action?: string
 }
 
+interface MsgButton {
+  label: string
+  icon?: string
+  callback: () => void
+}
+
 type FormItem = ({
   type: 'option'
   options: Array<{ label: string, value: string }>

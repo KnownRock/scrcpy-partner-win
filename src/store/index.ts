@@ -3,6 +3,14 @@ export {
 } from './general-dialog-form'
 
 export {
+  default as generalMsg
+} from './general-msg'
+
+export {
+  default as generalLoading
+} from './general-loading'
+
+export {
   default as configForm
 } from './config-form'
 
