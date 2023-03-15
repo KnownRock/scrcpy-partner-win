@@ -40,7 +40,19 @@ model DeviceConfig{
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
   lastSeenAt  DateTime?
+
+  sideBarConfigId String?
+  sideBarConfig   SideBarConfig? @relation(fields: [sideBarConfigId], references: [id])
 }
+
+model SideBarConfig{
+  id       String     @id @default(uuid())
+  name     String
+  value    String
+
+  deviceConfig DeviceConfig[]
+}
+
 
 model DeviceConfigValue{
   id       String     @id @default(uuid())
