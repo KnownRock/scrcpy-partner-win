@@ -37,6 +37,10 @@ async function init (url, pipeName) {
       }).catch((e) => {
         console.error(e)
         socket.write(JSON.stringify({ error: e.message }))
+      }).finally(() => {
+        setTimeout(() => {
+          socket.end()
+        }, 0)
       })
     })
   })
