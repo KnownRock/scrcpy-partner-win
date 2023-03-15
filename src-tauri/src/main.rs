@@ -5,7 +5,7 @@
 
 use std::env;
 
-use tauri::Manager;
+use tauri::{LogicalSize, Manager};
 
 use std::os::windows::process::CommandExt;
 use std::process::Command;
@@ -280,6 +280,15 @@ fn adb_devices_l() -> String {
 }
 
 #[tauri::command]
+async fn open(exec: String, args: Vec<String>, cwd: String) {
+    Command::new(exec)
+        .args(args)
+        .current_dir(cwd)
+        .spawn()
+        .unwrap();
+}
+
+#[tauri::command]
 fn create_ms_link(link: String, args: Vec<String>) {
     let home_path = std::env::var("USERPROFILE").unwrap();
 
@@ -372,6 +381,19 @@ async fn show_main_window(app: tauri::AppHandle) {
         }
         None => {}
     }
+}
+
+#[tauri::command]
+async fn get_config_id() -> String {
+    unsafe { CONFIG_ID.clone() }
+}
+
+#[tauri::command]
+async fn set_tool_window_size(app: tauri::AppHandle, width: f64, height: f64) {
+    app.get_window("tool")
+        .unwrap()
+        .set_size(LogicalSize::new(width, height))
+        .unwrap();
 }
 
 #[tauri::command]
@@ -499,7 +521,10 @@ fn main() {
             close_application,
             run_scrcpy_command,
             create_ms_link,
-            exit
+            exit,
+            set_tool_window_size,
+            get_config_id,
+            open
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");
