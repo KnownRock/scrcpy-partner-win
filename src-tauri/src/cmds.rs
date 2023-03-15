@@ -2,6 +2,7 @@ use std::os::windows::process::CommandExt;
 use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
+use sysinfo::{NetworkExt, NetworksExt, ProcessExt, System, SystemExt};
 
 use crate::wins::get_hwnd_by_pid;
 // use async_process::Stdio;
@@ -55,23 +56,13 @@ fn test_get_adb_devices() {
 }
 
 pub fn get_all_pids() -> Vec<u32> {
-    let output = std::process::Command::new("tasklist")
-        .arg("/FO")
-        .arg("CSV")
-        .arg("/NH")
-        .creation_flags(0x08000000)
-        .output()
-        .expect("failed to execute process");
-    let output = String::from_utf8(output.stdout).unwrap();
-
     let mut pids = Vec::new();
-    for line in output.lines() {
-        let mut iter = line.split(',');
-        let _name = iter.next().unwrap();
-        let pid = iter.next().unwrap();
-        let pid = pid.replace("\"", "");
-        let pid = pid.parse::<u32>().unwrap();
-        pids.push(pid);
+    let system = System::new_all();
+    for proc in system.processes() {
+        let pid = proc.0;
+        let pid_string = pid.to_string();
+        let pid_u32 = pid_string.parse::<u32>().unwrap();
+        pids.push(pid_u32);
     }
     pids
 }
@@ -354,7 +345,7 @@ use tokio::net::windows::named_pipe;
 static mut PRISMA: Option<String> = None;
 use std::error::Error;
 use std::io;
-use tokio::io::Interest;
+use tokio::io::{AsyncReadExt, Interest};
 use uuid::Uuid;
 
 static mut STATIC_PIPE_NAME: Option<String> = None;
@@ -426,7 +417,7 @@ pub async fn call_prisma(
     unsafe {
         let pipe_name = PRISMA.as_ref().unwrap();
 
-        let client = named_pipe::ClientOptions::new().open(pipe_name).unwrap();
+        let mut client = named_pipe::ClientOptions::new().open(pipe_name).unwrap();
 
         loop {
             let ready = client
@@ -468,37 +459,26 @@ pub async fn call_prisma(
             tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
         }
 
+        let mut full_data = vec![0; 1024 * 1024];
+        let mut ptr = 0;
+
+        // FIXME: may unicode problem
         loop {
             let ready = client
                 .ready(Interest::READABLE | Interest::WRITABLE)
                 .await?;
 
-            // dbg!(ready);
-
             if ready.is_readable() {
-                let mut data = vec![0; 1024 * 1024];
+                dbg!("readable");
 
-                match client.try_read(&mut data) {
-                    Ok(n) => {
-                        println!("read {} bytes", &n);
+                let mut data = Vec::<u8>::new();
+                client.read_to_end(&mut data).await?;
 
-                        let mut text = String::from_utf8(data).unwrap();
-                        text = text.trim_end_matches(char::from(0)).to_string();
-                        println!("text: {:?}", &text);
+                let mut text = String::from_utf8(data).unwrap();
+                text = text.trim_end_matches(char::from(0)).to_string();
+                println!("text: {:?}", &text);
 
-                        if text.len() > 0 {
-                            return Ok(text);
-                        } else {
-                            continue;
-                        }
-                    }
-                    Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-                        continue;
-                    }
-                    Err(_e) => {
-                        continue;
-                    }
-                }
+                return Ok(text);
             }
         }
     }
