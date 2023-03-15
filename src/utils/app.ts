@@ -47,3 +47,19 @@ export async function runScrcpyCommand (args: string[]): Promise<boolean> {
 export async function exit (): Promise<void> {
   await callTauriFunction('exit')
 }
+
+// set_tool_window_size
+export async function setToolWindowSize (width: number, height: number): Promise<void> {
+  await callTauriFunction('set_tool_window_size', { width, height })
+}
+
+// get_config_id
+export async function getConfigId (): Promise<string> {
+  return await callTauriFunction<string>('get_config_id')
+}
+
+// open
+// async fn open(exec: String, args: Vec<String>, cwd: String) {
+export async function open (exec: string, args: string[], cwd: string): Promise<void> {
+  await callTauriFunction('open', { exec, args, cwd })
+}
