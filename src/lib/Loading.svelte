@@ -136,6 +136,11 @@ border: 1px solid #ccc;
 
       console.log('args', args)
 
+      if (args === null) {
+        error = 'Invalid arguments'
+        return
+      }
+
       const serialDeviceInArgs = getSerialDevicesFromArg(args)
       console.log('serialDeviceInArgs', serialDeviceInArgs)
 
