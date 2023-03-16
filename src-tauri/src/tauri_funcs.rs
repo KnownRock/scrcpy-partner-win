@@ -13,18 +13,12 @@ pub fn init_main_window(app: &tauri::AppHandle) {
 
 #[cfg(debug_assertions)]
 pub fn init_main_window(app: &tauri::AppHandle) {
-    let w = tauri::WindowBuilder::new(app, "main", tauri::WindowUrl::App("index.html".into()))
+    tauri::WindowBuilder::new(app, "main", tauri::WindowUrl::App("index.html".into()))
         .center()
         // .visible(false)
         .title("Scrcpy Partner")
         .build()
         .unwrap();
-
-    w.set_size(Size::Logical(LogicalSize {
-        width: 1000.0,
-        height: 800.0,
-    }))
-    .unwrap();
 }
 
 #[cfg(not(debug_assertions))]
@@ -61,8 +55,8 @@ pub fn init_tool_window(app: &tauri::AppHandle) {
 
     tool_window
         .set_size(Size::Logical(LogicalSize {
-            width: 48.0,
-            height: 650.0,
+            width: 50.0,
+            height: 50.0,
         }))
         .unwrap();
 }

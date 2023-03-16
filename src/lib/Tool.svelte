@@ -2,76 +2,21 @@
 <script lang="ts">
   import 'svelte-material-ui/bare.css'
   import IconButton from '@smui/icon-button'
-
   import { invoke } from '@tauri-apps/api/tauri'
   import { onMount } from 'svelte'
   import { exit, getConfigId, setToolWindowSize, showToolWindow, open } from '../utils/app'
   import Grid from 'svelte-grid'
-  import Textfield from '@smui/textfield'
   import { commandKeyDict } from './Tool/command-key-dict'
 
-  import gridHelp from 'svelte-grid/build/helper/index.mjs'
-  import { v4 as uuidv4 } from 'uuid'
-  import { addableItems, addableItems2 } from './Tool/addable-items'
   import prismaClientLike from '../utils/prisma-like-client'
-  import Button from '@smui/button'
-  import Select, { Option } from '@smui/select'
   import { lanuchSelf } from '../utils/devices'
 
-  import { open as openFileDialog } from '@tauri-apps/api/dialog'
-  import Dialog, { Actions, Header, Title } from '@smui/dialog'
-  import { Content } from '@smui/card'
-
-
-  const fullAddableItems = addableItems.concat(addableItems2)
-  
-  let sidebarName = ''
-  
-  function getDefaultSidebarSingleLayer () {
-    return {
-      gridSize: [1, addableItems.length],
-      items: addableItems.map((item, index) => {
-        const insertItem = {
-          id: uuidv4(),
-          item
-        }
-        const gridPosAndSize = gridHelp.item({
-          x: 0,
-          y: index,
-          w: 1,
-          h: 1
-        })
-
-        Array.from(Array(maxWidth + 1)).forEach((_, i) => {
-          insertItem[i] = gridPosAndSize
-        })
-  
-        return insertItem
-      })
-
-    }
-  }
-
-  function getDefaultSidebarConfig () {
-    const sidebarConfig = {
-      activeLayer: 0,
-      layers: Array.from(Array(9)).map((_, i) => {
-        if (i === 0) {
-          return getDefaultSidebarSingleLayer()
-        } else {
-          return {
-            gridSize: [1, 1],
-            items: []
-          }
-        }
-      })
-    }
-
-    return sidebarConfig
-  }
+  import Setting from './Tool/Setting.svelte'
+  import { getDefaultSidebarConfig, maxWidth } from './Tool/config'
 
 
   let sidebarConfig = {
+    name: 'default',
     activeLayer: 0,
     layers: Array.from(Array(9)).map((_, i) => {
       return {
@@ -89,7 +34,7 @@
     }
   }
 
-  let mode: 'normal' | 'setting' = 'normal'
+  let mode: 'normal' | 'setting' = 'setting'
   async function toggleMode () {
     if (mode === 'normal') {
       mode = 'setting'
@@ -98,9 +43,9 @@
     }
   }
 
-  let gridSize = [1, addableItems.length]
+  let gridSize = [1, 1]
 
-  const maxWidth = 10
+  // const maxWidth = 10
 
   // $: sidebarConfig && (() => {
   //   gridSize = sidebarConfig.layers[sidebarConfig.activeLayer].gridSize
@@ -147,29 +92,6 @@
 
   let items = [] as Array<any>
 
-
-  function addAbleItems (item: any) {
-    const insertItem = {
-      id: uuidv4(),
-      item
-    }
-
-    const gridPosAndSize = gridHelp.item({
-      x: 0,
-      y: 0,
-      w: 1,
-      h: 1
-    })
-
-
-    Array.from(Array(maxWidth + 1)).forEach((_, i) => {
-      insertItem[i] = gridPosAndSize
-    })
-  
-    items.push(insertItem)
-
-    items = items
-  }
 
   $: items && (() => {
     items.forEach((item) => {
@@ -222,7 +144,6 @@
       const queriedSidebarConfig = config.sideBarConfig
 
       if (queriedSidebarConfig) {
-        sidebarName = queriedSidebarConfig.name
         const config = JSON.parse(queriedSidebarConfig.value)
         sidebarConfig = config
       } else {
@@ -235,41 +156,6 @@
     layerChanged()
   })
 
-  function resetSidebarConfig () {
-    const defaultConfig = getDefaultSidebarConfig()
-    sidebarConfig = defaultConfig
-
-    layerChanged()
-  }
-
-  async function saveSidebarConfig () {
-    const config = await getConfigWithSidebarConfig()
-
-    if (config) {
-      // const sidebarConfig = config.sideBarConfig
-
-      // debugger
-  
-      prismaClientLike.deviceConfig.update({
-        where: {
-          id: currentConfigId
-        },
-        data: {
-          sideBarConfig: {
-            update: {
-              name: sidebarName,
-              value: JSON.stringify(sidebarConfig)
-            },
-            create: {
-              name: sidebarName,
-  
-              value: JSON.stringify(sidebarConfig)
-            }
-          }
-        }
-      })
-    }
-  }
 
   function execute (item) {
     if (item.cmdType === 'scrcpy-cmd') {
@@ -326,108 +212,7 @@
     items = [...items]
   }
 
-
-  async function showAddDialog () {
-    // alert(1234)
-
-    showAddDialogVisible = true
-
-    // const selected = await open({
-    //   filters: [{
-    //     name: 'Executables',
-    //     extensions: ['*']
-    //   }]
-    // })
-
-    // console.log('selected', selected)
-  }
-
-  let showAddDialogVisible = false
-
-  const execButtonInfo = {
-    icon: 'web_asset',
-    uiType: 'icon-button',
-
-    cmdType: 'app-cmd',
-    cmdName: 'open',
-    opts: {
-      exec: '',
-      args: '',
-      cwd: ''
-    }
-
-  }
-
-  async function setExecPath () {
-    const selected = await openFileDialog({
-      filters: [{
-        name: 'Executables',
-        extensions: ['*']
-      }]
-    })
-
-    const str = (typeof selected === 'string' ? selected : selected?.[0]) ?? ''
-
-    execButtonInfo.opts.exec = str
-
-    if (!execButtonInfo.opts.cwd) {
-      execButtonInfo.opts.cwd = str.replace(/\\[^\\]+$/, '')
-    }
-  }
-
 </script>
-<Dialog
-  bind:open={showAddDialogVisible}
-  title="Add Item"
-  width="400"
-  height="300"
-  on:close={() => { showAddDialogVisible = false }}
->
-<Header>
-  <Title id="fullscreen-title">{ 'Run Application' }</Title>
-</Header>
-<Content>
-  <div style="display:flex;flex-direction:column;">
-  <Textfield
-    label="Name"
-    bind:value={execButtonInfo.opts.exec}
-  />
-  <Button on:click={setExecPath}>Select Executable</Button>
-  <Textfield
-    label="Args"
-    bind:value={execButtonInfo.opts.args}
-  />
-  <Textfield
-    label="Cwd"
-    bind:value={execButtonInfo.opts.cwd}
-  />
-  <Textfield
-    label="Icon"
-    bind:value={execButtonInfo.icon}
-  />
-  <IconButton class="material-icons">
-    {execButtonInfo.icon}
-  </IconButton>
-  <a href="https://fonts.google.com/icons" target="_blank" rel="noreferrer">Google Material Icons</a>
-
-</div>
-</Content>
-  <Actions>
-    <Button
-      on:click={() => { showAddDialogVisible = false }}
-    >
-      Cancel
-    </Button>
-    <Button
-      on:click={() => {
-        showAddDialogVisible = false
-        addAbleItems(execButtonInfo)
-      }}
-    >
-      OK
-    </Button>
-  </Actions>
-</Dialog>
 
 
 
@@ -480,79 +265,18 @@
   
   </div>
   {#if mode === 'setting'}
-  <div style="
-    padding:0 10px 0 50px; min-height:600px;
-    display: flex; flex-direction: column; justify-content: space-between;
-    ">
-    <div>
-      <h1>
-        Settings
-      </h1>
+    <Setting
+      bind:sidebarConfig={sidebarConfig}
+      bind:items={items}
+      bind:gridSize={gridSize}
+      bind:activeLayer={activeLayer}
+      bind:currentConfigId={currentConfigId}
+      maxWidth={maxWidth}
+      getConfigWithSidebarConfig={getConfigWithSidebarConfig}
+      layerChanged={layerChanged}
+      getDefaultSidebarConfig={getDefaultSidebarConfig}
 
-      <!-- name -->
-      <Textfield 
-        label="Sidebar Config Name"
-        bind:value={sidebarName} 
-        type="text" />
-
-      <Select bind:value={activeLayer} >
-        {#each sidebarConfig.layers as layer, index}
-          <Option value={index}>
-            {`Layer ${index + 1}`}
-          </Option>
-        {/each}
-      </Select>
-  
-      <div style="display:flex">
-        <Textfield 
-          label="Grid Size X"
-          bind:value={gridSize[0]} 
-          min={1}
-          type="number" />
-        <Textfield 
-          style="margin-left: 10px;"
-          label="Grid Size Y"
-          min={1}
-          bind:value={gridSize[1]} 
-          type="number" />
-      </div>
-  
-      <div style="display:flex;    width: 350px;    flex-flow: row wrap;">
-  
-        {#each fullAddableItems as item}
-          {#if item.uiType === 'icon-button'}
-          <IconButton class="material-icons" on:click={() => addAbleItems(item)}>
-            {item.icon}
-          </IconButton> 
-          {/if}
-        {/each}
-
-        <IconButton class="material-icons" on:click={() => showAddDialog()}>
-          open_in_new
-        </IconButton> 
-      </div>
-  
-    </div>
-    
-
-    <div
-      style="
-      display: flex; justify-content: flex-end;
-      "  
-    >
-      <!-- resett -->
-      <Button on:click={() => { resetSidebarConfig() }} style="margin-right: 10px;">
-        Reset
-      </Button>
-      <!-- save -->
-      <Button on:click={() => { saveSidebarConfig() }}>
-        Save
-      </Button>
-    </div>
-
-
-
-  </div>
+    />
   {/if}
 </div>
 
