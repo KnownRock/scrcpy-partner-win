@@ -4,7 +4,7 @@
   import IconButton from '@smui/icon-button'
   import { invoke } from '@tauri-apps/api/tauri'
   import { onMount } from 'svelte'
-  import { exit, getConfigId, setToolWindowSize, showToolWindow, open } from '../utils/app'
+  import { exit, getConfigId, setToolWindowSize, showToolWindow, open, start } from '../utils/app'
   import Grid from 'svelte-grid'
   import { commandKeyDict } from './Tool/command-key-dict'
 
@@ -34,7 +34,7 @@
     }
   }
 
-  let mode: 'normal' | 'setting' = 'setting'
+  let mode: 'normal' | 'setting' = 'normal'
   async function toggleMode () {
     if (mode === 'normal') {
       mode = 'setting'
@@ -203,6 +203,9 @@
       }
       if (item.cmdName === 'open') {
         open(item.opts.exec, item.opts.args.split(' ').filter((i) => i), item.opts.cwd)
+      }
+      if (item.cmdName === 'start') {
+        start(item.opts.exec, item.opts.cwd)
       }
     }
   }

@@ -15,10 +15,14 @@
     bind:value={model.exec}
   />
   <Button on:click={setExecPath}>Select Executable</Button>
+
+
   <Textfield
+    disabled={execMode === 'start'}
     label="Args"
     bind:value={model.args}
   />
+
   <Textfield
     label="Cwd"
     bind:value={model.cwd}
@@ -70,9 +74,18 @@
 
   type Model = typeof model
 
+  export let execMode: 'exec' | 'start' = 'exec'
+
 
   export let onSubmit = (model: Model) => {}
   export let show = false
+
+  $: show && (() => {
+    model.exec = ''
+    model.args = ''
+    model.cwd = ''
+    model.icon = 'web_asset'
+  })()
 
   async function setExecPath () {
     const selected = await openFileDialog({

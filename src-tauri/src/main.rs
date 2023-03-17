@@ -317,6 +317,14 @@ async fn open(exec: String, args: Vec<String>, cwd: String) {
 }
 
 #[tauri::command]
+async fn start(exec: String, cwd: String) {
+    Command::new("cmd")
+        .args(["/C", "start", "/d", cwd.as_str(), exec.as_str()])
+        .spawn()
+        .unwrap();
+}
+
+#[tauri::command]
 fn create_ms_link(link: String, args: Vec<String>) {
     let home_path = std::env::var("USERPROFILE").unwrap();
 
@@ -552,7 +560,8 @@ fn main() {
             exit,
             set_tool_window_size,
             get_config_id,
-            open
+            open,
+            start
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");

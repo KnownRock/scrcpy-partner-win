@@ -24,9 +24,14 @@
   export let currentConfigId
 
   let showAddDialogVisible = false
+  let showAddStartDialogVisible = false
 
   async function showAddDialog () {
     showAddDialogVisible = true
+  }
+
+  async function showAddStartDialog () {
+    showAddStartDialogVisible = true
   }
 
   function addAbleItems (item: any) {
@@ -103,6 +108,7 @@
 </script>
 
 <ExecDialog
+  execMode="exec"
   bind:show={showAddDialogVisible}
   onSubmit={(model) => {
      const execButtonInfo = {
@@ -123,7 +129,31 @@
     showAddDialogVisible = false
   }}
   
-  />
+/>
+
+<ExecDialog
+  bind:show={showAddStartDialogVisible}
+  execMode="start"
+  onSubmit={(model) => {
+     const execButtonInfo = {
+    icon: model.icon,
+    uiType: 'icon-button',
+
+    cmdType: 'app-cmd',
+    cmdName: 'start',
+    opts: {
+      exec: model.exec,
+      args: model.args,
+      cwd: model.cwd
+    }
+
+  }
+
+    addAbleItems(execButtonInfo)
+    showAddDialogVisible = false
+  }}
+  
+/>
 
 <Loading />
 <div
@@ -180,6 +210,10 @@
 
       <IconButton class="material-icons" on:click={() => showAddDialog()}>
         open_in_new
+      </IconButton>
+
+      <IconButton class="material-icons" on:click={() => showAddStartDialog()}>
+        terminal
       </IconButton>
     </div>
   </div>

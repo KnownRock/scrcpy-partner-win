@@ -63,3 +63,9 @@ export async function getConfigId (): Promise<string> {
 export async function open (exec: string, args: string[], cwd: string): Promise<void> {
   await callTauriFunction('open', { exec, args, cwd })
 }
+
+// start
+// async fn open(exec: String, cwd: String) {
+export async function start (exec: string, cwd: string): Promise<void> {
+  await callTauriFunction('start', { exec, cwd })
+}
