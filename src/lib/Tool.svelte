@@ -77,13 +77,10 @@
 
     if (mode === 'normal') {
       setToolWindowSize(barSize[0] + 2, barSize[1] + 2)
-      disableItems()
     } else {
       // keep setting visible
       const newHeight = Math.max(600, barSize[1])
-
       setToolWindowSize(barSize[0] + 400 + 2, newHeight + 2)
-      enableItems()
     }
 
     setItemsBySidebarConfig()
@@ -103,14 +100,32 @@
 
   function setItemsBySidebarConfig () {
     items = sidebarConfig.layers[sidebarConfig.activeLayer].items.map((i) => {
+      const coord = i.coord ?? gridHelp.item({
+        x: 0,
+        y: 0,
+        w: 1,
+        h: 1
+      })
+
+      const coordWithEnableState = {
+        ...coord,
+  
+        ...(mode === 'normal'
+          ? {
+              fixed: true,
+              resizable: false,
+              draggable: false
+            }
+          : {
+              fixed: false,
+              resizable: true,
+              draggable: true
+            })
+      }
+
       return {
         id: i.id,
-        [gridSize[0]]: i.coord ?? gridHelp.item({
-          x: 0,
-          y: 0,
-          w: 1,
-          h: 1
-        }),
+        [gridSize[0]]: coordWithEnableState,
         item: i.item
       }
     })
@@ -214,38 +229,6 @@
     items = items.filter((i) => i.id !== item.id)
     // sidebarConfig.layers[sidebarConfig.activeLayer].items = items
     setSidebarConfigItems(items)
-  }
-
-  function enableItems () {
-    items.forEach((item) => {
-      // Array.from(Array(maxWidth + 1)).forEach((_, i) => {
-      const i = gridSize[0]
-      item[i] = {
-        ...item[i],
-        fixed: false,
-        resizable: true,
-        draggable: true
-      }
-      // })
-    })
-
-    items = [...items]
-  }
-
-  function disableItems () {
-    items.forEach((item) => {
-      // Array.from(Array(maxWidth + 1)).forEach((_, i) => {
-      const i = gridSize[0]
-      item[i] = {
-        ...item[i],
-        fixed: true,
-        resizable: false,
-        draggable: false
-      }
-      // })
-    })
-
-    items = [...items]
   }
 
 </script>
