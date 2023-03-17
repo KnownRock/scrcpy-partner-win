@@ -144,7 +144,9 @@ store.subscribe(value => {
 
                 createdAt: null,
                 updatedAt: null,
-                lastSeenAt: null
+                lastSeenAt: null,
+
+                sideBarConfigId: null
               }
 
               if (value.type === 'edit' || value.type === 'copy') {
@@ -166,10 +168,6 @@ store.subscribe(value => {
               })
 
               const config = await saveConfig(deviceConfig)
-
-              // const configItems = await getConfigItems(
-              //   deviceConfig.id
-              // ) ?? []
 
               const configItems: DeviceConfigValueExt[] = []
               deviceConfigItems.forEach(([key, value]) => {
