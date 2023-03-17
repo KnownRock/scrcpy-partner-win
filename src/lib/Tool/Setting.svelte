@@ -10,6 +10,7 @@
   import Select, { Option } from '@smui/select'
   import ExecDialog from './ExecDialog.svelte'
   import { addableItems, addableItems2 } from './addable-items'
+  import { getDefaultSidebarConfig } from './config'
 
   const fullAddableItems = addableItems.concat(addableItems2)
 
@@ -17,9 +18,6 @@
   export let activeLayer
   export let gridSize
   export let items
-  export let maxWidth
-  export let getDefaultSidebarConfig
-  export let layerChanged
   export let getConfigWithSidebarConfig
   export let currentConfigId
 
@@ -41,14 +39,8 @@
       w: 1,
       h: 1
     })
-
-
-    Array.from(Array(maxWidth + 1)).forEach((_, i) => {
-      insertItem[i] = gridPosAndSize
-    })
-  
+    insertItem[gridSize[0]] = gridPosAndSize
     items.push(insertItem)
-
     items = items
   }
 
@@ -56,19 +48,12 @@
   function resetSidebarConfig () {
     const defaultConfig = getDefaultSidebarConfig()
     sidebarConfig = defaultConfig
-  
-
-    layerChanged()
   }
 
   async function saveSidebarConfig () {
     const config = await getConfigWithSidebarConfig()
 
     if (config) {
-      // const sidebarConfig = config.sideBarConfig
-
-      // debugger
-  
       prismaClientLike.deviceConfig.update({
         where: {
           id: currentConfigId
@@ -89,6 +74,21 @@
       })
     }
   }
+
+  let innerGridSize = [...gridSize]
+
+  function setInnerGridSize () {
+    innerGridSize = gridSize
+  }
+
+
+  $: gridSize && (() => {
+    setInnerGridSize()
+  })()
+
+
+  $: gridSize[0] = +innerGridSize[0] || 1
+  $: gridSize[1] = +innerGridSize[1] || 1
 
 </script>
 
@@ -142,61 +142,17 @@
     </Select>
 
     <div style="display:flex">
-      <!-- <Textfield 
+      <Textfield 
           label="Grid Size X"
-          bind:value={gridSize[0]} 
+          bind:value={innerGridSize[0]} 
           min={1}
           type="number" />
         <Textfield 
           style="margin-left: 10px;"
           label="Grid Size Y"
           min={1}
-          bind:value={gridSize[1]} 
-          type="number" /> -->
-
-      <Select
-        bind:value={gridSize[0]}
-        label="Grid Size X"
-        style="width: 150px;"
-      >
-        {#each [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as size}
-          <Option value={size}>
-            {`${size}`}
-          </Option>
-        {/each}
-      </Select>
-
-      <Select
-        label="Grid Size Y"
-        style="margin-left: 10px;width: 150px;"
-        bind:value={gridSize[1]}
-      >
-        {#each [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as size}
-          <Option value={size}>
-            {`${size}`}
-          </Option>
-        {/each}
-      </Select>
-
-      <!-- <Slider
-          style="width: 100px;"
-          bind:value={gridSize[0]}
-          min={1}
-          max={10}
-          step={1}
-          discrete
-          input$aria-label="Grid Size X"
-        />
-        
-        <Slider
-          style="width: 100px; margin-left: 10px;"
-          bind:value={gridSize[1]}
-          min={1}
-          max={20}
-          step={1}
-          discrete
-          input$aria-label="Grid Size Y"
-        /> -->
+          bind:value={innerGridSize[1]} 
+          type="number" />
     </div>
 
     <div style="display:flex;    width: 350px;    flex-flow: row wrap;">
@@ -222,7 +178,6 @@
       display: flex; justify-content: flex-end;
       "
   >
-    <!-- resett -->
     <Button
       on:click={() => {
         resetSidebarConfig()
@@ -231,7 +186,6 @@
     >
       Reset
     </Button>
-    <!-- save -->
     <Button
       on:click={() => {
         saveSidebarConfig()

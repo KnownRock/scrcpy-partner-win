@@ -12,8 +12,8 @@
   import { lanuchSelf } from '../utils/devices'
 
   import Setting from './Tool/Setting.svelte'
-  import { getDefaultSidebarConfig, maxWidth } from './Tool/config'
-
+  import { getDefaultSidebarConfig } from './Tool/config'
+  import gridHelp from 'svelte-grid/build/helper/index.mjs'
 
   let sidebarConfig = {
     name: 'default',
@@ -45,32 +45,28 @@
 
   let gridSize = [1, 1]
 
-  // const maxWidth = 10
-
-  // $: sidebarConfig && (() => {
-  //   gridSize = sidebarConfig.layers[sidebarConfig.activeLayer].gridSize
-  //   items = sidebarConfig.layers[sidebarConfig.activeLayer].items
-  // })()
   let activeLayer = 0
   $: activeLayer !== undefined && (() => {
     sidebarConfig.activeLayer = +activeLayer
+    layerChanged()
+  })()
 
+  $: sidebarConfig && (() => {
     layerChanged()
   })()
 
   function layerChanged () {
     activeLayer = sidebarConfig.activeLayer
     gridSize = sidebarConfig.layers[sidebarConfig.activeLayer].gridSize
-    items = sidebarConfig.layers[sidebarConfig.activeLayer].items
+    // items = sidebarConfig.layers[sidebarConfig.activeLayer].items
+    setItemsBySidebarConfig()
   }
 
   $: mode && gridSize && (() => {
-    // debugger
-
     gridSize[0] = Math.max(1, gridSize[0])
     gridSize[1] = Math.max(1, gridSize[1])
-    gridSize[0] = Math.min(maxWidth, gridSize[0])
-    gridSize[1] = Math.min(20, gridSize[1])
+    // gridSize[0] = Math.min(maxWidth, gridSize[0])
+    // gridSize[1] = Math.min(20, gridSize[1])
 
     const barSize = [
       gridSize[0] * 50,
@@ -83,35 +79,71 @@
       setToolWindowSize(barSize[0] + 2, barSize[1] + 2)
       disableItems()
     } else {
+      // keep setting visible
       const newHeight = Math.max(600, barSize[1])
 
       setToolWindowSize(barSize[0] + 400 + 2, newHeight + 2)
       enableItems()
     }
+
+    setItemsBySidebarConfig()
   })()
 
   let items = [] as Array<any>
 
+  function setSidebarConfigItems (items) {
+    sidebarConfig.layers[sidebarConfig.activeLayer].items = items.map((i) => {
+      return {
+        id: i.id,
+        coord: i[gridSize[0]],
+        item: i.item
+      }
+    })
+  }
+
+  function setItemsBySidebarConfig () {
+    items = sidebarConfig.layers[sidebarConfig.activeLayer].items.map((i) => {
+      return {
+        id: i.id,
+        [gridSize[0]]: i.coord ?? gridHelp.item({
+          x: 0,
+          y: 0,
+          w: 1,
+          h: 1
+        }),
+        item: i.item
+      }
+    })
+  }
 
   $: items && (() => {
     items.forEach((item) => {
-      Array.from(Array(maxWidth + 1)).forEach((_, i) => {
-        const bottom = item[i].y + item[i].h
-        if (bottom > gridSize[1]) {
-          item[i].y = gridSize[1] - item[i].h
+      // Array.from(Array(maxWidth + 1)).forEach((_, i) => {
+      const i = gridSize[0]
+      const bottom = item[i].y + item[i].h
+      if (bottom > gridSize[1]) {
+        item[i].y = gridSize[1] - item[i].h
 
-          if (item[i].y < 0) {
-            item[i].y = 0
-          }
-
-          if (item[i].h > gridSize[1]) {
-            item[i].h = gridSize[1]
-          }
+        if (item[i].y < 0) {
+          item[i].y = 0
         }
-      })
+
+        if (item[i].h > gridSize[1]) {
+          item[i].h = gridSize[1]
+        }
+      }
+      // })
     })
 
-    sidebarConfig.layers[sidebarConfig.activeLayer].items = items
+    // sidebarConfig.layers[sidebarConfig.activeLayer].items = items.map((i) => {
+    //   return {
+    //     id: i.id,
+    //     size: i[gridSize[0]],
+    //     item: i.item
+    //   }
+    // })
+
+    setSidebarConfigItems(items)
   })()
 
 
@@ -152,8 +184,6 @@
     } else {
       sidebarConfig = getDefaultSidebarConfig()
     }
-
-    layerChanged()
   })
 
 
@@ -179,19 +209,21 @@
 
   function delItem (item) {
     items = items.filter((i) => i.id !== item.id)
-    sidebarConfig.layers[sidebarConfig.activeLayer].items = items
+    // sidebarConfig.layers[sidebarConfig.activeLayer].items = items
+    setSidebarConfigItems(items)
   }
 
   function enableItems () {
     items.forEach((item) => {
-      Array.from(Array(maxWidth + 1)).forEach((_, i) => {
-        item[i] = {
-          ...item[i],
-          fixed: false,
-          resizable: true,
-          draggable: true
-        }
-      })
+      // Array.from(Array(maxWidth + 1)).forEach((_, i) => {
+      const i = gridSize[0]
+      item[i] = {
+        ...item[i],
+        fixed: false,
+        resizable: true,
+        draggable: true
+      }
+      // })
     })
 
     items = [...items]
@@ -199,14 +231,15 @@
 
   function disableItems () {
     items.forEach((item) => {
-      Array.from(Array(maxWidth + 1)).forEach((_, i) => {
-        item[i] = {
-          ...item[i],
-          fixed: true,
-          resizable: false,
-          draggable: false
-        }
-      })
+      // Array.from(Array(maxWidth + 1)).forEach((_, i) => {
+      const i = gridSize[0]
+      item[i] = {
+        ...item[i],
+        fixed: true,
+        resizable: false,
+        draggable: false
+      }
+      // })
     })
 
     items = [...items]
@@ -236,16 +269,13 @@
     <Grid
       style={`width: ${gridSize[0] * 50}px; height: ${gridSize[1] * 50}px;`}
       bind:items
-      
+      fastStart={true}
       gap={[0, 0]}
       rowHeight={50}
       let:item
       let:dataItem
       cols={[[gridSize[1], gridSize[0]]]}
     >
-      <!-- <div class="item" style="background: {dataItem.color}">
-        {dataItem.item}
-      </div> -->
       <div style="
       display: flex; justify-content: center; align-items: center;
       height: 100%; width: 100%;
@@ -271,10 +301,7 @@
       bind:gridSize={gridSize}
       bind:activeLayer={activeLayer}
       bind:currentConfigId={currentConfigId}
-      maxWidth={maxWidth}
       getConfigWithSidebarConfig={getConfigWithSidebarConfig}
-      layerChanged={layerChanged}
-      getDefaultSidebarConfig={getDefaultSidebarConfig}
 
     />
   {/if}
