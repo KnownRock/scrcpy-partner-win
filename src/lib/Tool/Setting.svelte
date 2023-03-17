@@ -1,9 +1,11 @@
 <script lang="ts">
   import IconButton from '@smui/icon-button'
   import Textfield from '@smui/textfield'
-
+  import Loading from '../general/Loading.svelte'
   import gridHelp from 'svelte-grid/build/helper/index.mjs'
   import { v4 as uuidv4 } from 'uuid'
+
+  import { generalLoading } from '../../store/index'
 
   import prismaClientLike from '../../utils/prisma-like-client'
   import Button from '@smui/button'
@@ -51,6 +53,10 @@
   }
 
   async function saveSidebarConfig () {
+    generalLoading.set({
+      show: true
+    })
+
     const config = await getConfigWithSidebarConfig()
 
     if (config) {
@@ -73,6 +79,10 @@
         }
       })
     }
+
+    generalLoading.set({
+      show: false
+    })
   }
 
   let innerGridSize = [...gridSize]
@@ -115,6 +125,7 @@
   
   />
 
+<Loading />
 <div
   style="
     padding:0 10px 0 50px; min-height:600px;
