@@ -11,3 +11,6 @@
 [x] add mouse events recoding
 [ ] config default name
 [v] fix autocomplete input issue
+[ ] sidebar config management
+[ ] add a application panel
+[ ] add a adb event recorder
