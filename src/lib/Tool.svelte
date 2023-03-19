@@ -7,7 +7,7 @@
   import { exit, getConfigId, setToolWindowSize, showToolWindow, open, start } from '../utils/app'
   import Grid from 'svelte-grid'
   import { commandKeyDict } from './Tool/command-key-dict'
-
+  import { Command } from '@tauri-apps/api/shell'
   import prismaClientLike from '../utils/prisma-like-client'
   import { lanuchSelf } from '../utils/devices'
 
@@ -31,6 +31,22 @@
     const opt = commandKeyDict[command]
     if (opt) {
       await invoke('sendkey', opt)
+    }
+  }
+
+  type Application = {
+    label: 'recorder'
+    id: 'recorder'
+  }
+
+  const applications = [] as Application[]
+
+  function addApplication (
+    application: Application
+  ) {
+    const index = applications.findIndex((a) => a.id === application.id)
+    if (index === -1) {
+      applications.push(application)
     }
   }
 
@@ -62,7 +78,7 @@
     setItemsBySidebarConfig()
   }
 
-  $: mode && gridSize && (() => {
+  $: mode && applications && gridSize && (() => {
     gridSize[0] = Math.max(1, gridSize[0])
     gridSize[1] = Math.max(1, gridSize[1])
     // gridSize[0] = Math.min(maxWidth, gridSize[0])
@@ -221,6 +237,9 @@
       }
       if (item.cmdName === 'start') {
         start(item.opts.exec, item.opts.cwd)
+      }
+      if (item.cmdName === 'record') {
+        // set mode to recording or show a record application?
       }
     }
   }
