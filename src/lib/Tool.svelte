@@ -7,13 +7,13 @@
   import { exit, getConfigId, setToolWindowSize, showToolWindow, open, start } from '../utils/app'
   import Grid from 'svelte-grid'
   import { commandKeyDict } from './Tool/command-key-dict'
-  import { Command } from '@tauri-apps/api/shell'
-  import prismaClientLike from '../utils/prisma-like-client'
   import { lanuchSelf } from '../utils/devices'
 
   import Setting from './Tool/Setting.svelte'
-  import { getDefaultSidebarConfig } from './Tool/config'
+  import { getConfigWithSidebarConfig, getDefaultSidebarConfig } from './Tool/config'
   import gridHelp from 'svelte-grid/build/helper/index.mjs'
+  import TabBar from '@smui/tab-bar'
+  import Tab from '@smui/tab'
 
   let sidebarConfig = {
     name: 'default',
@@ -34,13 +34,18 @@
     }
   }
 
+  const componentDict = {
+    setting: Setting
+  }
+
+
   type Application = {
-    label: 'recorder'
-    id: 'recorder'
+    label: string
+    id: 'recorder' | 'setting'
   }
 
   const applications = [] as Application[]
-
+  let currentApplication = null as Application | null
   function addApplication (
     application: Application
   ) {
@@ -48,14 +53,42 @@
     if (index === -1) {
       applications.push(application)
     }
+
+    currentApplication = application
+  }
+
+  function removeApplication (
+    applicationId: Application['id'] | null
+  ) {
+    if (applicationId === null) {
+      return
+    }
+
+    const index = applications.findIndex((a) => a.id === applicationId)
+    if (index !== -1) {
+      applications.splice(index, 1)
+    }
+
+    if (currentApplication?.id === applicationId) {
+      currentApplication = applications[index + 1] ?? applications[index - 1] ?? null
+    }
+
+    if (applicationId === 'setting') {
+      mode = 'normal'
+    }
   }
 
   let mode: 'normal' | 'setting' = 'normal'
   async function toggleMode () {
     if (mode === 'normal') {
       mode = 'setting'
+      addApplication({
+        label: 'Setting',
+        id: 'setting'
+      })
     } else {
       mode = 'normal'
+      removeApplication('setting')
     }
   }
 
@@ -78,7 +111,8 @@
     setItemsBySidebarConfig()
   }
 
-  $: mode && applications && gridSize && (() => {
+  // eslint-disable-next-line
+  $: mode, currentApplication, gridSize && (() => {
     gridSize[0] = Math.max(1, gridSize[0])
     gridSize[1] = Math.max(1, gridSize[1])
     // gridSize[0] = Math.min(maxWidth, gridSize[0])
@@ -91,13 +125,16 @@
   
     gridSize = gridSize
 
-    if (mode === 'normal') {
-      setToolWindowSize(barSize[0] + 2, barSize[1] + 2)
-    } else {
-      // keep setting visible
-      const newHeight = Math.max(600, barSize[1])
-      setToolWindowSize(barSize[0] + 400 + 2, newHeight + 2)
+    let newWidth = barSize[0]
+    let newHeight = barSize[1]
+    if (currentApplication) {
+      newHeight = Math.max(600, barSize[1])
+      newWidth = barSize[0] + 400
     }
+
+
+    setToolWindowSize(newWidth + 2, newHeight + 2)
+  
 
     setItemsBySidebarConfig()
   })()
@@ -178,19 +215,6 @@
   })()
 
 
-  async function getConfigWithSidebarConfig () {
-    const config = await prismaClientLike.deviceConfig.findUnique({
-      where: {
-        id: currentConfigId
-      },
-      include: {
-        sideBarConfig: true
-      }
-    })
-
-    return config
-  }
-
   let currentConfigId = ''
   onMount(async () => {
     showToolWindow()
@@ -200,7 +224,7 @@
 
     currentConfigId = configId
 
-    const config = await getConfigWithSidebarConfig()
+    const config = await getConfigWithSidebarConfig(currentConfigId)
     console.log('config', config)
 
     if (config) {
@@ -299,16 +323,61 @@
     </Grid>
   
   </div>
-  {#if mode === 'setting'}
+  {#if currentApplication}
+  <div style="display: flex; height:100%;min-height:600px;
+    flex-direction: column;
+  ">
+    <TabBar 
+    tabs={applications}
+    let:tab
+    key={(tab) => tab?.id ?? ''}
+    bind:active={currentApplication}
+  >
+    {#each applications as app}
+    <Tab
+    
+      {tab}
+      stacked={true}
+      indicatorSpanOnlyContent={true}
+      tabIndicator$transition="fade"
+    >
+      {app.label}     
+      </Tab>
+    {/each}
+
+
+  </TabBar>
+
+  <div style="height: 0"
+  >
+    <IconButton
+      class="material-icons"
+      on:click={() => { removeApplication(currentApplication?.id ?? null) }}
+    >
+      close
+    </IconButton>
+  </div>
+
+  <!-- {#if currentApplication.id === 'setting'}
     <Setting
       bind:sidebarConfig={sidebarConfig}
       bind:items={items}
       bind:gridSize={gridSize}
       bind:activeLayer={activeLayer}
       bind:currentConfigId={currentConfigId}
-      getConfigWithSidebarConfig={getConfigWithSidebarConfig}
-
     />
+      {/if}
+ -->
+  <svelte:component this={componentDict[currentApplication.id]}
+    bind:sidebarConfig={sidebarConfig}
+    bind:items={items}
+    bind:gridSize={gridSize}
+    bind:activeLayer={activeLayer}
+    bind:currentConfigId={currentConfigId}
+  />
+
+  </div> 
+    
   {/if}
 </div>
 

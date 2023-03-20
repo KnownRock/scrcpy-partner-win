@@ -12,7 +12,7 @@
   import Select, { Option } from '@smui/select'
   import ExecDialog from './ExecDialog.svelte'
   import { addableItems, addableItems2 } from './addable-items'
-  import { getDefaultSidebarConfig } from './config'
+  import { getConfigWithSidebarConfig, getDefaultSidebarConfig } from './config'
 
   const fullAddableItems = addableItems.concat(addableItems2)
 
@@ -20,7 +20,6 @@
   export let activeLayer
   export let gridSize
   export let items
-  export let getConfigWithSidebarConfig
   export let currentConfigId
 
   let showAddDialogVisible = false
@@ -62,7 +61,7 @@
       show: true
     })
 
-    const config = await getConfigWithSidebarConfig()
+    const config = await getConfigWithSidebarConfig(currentConfigId)
 
     if (config) {
       prismaClientLike.deviceConfig.update({
@@ -158,7 +157,7 @@
 <Loading />
 <div
   style="
-    padding:0 10px 0 50px; min-height:600px;
+    padding:0 10px 0 50px; min-height:500px;
     display: flex; flex-direction: column; justify-content: space-between;
     "
 >
