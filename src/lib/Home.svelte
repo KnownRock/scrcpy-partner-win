@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from 'svelte-i18n'
   import Devices from './Devices.svelte'
   import Configs from './Configs.svelte'
   import 'svelte-material-ui/bare.css'
@@ -21,15 +22,18 @@
 
     {
       k: 'config',
-      label: 'Config'
+      // label: 'Config'
+      label: $t('Config')
     },
     {
       k: 'devices',
-      label: 'Devices'
+      // label: 'Devices'
+      label: $t('Devices')
     },
     {
       k: 'adb',
-      label: 'Adb Devices'
+      // label: 'Adb Devices'
+      label: $t('ADB Devices')
     }
   ]
   let active = tabs[0]
@@ -40,13 +44,13 @@
 
 </script>
 
+
 <main class="container">
   <Form />
   <Message />
   <Loading />
   <TabBar {tabs} let:tab {key} bind:active> 
     <Tab
-    
       {tab}
       stacked={true}
       indicatorSpanOnlyContent={true}
@@ -69,11 +73,9 @@
     {#if active.k === 'adb'}
       <Devices queryType="only adb" />
     {/if}
-    {#if active.k === 'components'}
-      <h1>Components</h1>
-    {/if} 
   </div>
 </main>
+
 
 <style>
 

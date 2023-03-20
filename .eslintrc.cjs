@@ -17,7 +17,9 @@ module.exports = {
       rules: {
         // https://stackoverflow.com/questions/63509978/global-module-definition-for-typescript
         // https://typescript-eslint.io/linting/troubleshooting/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
-        'no-undef': 'off'
+        'no-undef': 'off',
+        // https://github.com/sveltejs/eslint-plugin-svelte3/issues/73
+        'import/first': 'off'
       }
     },
     {

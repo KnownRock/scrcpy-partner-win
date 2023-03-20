@@ -1,6 +1,7 @@
 <script lang="ts">
   import Button, { Icon, Label } from '@smui/button'
   import Badge from '@smui-extra/badge'
+  import { t } from 'svelte-i18n'
   import Card, {
     Content,
     PrimaryAction,
@@ -122,8 +123,8 @@
     if (config !== undefined) {
       confirmDialog.set({
         show: true,
-        title: 'Delete device',
-        message: `Are you sure to delete config [${config.name}]?`,
+        title: $t('Delete config'),
+        message: `${$t('Are you sure to delete config')} [${config.name}]?`,
         okCallback: async () => {
           // console.log('delete device', device)
           await deleteConfigById(config?.id ?? '')
@@ -137,8 +138,8 @@
 
     confirmDialog.set({
       show: true,
-      title: 'Delete device',
-      message: `Are you sure to delete device [${device.name}]?`,
+      title: $t('Delete device'),
+      message: `${$t('Are you sure to delete device')} [${device.name}]?`,
       okCallback: async () => {
         // console.log('delete device', device)
         await deleteDevice(device.id)
@@ -192,7 +193,7 @@
             position="inset"
             
              aria-label="notification count">
-            New device
+            {$t('New device')}
             </Badge>
           {/if}
         </div>
@@ -219,7 +220,7 @@
         on:click={() => lanuchScrcpy()}
         title="Start scrcpy"
       >
-        <Label>Start</Label>
+        <Label>{$t('Start')}</Label>
       </Button>
     </ActionButtons>
     {/if}
@@ -228,10 +229,14 @@
         <Button
           disabled={device.isConnected}
           variant="raised"
+          color="secondary"
           on:click={() => connectAdb()}
           title="Start scrcpy"
         >
-          <Label>Connect</Label>
+          <Label>
+            <!-- Connect -->
+            {$t('Connect')}
+          </Label>
         </Button>
       </ActionButtons>
     {/if}
@@ -244,7 +249,10 @@
           on:click={() => disconnectAdb()}
           title="Start scrcpy"
         >
-          <Label>Disconnect</Label>
+          <Label>
+            <!-- Disconnect -->
+            {$t('Disconnect')}
+          </Label>
         </Button>
       </ActionButtons>
     {/if}
@@ -281,29 +289,39 @@
               
 
               <Item on:SMUI:action={() => saveDevice()}>
-                <Text>Edit</Text>
+                <Text>
+                  <!-- Edit -->
+                  {$t('Edit')}
+                </Text>
               </Item>
               <Item on:SMUI:action={() => saveDevice('copy')}>
                 <Text>
-                  Duplicate
+                  <!-- Duplicate -->
+                  {$t('Duplicate')}
                 </Text>
               </Item>
               <Item on:SMUI:action={() => handleDeleteDevice()}>
                 <Text style="color: red;">
-                  Delete
+                  <!-- Delete -->
+                  {$t('Delete')}
                 </Text>
               </Item>
 
               <Item on:SMUI:action={() => createLink()}>
                 <Text style="color: blue;">
-                Create Link</Text>
+                <!-- Create Link -->
+                {$t('Create Link')}
+              </Text>
               </Item>
 
               {#if !config}
             
               <Separator />
               <Item on:SMUI:action={() => showConfig()}>
-                <Text>Config</Text>
+                <Text>
+                  <!-- Config -->
+                  {$t('Config')}
+                </Text>
               </Item>
 
               {/if}
@@ -318,7 +336,4 @@
 </Card>
 
 <style>
-  .device-actions div {
-    margin: 10px;
-  }
 </style>

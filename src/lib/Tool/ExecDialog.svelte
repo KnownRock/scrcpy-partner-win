@@ -1,12 +1,12 @@
 <Dialog
   bind:open={show}
-  title="Add Item"
+  title={$t('Add Item')}
   width="400"
   height="300"
   on:close={() => { show = false }}
 >
 <Header>
-  <Title id="fullscreen-title">{ 'Run Application' }</Title>
+  <Title id="fullscreen-title">{ $t('Run Application') }</Title>
 </Header>
 <Content>
   <div style="display:flex;flex-direction:column;">
@@ -14,21 +14,24 @@
     label="Name"
     bind:value={model.exec}
   />
-  <Button on:click={setExecPath}>Select Executable</Button>
+  <Button on:click={setExecPath}>
+    <!-- Select Executable -->
+    {$t('Select Executable')}
+  </Button>
 
 
   <Textfield
     disabled={execMode === 'start'}
-    label="Args"
+    label={$t('Args')}
     bind:value={model.args}
   />
 
   <Textfield
-    label="Cwd"
+    label={$t('Working Directory')}
     bind:value={model.cwd}
   />
   <Textfield
-    label="Icon"
+    label={$t('Icon')}
     bind:value={model.icon}
   />
   <IconButton class="material-icons">
@@ -42,7 +45,8 @@
     <Button
       on:click={() => { show = false }}
     >
-      Cancel
+      <!-- Cancel -->
+      { $t('Cancel') }
     </Button>
     <Button
       on:click={() => {
@@ -50,7 +54,8 @@
         onSubmit(model)
       }}
     >
-      OK
+      <!-- OK -->
+      { $t('OK') }
     </Button>
   </Actions>
 </Dialog>
@@ -58,7 +63,7 @@
 <script lang="ts">
   import 'svelte-material-ui/bare.css'
   import IconButton from '@smui/icon-button'
-
+  import { t } from 'svelte-i18n'
   import Textfield from '@smui/textfield'
 
   import Button from '@smui/button'

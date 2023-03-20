@@ -14,7 +14,7 @@
   import TabBar from '@smui/tab-bar'
   import Tab from '@smui/tab'
   import { callTauriFunction } from '../utils/tauri'
-
+  import { t } from 'svelte-i18n'
   const componentDict = {
     setting: Setting
   }
@@ -320,7 +320,8 @@
       indicatorSpanOnlyContent={true}
       tabIndicator$transition="fade"
     >
-      {app.label}     
+      <!-- {app.label}      -->
+      {$t(app.label)}
       </Tab>
     {/each}
 

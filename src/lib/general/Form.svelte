@@ -12,6 +12,7 @@
   import { generalDialogForm } from '../../store/index'
   import Tooltip, { Wrapper } from '@smui/tooltip'
   import Optional from './Form/Optional.svelte'
+  import { t } from 'svelte-i18n'
   let open = false
   let currentFormItems : FormItem[] = []
   let buttons: DialogFormButton[] = []
@@ -125,7 +126,10 @@
   on:SMUIDialog:closed={closeHandler}
 >
   <Header>
-    <Title id="fullscreen-title">{ title }</Title>
+    <Title id="fullscreen-title">
+      <!-- { title } -->
+      {$t(title)}
+    </Title>
     <IconButton action="close" class="material-icons">close</IconButton>
   </Header>
   <Content id="fullscreen-content">
@@ -134,22 +138,31 @@
         {#if formItem.type === 'header' || formItem.type === 'message' || formItem.type === 'table'}
           {#if formItem.type === 'header'}
             <Cell span={12}>
-              <h2>{formItem.label}</h2>
+              <h2>
+                <!-- {formItem.label} -->
+                {$t(formItem.label)}
+              </h2>
             </Cell>
           {:else if formItem.type === 'message'}
             <Cell span={12}>
-              <p>{formItem.value}</p>
+              <p>
+                <!-- {formItem.value} -->
+                {$t(formItem.value)}
+              </p>
             </Cell>
           {:else if formItem.type === 'table'}
           <Cell span={12}>
-          <DataTable table$aria-label="People list" style="width: 100%;">
+          <DataTable table$aria-label="list" style="width: 100%;">
             <Head>
               <Row style="width: 100%">
                 <!-- <TableCell>Name</TableCell>
                 <TableCell>Favorite Color</TableCell>
                 <TableCell numeric>Favorite Number</TableCell> -->
                 {#each formItem.columns as column (column.name)}
-                  <TableCell style="width: 100%">{column.label}</TableCell>
+                  <TableCell style="width: 100%">
+                    <!-- {column.label} -->
+                    {$t(column.label)}
+                  </TableCell>
                 {/each}
               </Row>
             </Head>
@@ -167,12 +180,17 @@
                       <TableCell>
                         {#each column.buttons as button (button.label)}
                           <Button on:click={() => button.callback(row)} >
-                            <Label>{button.label}</Label>
+                            <Label>
+                              <!-- {button.label} -->
+                              {$t(button.label)}
+                            </Label>
                           </Button>
                         {/each}
                       </TableCell>
                     {:else}
-                      <TableCell>{row[column.name]}</TableCell>
+                      <TableCell>
+                        {row[column.name]}
+                      </TableCell>
                     {/if}
 
                   {/each}
@@ -191,7 +209,7 @@
                 disabled={formItem.disabled}
                 options={formItem.options}
                 bind:value={formItem.value}
-                label={formItem.label}
+                label={$t(formItem.label)}
               />
             {/if}
 
@@ -200,21 +218,26 @@
                 disabled={formItem.disabled}
                 align="start">
                 <Switch bind:checked={formItem.value} />
-                <span slot="label">{formItem.label}</span>
+                <span slot="label">
+                  <!-- {formItem.label} -->
+                  {$t(formItem.label)}
+                </span>
               </FormField>
             {/if}
 
             {#if formItem.type === 'text'}
               <Textfield 
                 disabled={formItem.disabled}
-                bind:value={formItem.value} label={formItem.label} />
+                bind:value={formItem.value} 
+                label={$t(formItem.label)}
+                 />
             {/if}
 
             {#if formItem.type === 'number'}
               <Textfield
                 disabled={formItem.disabled}
                 bind:value={formItem.value}
-                label={formItem.label}
+                label={$t(formItem.label)}
                 type="number"
               />
             {/if}
@@ -225,38 +248,19 @@
                 <Select 
                   disabled={formItem.disabled}
                   bind:value={formItem.value} 
-                  label={formItem.label}
+                  label={$t(formItem.label)}
                 >
                   {#each formItem.options as option}
-                    <Option value={option.value}>{option.label}</Option>
+                    <Option value={option.value}>
+                      <!-- {option.label} -->
+                      {$t(option.label)}
+                    </Option>
                   {/each}
                 </Select>
               {/key}
             {/if}
 
             {#if formItem.type === 'optional-auto'}
-              <!-- <FormField disabled={formItem.disabled}>
-                <Checkbox bind:checked={formItem.enable} />
-                <div 
-                  on:click={e => { e.stopPropagation() }}
-                  on:mousedown={e => e.stopPropagation()}
-                  on:mouseup={e => e.stopPropagation()}
-                >
-                  <Autocomplete
-                    type="text"
-                    slot="label"
-                    disabled={!formItem.enable}
-                    onclick={e => {
-                      e.stopPropagation()
-                    }}
-
-                    options={formItem.options}
-                    bind:value={formItem.value}
-                    label={formItem.label}
-                  />
-                </div>
-                
-              </FormField> -->
               <Optional bind:disabled={formItem.disabled} bind:enable={formItem.enable} >
                 <Autocomplete
                   combobox
@@ -264,7 +268,7 @@
                   disabled={!formItem.enable || formItem.disabled}
                   options={formItem.options}
                   bind:value={formItem.value}
-                  label={formItem.label}
+                  label={$t(formItem.label)}
                 />
               </Optional>
             {/if}
@@ -277,7 +281,7 @@
                   disabled={!formItem.enable || formItem.disabled}
                   options={formItem.options}
                   bind:value={formItem.value}
-                  label={formItem.label}
+                  label={$t(formItem.label)}
                 />
               </Optional>
             {/if}
@@ -289,7 +293,7 @@
                   <Select
                     disabled={!formItem.enable}
                     bind:value={formItem.value}
-                    label={formItem.label}
+                    label={$t(formItem.label)}
                   >
                     {#each formItem.options as option}
                       <Option value={option.value}>{option.label}</Option>
@@ -305,7 +309,7 @@
                 <Textfield
                   disabled={!formItem.enable}
                   bind:value={formItem.value}
-                  label={formItem.label}
+                  label={$t(formItem.label)}
                 />
               </Optional>
             {/if}
@@ -329,7 +333,7 @@
                 <Textfield
                   disabled={!formItem.enable}
                   bind:value={formItem.value}
-                  label={formItem.label}
+                  label={$t(formItem.label)}
                   type="number"
                 />
               </Optional>
@@ -360,7 +364,10 @@
         action={button.action} 
         defaultAction={!!button.defaultAction}
           on:click={() => buttonHandler(button)}>
-          <Label>{button.label}</Label>
+          <Label>
+            <!-- {button.label} -->
+            {$t(button.label)}
+          </Label>
         </Button>
       {/each}
     </div>

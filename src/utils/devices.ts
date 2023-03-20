@@ -26,11 +26,14 @@ async function getAdbDevices (): Promise<Device[]> {
   const deviceLines = lines.slice(1, lines.length).filter(line => /\S/.exec(line))
 
   return deviceLines.map(line => {
-    const matched = (/(\S+)\s+device product:(\S+) model:(\S+) device:(\S+) transport_id:(\S+)/.exec(line))
+    const matched = (/(\S+)\s+(device|offline) product:(\S+) model:(\S+) device:(\S+) transport_id:(\S+)/.exec(line))
     if (matched == null) {
       throw new Error(`Failed to parse device line: ${line}`)
     }
-    const [,adbId, product, model] = matched
+    const [,adbId, state, product, model] = matched
+    if (state !== 'device') {
+      return null
+    }
     const name = adbId
     return {
       name,
@@ -42,7 +45,7 @@ async function getAdbDevices (): Promise<Device[]> {
       updatedAt: null,
       lastSeenAt: null
     }
-  })
+  }).filter(device => device != null) as Device[]
 }
 
 export async function deleteDevice (deviceId: string): Promise<void> {

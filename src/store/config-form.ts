@@ -4,6 +4,7 @@ import { generalDialogForm, generalLoading, generalMsg } from '.'
 import { getDevices } from '../utils/devices'
 import { saveConfig, type DeviceConfigValueExt, type DeviceConfigExt, getConfig, saveConfigItems, getConfigItems } from '../utils/configs'
 import { getFormItems } from '../utils/scrcpy'
+
 const store = writable<{
   show: boolean
   deviceId: string

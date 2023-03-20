@@ -1,6 +1,6 @@
 <script lang="ts">
   import { setContext } from 'svelte'
-  
+  import { t } from 'svelte-i18n'
   import 'svelte-material-ui/bare.css'
   import LayoutGrid, { Cell } from '@smui/layout-grid'
   import Fab, { Label, Icon } from '@smui/fab'
@@ -26,9 +26,6 @@
 
       const aValue = new Date(a[currentSortKey]).getTime()
       const bValue = new Date(b[currentSortKey]).getTime()
-
-      console.log(aValue - bValue)
-      console.log((aValue - bValue) * currentSortOrder)
 
       return (aValue - bValue) * currentSortOrder
     })
@@ -87,15 +84,33 @@
       <Select
         style="margin-right: 0.5em; width: min(calc(100% - 56px) , 200px);"
         variant="outlined"
-        label="Sort by"
+        label={$t('Sort by')}
         bind:value={currentSort}
       >
-        <Option value="createdAt">Created at</Option>
-        <Option value="createdAt_asc">Created at (asc)</Option>
-        <Option value="updatedAt">Updated at</Option>
-        <Option value="updatedAt_asc">Updated at (asc)</Option>
-        <Option value="lastSeenAt">Last seen at</Option>
-        <Option value="lastSeenAt_asc">Last seen at (asc)</Option>
+      <Option value="createdAt">
+        <!-- Created at -->
+        {$t('Created at')}
+      </Option>
+      <Option value="createdAt_asc">
+        <!-- Created at (asc) -->
+        {$t('Created at (asc)')}
+      </Option>
+      <Option value="updatedAt">
+        <!-- Updated at -->
+        {$t('Updated at')}
+      </Option>
+      <Option value="updatedAt_asc">
+        <!-- Updated at (asc) -->
+        {$t('Updated at (asc)')}
+      </Option>
+      <Option value="lastSeenAt">
+        <!-- Last seen at -->
+        {$t('Last seen at')}
+      </Option>
+      <Option value="lastSeenAt_asc">
+        <!-- Last seen at (asc) -->
+        {$t('Last seen at (asc)')}
+      </Option>
       </Select>
 
 

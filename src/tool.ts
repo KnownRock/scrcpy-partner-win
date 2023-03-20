@@ -1,8 +1,9 @@
 // import "./style.css";
-import App from "./lib/Tool.svelte";
+import './i18n/index'
+import App from './lib/ToolWithI18n.svelte'
 
 const app = new App({
-  target: document.getElementById("app") || document.body
-});
+  target: document.getElementById('app') as HTMLElement
+})
 
-export default app;
+export default app

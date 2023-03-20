@@ -1,6 +1,6 @@
 <script lang="ts">
   import { setContext } from 'svelte'
-  
+  import { t } from 'svelte-i18n'
   import 'svelte-material-ui/bare.css'
   import LayoutGrid, { Cell } from '@smui/layout-grid'
   import Fab, { Label, Icon } from '@smui/fab'
@@ -40,26 +40,6 @@
         config
       }
     })
-
-
-    // const queriedDevices = await getConfigs(currentDeviceId)
-
-    // const currentSortKey = currentSort.split('_')[0]
-    // const currentSortOrder = currentSort.split('_')[1] === 'asc' ? 1 : -1
-
-    // devices = queriedDevices.sort((a, b) => {
-    //   if (a[currentSortKey] == null && b[currentSortKey] == null) return 0
-    //   if (a[currentSortKey] == null) return 1 * currentSortOrder
-    //   if (b[currentSortKey] == null) return -1 * currentSortOrder
-
-    //   const aValue = new Date(a[currentSortKey]).getTime()
-    //   const bValue = new Date(b[currentSortKey]).getTime()
-
-    //   console.log(aValue - bValue)
-    //   console.log((aValue - bValue) * currentSortOrder)
-
-    //   return (aValue - bValue) * currentSortOrder
-    // })
   }
 
   let currentSort = 'createdAt'
@@ -69,10 +49,6 @@
   })()
 
   setContext('freshDevices', freshConfigs)
-
-  // freshDevices()
-
-  // freshConfigs()
 
 </script>
 
@@ -97,7 +73,9 @@
         })
       }} extended  ripple={false}>
         <Icon  class="material-icons">add</Icon>
-        <Label>Add</Label>
+        <Label>
+          {$t('add')}
+        </Label>
       </Fab>
       
     </Cell>
@@ -107,7 +85,9 @@
       
      <Select 
       bind:value={currentDeviceId}
-      label="filter by device" variant="outlined" style="width: min(calc(50% - 56px) , 200px);">
+      label={
+        $t('filter by device')
+      } variant="outlined" style="width: min(calc(50% - 56px) , 200px);">
         <Option value={'all'}>{'All'}</Option>
         {#each devices as device}
           <Option value={device.id}>{device.name}</Option>
@@ -117,15 +97,33 @@
       <Select
         style="margin: 0 0.5em; width: min(calc(50% - 56px) , 200px);"
         variant="outlined"
-        label="Sort by"
+        label={$t('Sort by')}
         bind:value={currentSort}
       >
-        <Option value="createdAt">Created at</Option>
-        <Option value="createdAt_asc">Created at (asc)</Option>
-        <Option value="updatedAt">Updated at</Option>
-        <Option value="updatedAt_asc">Updated at (asc)</Option>
-        <Option value="lastSeenAt">Last seen at</Option>
-        <Option value="lastSeenAt_asc">Last seen at (asc)</Option>
+        <Option value="createdAt">
+          <!-- Created at -->
+          {$t('Created at')}
+        </Option>
+        <Option value="createdAt_asc">
+          <!-- Created at (asc) -->
+          {$t('Created at (asc)')}
+        </Option>
+        <Option value="updatedAt">
+          <!-- Updated at -->
+          {$t('Updated at')}
+        </Option>
+        <Option value="updatedAt_asc">
+          <!-- Updated at (asc) -->
+          {$t('Updated at (asc)')}
+        </Option>
+        <Option value="lastSeenAt">
+          <!-- Last seen at -->
+          {$t('Last seen at')}
+        </Option>
+        <Option value="lastSeenAt_asc">
+          <!-- Last seen at (asc) -->
+          {$t('Last seen at (asc)')}
+        </Option>
       </Select>
 
 

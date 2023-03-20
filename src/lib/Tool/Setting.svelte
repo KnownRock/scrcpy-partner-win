@@ -4,7 +4,7 @@
   import Loading from '../general/Loading.svelte'
   import gridHelp from 'svelte-grid/build/helper/index.mjs'
   import { v4 as uuidv4 } from 'uuid'
-
+  import { t } from 'svelte-i18n'
   import { generalLoading } from '../../store/index'
 
   import prismaClientLike from '../../utils/prisma-like-client'
@@ -162,11 +162,11 @@
     "
 >
   <div>
-    <h1>Settings</h1>
+    <h1>{$t('Setting')}</h1>
 
     <!-- name -->
     <Textfield
-      label="Sidebar Config Name"
+      label={$t('Sidebar Config Name')}
       bind:value={sidebarConfig.name}
       type="text"
     />
@@ -176,20 +176,20 @@
     <Select bind:value={activeLayer}>
       {#each sidebarConfig.layers as layer, index}
         <Option value={index}>
-          {`Layer ${index + 1}`}
+          {`${$t('Layer')} ${index + 1}`}
         </Option>
       {/each}
     </Select>
 
     <div style="display:flex">
       <Textfield 
-          label="Grid Size X"
+          label={$t('Grid Size X')}
           bind:value={innerGridSize[0]} 
           min={1}
           type="number" />
         <Textfield 
           style="margin-left: 10px;"
-          label="Grid Size Y"
+          label={$t('Grid Size Y')}
           min={1}
           bind:value={innerGridSize[1]} 
           type="number" />
@@ -228,14 +228,16 @@
       }}
       style="margin-right: 10px;"
     >
-      Reset
+      <!-- Reset -->
+      {$t('Reset')}
     </Button>
     <Button
       on:click={() => {
         saveSidebarConfig()
       }}
     >
-      Save
+      <!-- Save -->
+      {$t('Save')}
     </Button>
   </div>
 </div>
