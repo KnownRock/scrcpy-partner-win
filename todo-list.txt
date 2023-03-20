@@ -5,12 +5,13 @@
 [v] generate links for config open
 [ ] fix mini prisma server close after app close
 [v] add a shortcut add function
-[ ] fix ipc pipe startup issue in dev mode?
-[ ] add adb scripts management
+[?] fix ipc pipe startup issue in dev mode
+[x] add adb scripts management
 [v] add sidebar buttons management & settings
 [x] add mouse events recoding
 [ ] config default name
 [v] fix autocomplete input issue
 [ ] sidebar config management
-[ ] add a application panel
+[v] add a application panel
 [ ] add a adb event recorder
+[ ] add i18n
