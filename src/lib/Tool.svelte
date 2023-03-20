@@ -2,7 +2,6 @@
 <script lang="ts">
   import 'svelte-material-ui/bare.css'
   import IconButton from '@smui/icon-button'
-  import { invoke } from '@tauri-apps/api/tauri'
   import { onMount } from 'svelte'
   import { exit, getConfigId, setToolWindowSize, showToolWindow, open, start } from '../utils/app'
   import Grid from 'svelte-grid'
@@ -10,29 +9,11 @@
   import { lanuchSelf } from '../utils/devices'
 
   import Setting from './Tool/Setting.svelte'
-  import { getConfigWithSidebarConfig, getDefaultSidebarConfig } from './Tool/config'
+  import { getConfigWithSidebarConfig, getDefaultSidebarConfig, getInitConfig } from './Tool/config'
   import gridHelp from 'svelte-grid/build/helper/index.mjs'
   import TabBar from '@smui/tab-bar'
   import Tab from '@smui/tab'
-
-  let sidebarConfig = {
-    name: 'default',
-    activeLayer: 0,
-    layers: Array.from(Array(9)).map((_, i) => {
-      return {
-        gridSize: [1, 1],
-        items: [] as any[]
-      }
-    })
-  }
-  
-  
-  async function sendKey (command: string) {
-    const opt = commandKeyDict[command]
-    if (opt) {
-      await invoke('sendkey', opt)
-    }
-  }
+  import { callTauriFunction } from '../utils/tauri'
 
   const componentDict = {
     setting: Setting
@@ -41,8 +22,19 @@
 
   type Application = {
     label: string
-    id: 'recorder' | 'setting'
+    id: keyof typeof componentDict
   }
+
+  let sidebarConfig = getInitConfig()
+  
+  
+  async function sendKey (command: string) {
+    const opt = commandKeyDict[command]
+    if (opt) {
+      await callTauriFunction('sendkey', opt)
+    }
+  }
+
 
   const applications = [] as Application[]
   let currentApplication = null as Application | null
@@ -186,7 +178,6 @@
 
   $: items && (() => {
     items.forEach((item) => {
-      // Array.from(Array(maxWidth + 1)).forEach((_, i) => {
       const i = gridSize[0]
       const bottom = item[i].y + item[i].h
       if (bottom > gridSize[1]) {
@@ -200,16 +191,8 @@
           item[i].h = gridSize[1]
         }
       }
-      // })
     })
 
-    // sidebarConfig.layers[sidebarConfig.activeLayer].items = items.map((i) => {
-    //   return {
-    //     id: i.id,
-    //     size: i[gridSize[0]],
-    //     item: i.item
-    //   }
-    // })
 
     setSidebarConfigItems(items)
   })()
@@ -262,15 +245,11 @@
       if (item.cmdName === 'start') {
         start(item.opts.exec, item.opts.cwd)
       }
-      if (item.cmdName === 'record') {
-        // set mode to recording or show a record application?
-      }
     }
   }
 
   function delItem (item) {
     items = items.filter((i) => i.id !== item.id)
-    // sidebarConfig.layers[sidebarConfig.activeLayer].items = items
     setSidebarConfigItems(items)
   }
 
@@ -358,16 +337,6 @@
     </IconButton>
   </div>
 
-  <!-- {#if currentApplication.id === 'setting'}
-    <Setting
-      bind:sidebarConfig={sidebarConfig}
-      bind:items={items}
-      bind:gridSize={gridSize}
-      bind:activeLayer={activeLayer}
-      bind:currentConfigId={currentConfigId}
-    />
-      {/if}
- -->
   <svelte:component this={componentDict[currentApplication.id]}
     bind:sidebarConfig={sidebarConfig}
     bind:items={items}
@@ -387,18 +356,13 @@
 .tool-container{
   display: flex;
   flex-direction: column; 
-  /* align-items: center;  */
-  /* justify-content: center; */
   height: calc(100vh - 2px);
   width: calc(100vw - 2px);
   overflow: hidden;
 
   color: rgb(96, 125, 139);
-  /* background-color: rgb(240, 240, 240); */
 
   border: 1px solid rgb(96, 125, 139);
-
-  /* background-color: aqua; */
 }
 
 .main-container{
@@ -407,8 +371,6 @@
 
   display: flex;
   overflow: hidden;
-
-  /* background-color: antiquewhite; */
 }
 </style>
 

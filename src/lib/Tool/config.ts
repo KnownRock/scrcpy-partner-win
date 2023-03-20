@@ -87,3 +87,16 @@ export async function getConfigWithSidebarConfig (currentConfigId): Promise<Devi
 
   return config as DeviceConfig & { sideBarConfig: PrismaSidebarConfig } | null
 }
+
+export function getInitConfig (): SidebarConfig {
+  return {
+    name: 'default',
+    activeLayer: 0,
+    layers: Array.from(Array(9)).map((_, i) => {
+      return {
+        gridSize: [1, 1],
+        items: [] as any[]
+      }
+    })
+  }
+}
