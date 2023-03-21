@@ -99,7 +99,6 @@
   function layerChanged () {
     activeLayer = sidebarConfig.activeLayer
     gridSize = sidebarConfig.layers[sidebarConfig.activeLayer].gridSize
-    // items = sidebarConfig.layers[sidebarConfig.activeLayer].items
     setItemsBySidebarConfig()
   }
 
@@ -107,8 +106,6 @@
   $: mode, currentApplication, gridSize && (() => {
     gridSize[0] = Math.max(1, gridSize[0])
     gridSize[1] = Math.max(1, gridSize[1])
-    // gridSize[0] = Math.min(maxWidth, gridSize[0])
-    // gridSize[1] = Math.min(20, gridSize[1])
 
     const barSize = [
       gridSize[0] * 50,
@@ -296,8 +293,6 @@
         {dataItem.item.icon}
       </IconButton> 
       </div>
-  
-    
       
     </Grid>
   
@@ -320,7 +315,6 @@
       indicatorSpanOnlyContent={true}
       tabIndicator$transition="fade"
     >
-      <!-- {app.label}      -->
       {$t(app.label)}
       </Tab>
     {/each}

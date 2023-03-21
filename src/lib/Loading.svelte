@@ -1,11 +1,10 @@
 <div style="
-display: flex; justify-content: center;
-height: calc(100vh - 2px) ; align-items: center;
-width: calc(100vw - 2px); flex-direction: column;
-border: 1px solid #ccc;
-">
+  display: flex; justify-content: center;
+  height: calc(100vh - 2px) ; align-items: center;
+  width: calc(100vw - 2px); flex-direction: column;
+  border: 1px solid #ccc;
+  ">
   <h1>Scrcpy Partner</h1>
-  <!-- <h1>Loading...</h1> -->
   {#if !error}
   <CircularProgress style="height: 32px; width: 32px;" indeterminate />
   {/if}
@@ -13,13 +12,14 @@ border: 1px solid #ccc;
   {#if error}
     <h3>{error}</h3>
     <Button on:click={closeApplication}>
-      Close
+      {$t('Close')}
     </Button>
   {/if}
   
 </div>
 
 <script lang="ts">
+  import { t } from 'svelte-i18n'
   import 'svelte-material-ui/bare.css'
   import CircularProgress from '@smui/circular-progress'
   import arg, { type Result } from 'arg'
@@ -134,10 +134,8 @@ border: 1px solid #ccc;
 
       const args = getArgsFromRawArgs(rawArgs)
 
-      console.log('args', args)
-
       if (args === null) {
-        error = 'Invalid arguments'
+        error = $t('Invalid arguments')
         return
       }
 
@@ -150,7 +148,7 @@ border: 1px solid #ccc;
 
 
       if (serialDeviceInArgs && tcpipDeviceInArgs) {
-        error = 'Only one device can be selected at a time'
+        error = $t('Only one device can be selected at a time')
       }
 
 
@@ -160,7 +158,7 @@ border: 1px solid #ccc;
           await runScrcpyCommand(getScrcpyArgsFromArgs(args))
           init(true)
         } else {
-          error = `Device ${device} not connected`
+          error = `${$t('Device')} ${device} ${$t('not connected')}`
         }
 
         return
@@ -177,7 +175,7 @@ border: 1px solid #ccc;
           init(true)
           // change tcpip arg to serial arg
         } else {
-          error = `Device ${device} not connected`
+          error = `${$t('Device')} ${device} ${$t('not connected')}`
         }
 
         return
@@ -192,7 +190,7 @@ border: 1px solid #ccc;
         console.log('config', config)
 
         if (!config) {
-          error = `Config ${configId} not found`
+          error = `${$t('Config')} ${configId} ${$t('not found')}`
           return
         }
 
@@ -216,7 +214,7 @@ border: 1px solid #ccc;
         const device = devices.find(el => el.id === config.deviceId)
 
         if (!device) {
-          error = `Device ${config.deviceId} not found`
+          error = `${$t('Device')} ${config.deviceId} ${$t('not found')}`
           return
         }
 

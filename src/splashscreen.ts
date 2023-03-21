@@ -1,8 +1,9 @@
 import './style.css'
-import Loading from './lib/Loading.svelte'
+import './i18n/index'
+import Loading from './lib/LoadingWithI18n.svelte'
 
 const app = new Loading({
-  target: document.getElementById('app')
+  target: document.getElementById('app') as HTMLElement
 })
 
 export default app

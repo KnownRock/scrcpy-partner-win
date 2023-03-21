@@ -88,27 +88,21 @@
         bind:value={currentSort}
       >
       <Option value="createdAt">
-        <!-- Created at -->
         {$t('Created at')}
       </Option>
       <Option value="createdAt_asc">
-        <!-- Created at (asc) -->
         {$t('Created at (asc)')}
       </Option>
       <Option value="updatedAt">
-        <!-- Updated at -->
         {$t('Updated at')}
       </Option>
       <Option value="updatedAt_asc">
-        <!-- Updated at (asc) -->
         {$t('Updated at (asc)')}
       </Option>
       <Option value="lastSeenAt">
-        <!-- Last seen at -->
         {$t('Last seen at')}
       </Option>
       <Option value="lastSeenAt_asc">
-        <!-- Last seen at (asc) -->
         {$t('Last seen at (asc)')}
       </Option>
       </Select>

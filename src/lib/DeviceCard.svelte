@@ -105,7 +105,6 @@
         name: `${device.name} (copy)`,
         updatedAt: null,
         createdAt: null
-        // seenAt: null
       }
     }
 
@@ -126,9 +125,7 @@
         title: $t('Delete config'),
         message: `${$t('Are you sure to delete config')} [${config.name}]?`,
         okCallback: async () => {
-          // console.log('delete device', device)
           await deleteConfigById(config?.id ?? '')
-
           await freshDevices()
         }
       })
@@ -141,7 +138,6 @@
       title: $t('Delete device'),
       message: `${$t('Are you sure to delete device')} [${device.name}]?`,
       okCallback: async () => {
-        // console.log('delete device', device)
         await deleteDevice(device.id)
 
         await freshDevices()
@@ -201,7 +197,6 @@
         {/if}
 
         <div>
-          <!-- <h5>{ device.isConnected ? 'USB Connected' : 'USB Disconnected'}</h5> -->
           <Icon class="material-icons" style="font-size: 2em; color: {device.isConnected ? 'green' : 'red'};">
             {device.isConnected ? 'usb' : 'usb_off'}
           </Icon>
@@ -234,7 +229,6 @@
           title="Start scrcpy"
         >
           <Label>
-            <!-- Connect -->
             {$t('Connect')}
           </Label>
         </Button>
@@ -250,7 +244,6 @@
           title="Start scrcpy"
         >
           <Label>
-            <!-- Disconnect -->
             {$t('Disconnect')}
           </Label>
         </Button>
@@ -290,26 +283,22 @@
 
               <Item on:SMUI:action={() => saveDevice()}>
                 <Text>
-                  <!-- Edit -->
                   {$t('Edit')}
                 </Text>
               </Item>
               <Item on:SMUI:action={() => saveDevice('copy')}>
                 <Text>
-                  <!-- Duplicate -->
                   {$t('Duplicate')}
                 </Text>
               </Item>
               <Item on:SMUI:action={() => handleDeleteDevice()}>
                 <Text style="color: red;">
-                  <!-- Delete -->
                   {$t('Delete')}
                 </Text>
               </Item>
 
               <Item on:SMUI:action={() => createLink()}>
                 <Text style="color: blue;">
-                <!-- Create Link -->
                 {$t('Create Link')}
               </Text>
               </Item>
@@ -319,7 +308,6 @@
               <Separator />
               <Item on:SMUI:action={() => showConfig()}>
                 <Text>
-                  <!-- Config -->
                   {$t('Config')}
                 </Text>
               </Item>
