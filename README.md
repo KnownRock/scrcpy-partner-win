@@ -14,7 +14,7 @@
 
 ## Recommended IDE Setup
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer) + [i18n](https://marketplace.visualstudio.com/items?itemName=lokalise.i18n-ally)
 
 ## Install dependencies
 
@@ -25,13 +25,14 @@ npm install
 ## Build
 
 ```bash
-npm run tauri build
+npm run build-app
 ```
 
 ## Development
 
 ```bash
-npm run tauri dev
+npm run setup-dev
 # or
-npm run tauri dev -- -- -- -s1234
+npm run setup-dev -- -- -- -- -s1234
 ```
+
