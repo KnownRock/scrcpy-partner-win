@@ -83,7 +83,7 @@ export const argsDescriptions = {
   '-r': 'Record video to a file',
   '--no-display': 'Disable display',
   '--display-buffer': 'Set display buffer size (default 8)',
-  '--tcpip': 'Connect to device via TCP/IP (e.g. 5555)',
+  '--tcpip': 'Connect to device via TCP/IP (e.g. 127.0.0.1:5555)',
   '--serial': 'Connect to device via serial',
   '-s': 'Connect to device via serial',
 

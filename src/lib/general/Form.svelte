@@ -342,7 +342,7 @@
             {/if}
             {#if formItem.description}
               <Tooltip xPos="start" yPos="above">
-                {formItem.description}
+                {$t(formItem.description)}
               </Tooltip>
             {/if}
             </Wrapper>
