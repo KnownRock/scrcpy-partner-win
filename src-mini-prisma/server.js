@@ -22,7 +22,7 @@ async function init (url, pipeName) {
       // const functionArg = (args[2] && JSON.parse(args[2])) ?? undefined
 
 
-      console.log(jsonBuffer.toString())
+      // console.log(jsonBuffer.toString())
 
       const { table, func, arg_json: json } = JSON.parse(jsonBuffer.toString())
 
@@ -32,7 +32,7 @@ async function init (url, pipeName) {
       console.log(table, func, argJson)
 
       prisma[table][func](argJson).then((result) => {
-        console.log(JSON.stringify(result))
+        // console.log(JSON.stringify(result))
         socket.write(JSON.stringify({ data: result }))
       }).catch((e) => {
         console.error(e)

@@ -476,7 +476,7 @@ pub async fn call_prisma(
 
                 let mut text = String::from_utf8(data).unwrap();
                 text = text.trim_end_matches(char::from(0)).to_string();
-                println!("text: {:?}", &text);
+                // println!("text: {:?}", &text);
 
                 return Ok(text);
             }

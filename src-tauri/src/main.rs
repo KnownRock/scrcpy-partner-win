@@ -20,10 +20,11 @@ mod tauri_funcs;
 mod wins;
 
 use cmds::{kill_process, run_scrcpy};
-use tauri_funcs::{init_main_window, init_tool_window};
+use tauri_funcs::{init_main_window, init_record_window, init_tool_window};
 use winapi::shared::windef::RECT;
 use wins::set_window_loc_by_hwnd;
 static mut TOOL_WINDOW: Option<tauri::Window> = None;
+static mut RECORD_WINDOW: Option<tauri::Window> = None;
 
 fn unhook_all_window_events() {
     unsafe {
@@ -63,14 +64,13 @@ unsafe extern "system" fn win_event_loc_callback(
     match &mut TOOL_WINDOW {
         Some(window) => {
             set_window_loc_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
+        }
+        None => {}
+    }
 
-            match fuc_loc_callback {
-                Some(f) => {
-                    let rect = wins::get_window_rect_by_hwnd(HWND);
-                    f(rect, window, IS_WINDOW_BORDERLESS);
-                }
-                None => {}
-            }
+    match &mut RECORD_WINDOW {
+        Some(window) => {
+            set_window_loc_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
         }
         None => {}
     }
@@ -101,12 +101,27 @@ unsafe extern "system" fn win_event_order_callback(
         None => {}
     }
 
-    match &mut TOOL_WINDOW {
+    match &mut RECORD_WINDOW {
         Some(window) => {
-            set_window_loc_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
+            window.set_always_on_top(true).unwrap();
+            window.set_always_on_top(false).unwrap();
         }
         None => {}
     }
+
+    // match &mut TOOL_WINDOW {
+    //     Some(window) => {
+    //         set_window_loc_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
+    //     }
+    //     None => {}
+    // }
+
+    // match &mut RECORD_WINDOW {
+    //     Some(window) => {
+    //         set_window_loc_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
+    //     }
+    //     None => {}
+    // }
 }
 
 fn save_size_and_position(rect: RECT) {
@@ -482,6 +497,7 @@ async fn init(
             dbg!(&CONFIG_ID);
 
             init_tool_window(&app);
+            init_record_window(&app);
         }
     } else {
         println!("Mode: main");
@@ -506,6 +522,11 @@ fn main() {
             if window.label() == "tool" {
                 init_tool_hooks(window);
                 println!("*** tool window loaded ***")
+            } else if window.label() == "record" {
+                unsafe {
+                    RECORD_WINDOW = Some(window);
+                    println!("record window loaded");
+                }
             } else {
                 println!("*** non tool window loaded ***");
             }

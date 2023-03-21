@@ -36,7 +36,8 @@ export default defineConfig({
       input: {
         main: new URL('./index.html', import.meta.url).pathname,
         splashscreen: new URL('./splashscreen.html', import.meta.url).pathname,
-        tool: new URL('./tool.html', import.meta.url).pathname
+        tool: new URL('./tool.html', import.meta.url).pathname,
+        record: new URL('./record.html', import.meta.url).pathname
 
       }
     }

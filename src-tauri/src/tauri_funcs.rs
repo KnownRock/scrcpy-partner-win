@@ -60,3 +60,22 @@ pub fn init_tool_window(app: &tauri::AppHandle) {
         }))
         .unwrap();
 }
+
+pub fn init_record_window(app: &tauri::AppHandle) {
+    let tool_window =
+        tauri::WindowBuilder::new(app, "record", tauri::WindowUrl::App("record.html".into()))
+            // .visible(false)
+            .decorations(false)
+            .resizable(false)
+            .position(-99999.0, -99999.0)
+            .skip_taskbar(true)
+            .build()
+            .unwrap();
+
+    tool_window
+        .set_size(Size::Logical(LogicalSize {
+            width: 1.0,
+            height: 1.0,
+        }))
+        .unwrap();
+}
