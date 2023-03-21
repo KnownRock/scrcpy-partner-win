@@ -10,6 +10,7 @@
   import Form from './general/Form.svelte'
   import Message from './general/Message.svelte'
   import Loading from './general/Loading.svelte'
+  import { appWindow } from '@tauri-apps/api/window'
 
   type TabEntry = {
     k: string;
@@ -40,6 +41,8 @@
 
   onMount(() => {
     showMainWindow()
+    alert(123)
+    appWindow.setTitle($t('Scrcpy Partner Home'))
   })
 
 </script>

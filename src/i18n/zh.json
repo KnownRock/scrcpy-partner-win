@@ -57,5 +57,9 @@
   "not found": "未找到",
   "not connected": "未连接",
   "Only one device can be selected at a time": "一次只能选择一个设备",
-  "Invalid arguments": "无效参数"
+  "Invalid arguments": "无效参数",
+  "Device not found": "设备未找到",
+  "OK": "确定",
+  "Scrcpy Partner Home": "Scrcpy Partner 首页",
+  "Loading...": "加载中..."
 }

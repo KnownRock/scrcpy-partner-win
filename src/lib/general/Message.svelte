@@ -2,7 +2,7 @@
   bind:this={snackbar}
   class={`type-${type}`}
   >
-  <Label>{ msgLabel }</Label>
+  <Label>{ $t(msgLabel) }</Label>
   <Actions>
     {#each buttons as button}
       {#if button.icon}
@@ -18,7 +18,9 @@
           on:click={() => button.callback()}
           title={button.label}
         >
-          <Label>{button.label}</Label>
+          <Label>
+            {$t(button.label)}
+          </Label>
         </Button>
       {/if}
 
@@ -32,6 +34,7 @@
 
 
 <script lang="ts">
+  import { t } from 'svelte-i18n'
   import './Message/Colors.scss'
   import Snackbar, { Actions, Label } from '@smui/snackbar'
   import IconButton from '@smui/icon-button'
@@ -46,7 +49,6 @@
   let buttons: MsgButton[] = []
   
   generalMsg.subscribe((value) => {
-    // debugger
     if (value.show) {
       if (snackbar) {
         msgLabel = value.msg

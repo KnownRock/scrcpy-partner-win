@@ -1,6 +1,7 @@
 <script>
   import Checkbox from '@smui/checkbox'
   import FormField from '@smui/form-field'
+  import NoPopDiv from '../NoPopDiv.svelte'
 
   export let disabled = false
   export let enable = false
@@ -9,15 +10,8 @@
 
 <FormField disabled={disabled}>
   <Checkbox bind:checked={enable} />
-  <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div slot="label"
-    on:click={e => {
-      e.stopPropagation()
-      e.preventDefault()
-    }}
-    
-  >
+  <NoPopDiv  slot="label">
     <slot />
-  </div>
+  </NoPopDiv>
   
 </FormField>

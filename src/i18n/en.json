@@ -57,5 +57,6 @@
   "not found": "not found",
   "not connected": "not connected",
   "Only one device can be selected at a time": "Only one device can be selected at a time",
-  "Invalid arguments": "Invalid arguments"
+  "Invalid arguments": "Invalid arguments",
+  "Scrcpy Partner Home": "Scrcpy Partner Home"
 }

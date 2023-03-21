@@ -33,6 +33,7 @@
   import Button from '@smui/button'
   import { getConfigById, updateConfigLastSeenAt } from '../utils/configs'
   import { argsTemplate } from '../utils/scrcpy'
+  import { appWindow } from '@tauri-apps/api/window'
 
   async function sleep (ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -127,6 +128,9 @@
 
 
   onMount(() => {
+    appWindow.setTitle($t('Loading...'))
+
+
     // TODO: move logic to utils
     setTimeout(async () => {
       const rawArgs = (await getEnvArgs()).slice(1)

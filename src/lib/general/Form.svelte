@@ -13,6 +13,7 @@
   import Tooltip, { Wrapper } from '@smui/tooltip'
   import Optional from './Form/Optional.svelte'
   import { t } from 'svelte-i18n'
+  import NoPopDiv from './NoPopDiv.svelte'
   let open = false
   let currentFormItems : FormItem[] = []
   let buttons: DialogFormButton[] = []
@@ -203,6 +204,7 @@
         {:else}
           <Cell>
             <Wrapper>
+              <!-- FIXME: refactor this -->
             {#if formItem.type === 'auto'}
               <Autocomplete
                 combobox 
@@ -350,26 +352,18 @@
       {/each}
     </LayoutGrid>
   </Content>
-  <!-- <Actions> -->
-
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <div  on:click={e => {
-        e.stopPropagation()
-        e.preventDefault()
-      }} style="display: flex; justify-content: flex-end; padding:  1rem 1rem 0.5rem 1rem;">
-
- 
+    <NoPopDiv  style="display: flex; justify-content: flex-end; padding:  1rem 1rem 0.5rem 1rem;">
       {#each buttons as button}
-        <Button 
-        action={button.action} 
-        defaultAction={!!button.defaultAction}
-          on:click={() => buttonHandler(button)}>
-          <Label>
-            <!-- {button.label} -->
-            {$t(button.label)}
-          </Label>
-        </Button>
-      {/each}
-    </div>
-  <!-- </Actions> -->
+      <Button 
+      action={button.action} 
+      defaultAction={!!button.defaultAction}
+        on:click={() => buttonHandler(button)}>
+        <Label>
+          {$t(button.label)}
+        </Label>
+      </Button>
+    {/each}
+    </NoPopDiv>
+
+
 </Dialog>
