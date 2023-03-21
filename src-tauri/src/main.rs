@@ -308,23 +308,6 @@ fn adb_devices_l() -> String {
 }
 
 #[tauri::command]
-async fn open(exec: String, args: Vec<String>, cwd: String) {
-    Command::new(exec)
-        .args(args)
-        .current_dir(cwd)
-        .spawn()
-        .unwrap();
-}
-
-#[tauri::command]
-async fn start(exec: String, cwd: String) {
-    Command::new("cmd")
-        .args(["/C", "start", "/d", cwd.as_str(), exec.as_str()])
-        .spawn()
-        .unwrap();
-}
-
-#[tauri::command]
 fn create_ms_link(link: String, args: Vec<String>) {
     let home_path = std::env::var("USERPROFILE").unwrap();
 
@@ -346,18 +329,6 @@ fn lanuch_self(args: Vec<String>) {
         .creation_flags(0x08000000)
         .spawn()
         .unwrap();
-}
-
-#[tauri::command]
-fn exit() {
-    unsafe {
-        if PID != 0 {
-            kill_process(PID);
-            PID = 0;
-        }
-    }
-
-    std::process::exit(0);
 }
 
 #[tauri::command]
@@ -425,14 +396,6 @@ async fn get_config_id() -> String {
 }
 
 #[tauri::command]
-async fn set_tool_window_size(app: tauri::AppHandle, width: f64, height: f64) {
-    app.get_window("tool")
-        .unwrap()
-        .set_size(LogicalSize::new(width, height))
-        .unwrap();
-}
-
-#[tauri::command]
 async fn show_tool_window(app: tauri::AppHandle) {
     match app.get_window("tool") {
         Some(_window) => {
@@ -456,11 +419,14 @@ async fn get_env_args() -> Vec<String> {
 }
 
 #[tauri::command]
-fn close_application() {
+fn exit() {
     unsafe {
-        kill_process(PID);
-        PID = 0;
+        if PID != 0 {
+            kill_process(PID);
+            PID = 0;
+        }
     }
+
     std::process::exit(0);
 }
 
@@ -546,22 +512,16 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             adb_devices_l,
-            show_main_window,
-            show_tool_window,
             sendkey,
             lanuch_self,
             init,
             call_prisma,
             connect_tcpip_device,
             get_env_args,
-            close_application,
             run_scrcpy_command,
             create_ms_link,
             exit,
-            set_tool_window_size,
             get_config_id,
-            open,
-            start
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");

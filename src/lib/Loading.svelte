@@ -11,7 +11,7 @@
 
   {#if error}
     <h3>{error}</h3>
-    <Button on:click={closeApplication}>
+    <Button on:click={exit}>
       {$t('Close')}
     </Button>
   {/if}
@@ -24,7 +24,7 @@
   import CircularProgress from '@smui/circular-progress'
   import arg, { type Result } from 'arg'
   import { onMount } from 'svelte'
-  import { init, getEnvArgs, closeApplication, runScrcpyCommand } from '../utils/app'
+  import { init, getEnvArgs, exit, runScrcpyCommand } from '../utils/app'
   import {
     connectTcpipDevice, getDevices,
     updateDeviceLastSeenAt
@@ -252,6 +252,8 @@
       console.log('normal startup')
 
       await init()
+
+      appWindow.hide()
     }, 10)
   })
 

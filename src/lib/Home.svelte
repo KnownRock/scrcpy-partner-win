@@ -6,7 +6,6 @@
   import Tab from '@smui/tab'
   import TabBar from '@smui/tab-bar'
   import { onMount } from 'svelte'
-  import { showMainWindow } from '../utils/app'
   import Form from './general/Form.svelte'
   import Message from './general/Message.svelte'
   import Loading from './general/Loading.svelte'
@@ -40,8 +39,7 @@
   let active = tabs[0]
 
   onMount(() => {
-    showMainWindow()
-    alert(123)
+    appWindow.show()
     appWindow.setTitle($t('Scrcpy Partner Home'))
   })
 

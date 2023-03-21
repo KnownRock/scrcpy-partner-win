@@ -3,7 +3,7 @@
   import 'svelte-material-ui/bare.css'
   import IconButton from '@smui/icon-button'
   import { onMount } from 'svelte'
-  import { exit, getConfigId, setToolWindowSize, showToolWindow, open, start } from '../utils/app'
+  import { exit, getConfigId } from '../utils/app'
   import Grid from 'svelte-grid'
   import { commandKeyDict } from './Tool/command-key-dict'
   import { lanuchSelf } from '../utils/devices'
@@ -15,10 +15,17 @@
   import Tab from '@smui/tab'
   import { callTauriFunction } from '../utils/tauri'
   import { t } from 'svelte-i18n'
+  import { appWindow, LogicalSize } from '@tauri-apps/api/window'
+  import { Command } from '@tauri-apps/api/shell'
+
   const componentDict = {
     setting: Setting
   }
 
+
+  function setToolWindowSize (width: number, height: number) {
+    appWindow.setSize(new LogicalSize(width, height))
+  }
 
   type Application = {
     label: string
@@ -197,8 +204,7 @@
 
   let currentConfigId = ''
   onMount(async () => {
-    showToolWindow()
-
+    appWindow.show()
     const configId = await getConfigId()
     console.log('configId', configId)
 
@@ -237,10 +243,16 @@
         lanuchSelf([])
       }
       if (item.cmdName === 'open') {
-        open(item.opts.exec, item.opts.args.split(' ').filter((i) => i), item.opts.cwd)
+        const cmd = new Command(item.opts.exec, item.opts.args.split(' ').filter((i) => i), {
+          cwd: item.opts.cwd
+        })
+        cmd.spawn()
       }
       if (item.cmdName === 'start') {
-        start(item.opts.exec, item.opts.cwd)
+        const cmd = new Command('cmd', [
+          '/C', 'start', '/d', item.opts.cwd, item.opts.exec
+        ])
+        cmd.spawn()
       }
     }
   }
