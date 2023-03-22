@@ -1,7 +1,8 @@
 export const argsTemplate = {
   '--max-size': Number,
   '-m': '--max-size',
-  '--bit-rate': String,
+  '--audio-bit-rate': String,
+  '--video-bit-rate': String,
   '-b': '--bit-rate',
   '--max-fps': Number,
   '--print-fps': Boolean,
@@ -56,7 +57,11 @@ export const argsTemplate = {
 }
 
 export const argsTags = {
-  general: ['--max-size', '--bit-rate', '--max-fps', '--print-fps', '--crop', '--lock-video-orientation', '--encoder', '--record', '--no-display', '--display-buffer'],
+  general: ['--max-size',
+  // '--bit-rate',
+    '--audio-bit-rate',
+    '--video-bit-rate',
+    '--max-fps', '--print-fps', '--crop', '--lock-video-orientation', '--encoder', '--record', '--no-display', '--display-buffer'],
   window: ['--window-title', '--window-x', '--window-y', '--window-width', '--window-height', '--window-borderless', '--always-on-top', '--fullscreen', '--rotation'],
   power: ['--no-control', '--display', '--stay-awake', '--turn-screen-off', '--power-off-on-close', '--no-power-on', '--show-touches', '--disable-screensaver'],
   input: ['--hid-keyboard', '--hid-mouse', '--otg', '--prefer-text', '--raw-key-events', '--no-key-repeat', '--forward-all-clicks']
@@ -73,6 +78,8 @@ export const argsDescriptions = {
   '--max-size': 'Set window maximum size (e.g. 1024)',
   '-m': 'Set window maximum size (e.g. 1024)',
   '--bit-rate': 'Set video bit rate (e.g. 2M or 2000k)',
+  '--audio-bit-rate': 'Set audio bit rate (e.g. 2M or 2000k)',
+  '--video-bit-rate': 'Set video bit rate (e.g. 2M or 2000k)',
   '-b': 'Set video bit rate (e.g. 2M or 2000k)',
   '--max-fps': 'Set max frame rate (default 60)',
   '--print-fps': 'Show frame rate on stdout',
@@ -131,10 +138,18 @@ const formItemOverride: Record<string, FormItem> = {
     enable: false,
     options: [2160, 1440, 1080, 720, 480, 360, 240]
   },
-  '--bit-rate': {
+  '--video-bit-rate': {
     type: 'optional-auto',
-    label: 'Bit Rate',
-    name: '--bit-rate',
+    label: 'Video Bit Rate',
+    name: '--video-bit-rate',
+    value: '8M',
+    enable: false,
+    options: ['64M', '32M', '16M', '8M', '4M', '2M', '1M', '512k', '256k', '128k', '64k']
+  },
+  '--audio-bit-rate': {
+    type: 'optional-auto',
+    label: 'Audio Bit Rate',
+    name: '--audio-bit-rate',
     value: '8M',
     enable: false,
     options: ['64M', '32M', '16M', '8M', '4M', '2M', '1M', '512k', '256k', '128k', '64k']

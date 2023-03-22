@@ -65,10 +65,12 @@ pub fn init_record_window(app: &tauri::AppHandle) {
     let tool_window =
         tauri::WindowBuilder::new(app, "record", tauri::WindowUrl::App("record.html".into()))
             // .visible(false)
-            .decorations(false)
+            // .decorations(false)
             .resizable(false)
             .position(-99999.0, -99999.0)
             .skip_taskbar(true)
+            .always_on_top(true)
+            .transparent(true)
             .build()
             .unwrap();
 
@@ -78,4 +80,7 @@ pub fn init_record_window(app: &tauri::AppHandle) {
             height: 1.0,
         }))
         .unwrap();
+
+    // https://github.com/tauri-apps/tauri/issues/4881
+    tool_window.set_decorations(false).unwrap();
 }

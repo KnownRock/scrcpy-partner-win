@@ -14,8 +14,12 @@
     "allowlist": {
       "all": false,
       "shell": {
-        "all": false,
-        "open": true
+        "all": true,
+        "scope": [{
+          "name": "adb",
+          "cmd": "adb",
+          "args": true
+        }]
       },
       "dialog": {
         "all": true, 

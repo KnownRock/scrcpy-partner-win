@@ -3,7 +3,7 @@
   import 'svelte-material-ui/bare.css'
   import IconButton from '@smui/icon-button'
   import { onMount } from 'svelte'
-  import { exit, getConfigId } from '../utils/app'
+  import { exit, getConfigId, open, start } from '../utils/app'
   import Grid from 'svelte-grid'
   import { commandKeyDict } from './Tool/command-key-dict'
   import { lanuchSelf } from '../utils/devices'
@@ -16,7 +16,6 @@
   import { callTauriFunction } from '../utils/tauri'
   import { t } from 'svelte-i18n'
   import { appWindow, LogicalSize } from '@tauri-apps/api/window'
-  import { Command } from '@tauri-apps/api/shell'
 
   const componentDict = {
     setting: Setting
@@ -243,16 +242,10 @@
         lanuchSelf([])
       }
       if (item.cmdName === 'open') {
-        const cmd = new Command(item.opts.exec, item.opts.args.split(' ').filter((i) => i), {
-          cwd: item.opts.cwd
-        })
-        cmd.spawn()
+        open(item.opts.exec, item.opts.args.split(' ').filter((i) => i), item.opts.cwd)
       }
       if (item.cmdName === 'start') {
-        const cmd = new Command('cmd', [
-          '/C', 'start', '/d', item.opts.cwd, item.opts.exec
-        ])
-        cmd.spawn()
+        start(item.opts.exec, item.opts.cwd)
       }
     }
   }

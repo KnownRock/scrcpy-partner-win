@@ -22,7 +22,7 @@ mod wins;
 use cmds::{kill_process, run_scrcpy};
 use tauri_funcs::{init_main_window, init_record_window, init_tool_window};
 use winapi::shared::windef::RECT;
-use wins::set_window_loc_by_hwnd;
+use wins::{set_window_loc_and_size_by_hwnd, set_window_loc_by_hwnd};
 static mut TOOL_WINDOW: Option<tauri::Window> = None;
 static mut RECORD_WINDOW: Option<tauri::Window> = None;
 
@@ -70,7 +70,7 @@ unsafe extern "system" fn win_event_loc_callback(
 
     match &mut RECORD_WINDOW {
         Some(window) => {
-            set_window_loc_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
+            set_window_loc_and_size_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
         }
         None => {}
     }
@@ -360,6 +360,39 @@ fn connect_tcpip_device(ip: String, is_connect: bool) {
 }
 
 #[tauri::command]
+async fn open(exec: String, args: Vec<String>, cwd: String) {
+    Command::new(exec)
+        .args(args)
+        .current_dir(cwd)
+        .spawn()
+        .unwrap();
+}
+
+#[tauri::command]
+async fn start(exec: String, cwd: String) {
+    Command::new("cmd")
+        .args(["/C", "start", "/d", cwd.as_str(), exec.as_str()])
+        .spawn()
+        .unwrap();
+}
+
+#[tauri::command]
+async fn get_device_size(adb_id: String) -> String {
+    let mut adb = Command::new("adb");
+    adb.arg("-s");
+    adb.arg(adb_id);
+    adb.arg("shell");
+    adb.arg("wm");
+    adb.arg("size");
+
+    let output = adb.output().unwrap();
+    let output_str = String::from_utf8(output.stdout).unwrap();
+    println!("output_str: {:?}", output_str);
+
+    output_str
+}
+
+#[tauri::command]
 async fn sendkey(
     key_code: usize,
     scan_code: usize,
@@ -497,7 +530,9 @@ async fn init(
             dbg!(&CONFIG_ID);
 
             init_tool_window(&app);
-            init_record_window(&app);
+            // init_record_window(&app);
+
+            println!("*** tool init done ***")
         }
     } else {
         println!("Mode: main");
@@ -542,7 +577,10 @@ fn main() {
             run_scrcpy_command,
             create_ms_link,
             exit,
+            open,
+            start,
             get_config_id,
+            get_device_size
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");

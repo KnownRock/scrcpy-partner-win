@@ -17,6 +17,7 @@
     "@prisma/client": "^4.10.1",
     "@tauri-apps/api": "^1.2.0",
     "arg": "^5.0.2",
+    "js-yaml": "^4.1.0",
     "svelte-material-ui": "^7.0.0-beta.0",
     "uuid": "^9.0.0"
   },

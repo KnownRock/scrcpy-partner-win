@@ -40,3 +40,29 @@ export async function runScrcpyCommand (args: string[]): Promise<boolean> {
 export async function getConfigId (): Promise<string> {
   return await callTauriFunction<string>('get_config_id')
 }
+
+// open
+// async fn open(exec: String, args: Vec<String>, cwd: String) {
+export async function open (exec: string, args: string[], cwd: string): Promise<void> {
+  await callTauriFunction('open', { exec, args, cwd })
+}
+
+// start
+// async fn open(exec: String, cwd: String) {
+export async function start (exec: string, cwd: string): Promise<void> {
+  await callTauriFunction('start', { exec, cwd })
+}
+
+// async fn get_device_size(adbId: String) -> String {
+export async function getDeviceSize (adbId: string): Promise<[number, number]> {
+  // Physical size: 1080x2400
+  const result = await callTauriFunction<string>('get_device_size', { adbId })
+
+  const d = result.match(/Physical size: (\d+)x(\d+)/)
+
+  if (d != null) {
+    return [parseInt(d[1]), parseInt(d[2])]
+  } else {
+    return [0, 0]
+  }
+}

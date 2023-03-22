@@ -407,7 +407,7 @@ pub async fn call_prisma(
                 }
 
                 // FIXME: make it more safe
-                tokio::time::sleep(Duration::from_millis(500)).await;
+                tokio::time::sleep(Duration::from_millis(1000)).await;
 
                 PRISMA = Some(pipe_name);
             }
@@ -437,7 +437,7 @@ pub async fn call_prisma(
                 match client.try_write(text.as_bytes()) {
                     Ok(n) => {
                         dbg!("write {} bytes", &n);
-                        dbg!("text: {}", &text);
+                        // dbg!("text: {}", &text);
                     }
                     Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
                         continue;
