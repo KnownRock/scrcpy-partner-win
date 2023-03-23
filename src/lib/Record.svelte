@@ -70,9 +70,13 @@
   </div>
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div class="record-interface" 
-  bind:clientHeight={height}
-  bind:clientWidth={width}
-  on:click={handleClick}>
+    bind:clientHeight={height}
+    bind:clientWidth={width}
+    on:click={handleClick}
+    on:mousedown={handleMouseDown}
+    on:mouseup={handleMouseUp}
+    on:mousemove={throttleMouseMove}
+    >
   </div>
 </div>
 
@@ -84,7 +88,7 @@
   import { getConfigById } from '../utils/configs'
   import prismaClientLike from '../utils/prisma-like-client'
   import { appWindow } from '@tauri-apps/api/window'
-  import { Command } from '@tauri-apps/api/shell'
+  import { Child, Command } from '@tauri-apps/api/shell'
   import Autocomplete from '@smui-extra/autocomplete'
   import Button from '@smui/button'
   import IconButton from '@smui/icon-button/src/IconButton.svelte'
@@ -96,6 +100,70 @@
 
   let currentApplication = ''
   let currentApplicationAndActivity = ''
+
+  let motionAdbShell:Child | null = null
+
+  function getXYFromEvent (e: MouseEvent) {
+    const [deviceWidth, deviceHeight] = deviceSize
+    const x = ~~(e.offsetX / width * deviceWidth)
+    const y = ~~(e.offsetY / height * deviceHeight)
+    return [x, y]
+  }
+
+  let isMouseDown = false
+  async function handleMouseDown (e: MouseEvent) {
+    console.log('mousedown', e)
+    isMouseDown = true
+    const [x, y] = getXYFromEvent(e)
+    if (motionAdbShell) motionAdbShell.write(`input motionevent down ${x} ${y}\n`)
+  }
+
+  async function handleMouseUp (e: MouseEvent) {
+    console.log('mouseup', e)
+    isMouseDown = false
+    const [x, y] = getXYFromEvent(e)
+    if (motionAdbShell) motionAdbShell.write(`input motionevent up ${x} ${y}\n`)
+  }
+
+  const throttle = (fn: Function, delay: number) => {
+    let lastCall = 0
+    return function (...args: any[]) {
+      const now = (new Date()).getTime()
+      if (now - lastCall < delay) {
+        return
+      }
+      lastCall = now
+      return fn(...args)
+    }
+  }
+
+
+  async function handleMouseMove (e: MouseEvent) {
+    if (!isMouseDown) return
+    console.log('mousemove', e)
+    const [x, y] = getXYFromEvent(e)
+    if (motionAdbShell) motionAdbShell.write(`input motionevent move ${x} ${y}\n`)
+  }
+
+  const throttleMouseMove = throttle(handleMouseMove, 10)
+
+  async function handleClick (e : MouseEvent) {
+    console.log('click', e)
+
+    const [x, y] = getXYFromEvent(e)
+
+    // const cmd = new Command('adb', ['-s', adbId, 'shell', 'input', 'tap', x.toString(), y.toString()])
+    // cmd.spawn()
+    if (motionAdbShell) motionAdbShell.write(`input tap ${x} ${y}\n`)
+
+    addOperation({
+      type: 'tap',
+      x,
+      y
+    })
+    operations = operations
+    // open('adb', ['shell', 'input', 'tap', (~~x).toString(), (~~y).toString()], 'd:\\')
+  }
 
 
   $: currentApplication && (async () => {
@@ -225,33 +293,6 @@
   }]
 
 
-  const handleClick = async (e : MouseEvent) => {
-    console.log('click', e)
-
-    const [deviceWidth, deviceHeight] = deviceSize
-    console.log('width', width)
-    console.log('height', height)
-    console.log('deviceWidth', deviceWidth)
-    console.log('deviceHeight', deviceHeight)
-
-    const x = ~~(e.offsetX / width * deviceWidth)
-    const y = ~~(e.offsetY / height * deviceHeight)
-
-    console.log('x', x)
-    console.log('y', y)
-
-    const cmd = new Command('adb', ['-s', adbId, 'shell', 'input', 'tap', x.toString(), y.toString()])
-    cmd.spawn()
-
-    addOperation({
-      type: 'tap',
-      x,
-      y
-    })
-    operations = operations
-    // open('adb', ['shell', 'input', 'tap', (~~x).toString(), (~~y).toString()], 'd:\\')
-  }
-
   onMount(async () => {
     const configId = await getConfigId()
     const config = await getConfigById(configId)
@@ -294,6 +335,10 @@
     await pmList.spawn()
 
     applications = applications
+
+    const adbShellCmd = new Command('adb', ['shell'])
+    const adbShell = await adbShellCmd.spawn()
+    motionAdbShell = adbShell
   })
 
 </script>

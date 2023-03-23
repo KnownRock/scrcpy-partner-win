@@ -59,8 +59,6 @@
   "Only one device can be selected at a time": "Only one device can be selected at a time",
   "Invalid arguments": "Invalid arguments",
   "Scrcpy Partner Home": "Scrcpy Partner Home",
-
-
   "Set window maximum size (e.g. 1024)": "Set window maximum size (e.g. 1024)",
   "Set video bit rate (e.g. 2M or 2000k)": "Set video bit rate (e.g. 2M or 2000k)",
   "Set max frame rate (default 60)": "Set max frame rate (default 60)",
@@ -96,5 +94,7 @@
   "Prefer text (e.g. copy/paste) to control device": "Prefer text (e.g. copy/paste) to control device",
   "Send raw key events": "Send raw key events",
   "Disable key repeat": "Disable key repeat",
-  "Forward all clicks (default: only forward clicks on the device screen)": "Forward all clicks (default: only forward clicks on the device screen)"
+  "Forward all clicks (default: only forward clicks on the device screen)": "Forward all clicks (default: only forward clicks on the device screen)",
+  "select application": "select application",
+  "Get current activity": "Get current activity"
 }

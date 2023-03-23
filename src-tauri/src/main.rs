@@ -530,7 +530,7 @@ async fn init(
             dbg!(&CONFIG_ID);
 
             init_tool_window(&app);
-            // init_record_window(&app);
+            init_record_window(&app);
 
             println!("*** tool init done ***")
         }
