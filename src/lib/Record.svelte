@@ -72,7 +72,6 @@
   <div class="record-interface" 
     bind:clientHeight={height}
     bind:clientWidth={width}
-    on:click={handleClick}
     on:mousedown={handleMouseDown}
     on:mouseup={handleMouseUp}
     on:mousemove={throttleMouseMove}
@@ -103,6 +102,37 @@
 
   let motionAdbShell:Child | null = null
 
+  let mouseEventQueue: {
+    type: 'down' | 'up' | 'move'
+    x: number
+    y: number
+  }[] = []
+
+  let motionAdbShellLock = false
+  function addMouseEvent (type: 'down' | 'up' | 'move', x: number, y: number) {
+    mouseEventQueue.push({
+      type,
+      x,
+      y
+    })
+
+    if (motionAdbShellLock) return
+
+  
+    motionAdbShellLock = true
+    setTimeout(async () => {
+      for (const event of mouseEventQueue) {
+        if (motionAdbShell) {
+          await motionAdbShell.write(`input motionevent ${event.type} ${event.x} ${event.y}\n`)
+        }
+      }
+      mouseEventQueue = []
+
+      motionAdbShellLock = false
+    }, 0)
+  }
+  
+
   function getXYFromEvent (e: MouseEvent) {
     const [deviceWidth, deviceHeight] = deviceSize
     const x = ~~(e.offsetX / width * deviceWidth)
@@ -115,14 +145,16 @@
     console.log('mousedown', e)
     isMouseDown = true
     const [x, y] = getXYFromEvent(e)
-    if (motionAdbShell) motionAdbShell.write(`input motionevent down ${x} ${y}\n`)
+    addMouseEvent('down', x, y)
+    // if (motionAdbShell) motionAdbShell.write(`input motionevent down ${x} ${y}\n`)
   }
 
   async function handleMouseUp (e: MouseEvent) {
     console.log('mouseup', e)
     isMouseDown = false
     const [x, y] = getXYFromEvent(e)
-    if (motionAdbShell) motionAdbShell.write(`input motionevent up ${x} ${y}\n`)
+    addMouseEvent('up', x, y)
+    // if (motionAdbShell) motionAdbShell.write(`input motionevent up ${x} ${y}\n`)
   }
 
   const throttle = (fn: Function, delay: number) => {
@@ -142,10 +174,11 @@
     if (!isMouseDown) return
     console.log('mousemove', e)
     const [x, y] = getXYFromEvent(e)
-    if (motionAdbShell) motionAdbShell.write(`input motionevent move ${x} ${y}\n`)
+    addMouseEvent('move', x, y)
+    // if (motionAdbShell) motionAdbShell.write(`input motionevent move ${x} ${y}\n`)
   }
 
-  const throttleMouseMove = throttle(handleMouseMove, 10)
+  const throttleMouseMove = throttle(handleMouseMove, 50)
 
   async function handleClick (e : MouseEvent) {
     console.log('click', e)
