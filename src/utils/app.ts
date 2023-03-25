@@ -66,3 +66,13 @@ export async function getDeviceSize (adbId: string): Promise<[number, number]> {
     return [0, 0]
   }
 }
+
+// async fn get_current_exe_path() -> String {
+export async function getCurrentExePath (): Promise<string> {
+  return await callTauriFunction<string>('get_current_exe_path')
+}
+
+// async fn get_current_exe_dir() -> String {
+export async function getCurrentExeDir (): Promise<string> {
+  return await callTauriFunction<string>('get_current_exe_dir')
+}

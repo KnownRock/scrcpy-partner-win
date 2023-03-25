@@ -69,7 +69,7 @@ pub fn init_record_window(app: &tauri::AppHandle) {
             .resizable(false)
             .position(-99999.0, -99999.0)
             .skip_taskbar(true)
-            .always_on_top(true)
+            // .always_on_top(true)
             .transparent(true)
             .build()
             .unwrap();

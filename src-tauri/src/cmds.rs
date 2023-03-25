@@ -1,7 +1,7 @@
-use std::os::windows::process::CommandExt;
 use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
+use std::{os::windows::process::CommandExt, process::Child};
 use sysinfo::{NetworkExt, NetworksExt, ProcessExt, System, SystemExt};
 
 use crate::wins::get_hwnd_by_pid;

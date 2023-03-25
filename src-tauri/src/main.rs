@@ -549,6 +549,26 @@ async fn call_prisma(table: String, func: String, arg_json: String) -> String {
 }
 // static mut TAURI_APP : Option<&mut tauri::App> = None;
 
+#[tauri::command]
+async fn get_current_exe_path() -> String {
+    std::env::current_exe()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string()
+}
+
+#[tauri::command]
+async fn get_current_exe_dir() -> String {
+    std::env::current_exe()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string()
+}
+
 fn main() {
     let app_handle = tauri::Builder::default();
     app_handle
@@ -580,7 +600,9 @@ fn main() {
             open,
             start,
             get_config_id,
-            get_device_size
+            get_device_size,
+            get_current_exe_path,
+            get_current_exe_dir
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");

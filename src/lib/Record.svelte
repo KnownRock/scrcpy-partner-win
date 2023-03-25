@@ -29,6 +29,12 @@
           bind:value={currentApplicationAndActivity}
           label={$t('select app & activity')}
         />
+        <Button on:click={() => {
+          setApplicatons()
+        }}>
+          {$t('Fresh apps')}
+        </Button>
+
         <Button on:click={async () => {
           const currentActivity = await getCurrentActivityName(adbId)
           const paName = `${currentActivity}`
@@ -53,7 +59,7 @@
         </Button>
       </div>
     </div>
-    <div>
+    <div class="record-operations">
       {#each operations as operation}
         {#if operation.type === 'tap'}
           <div>{operation.type} {operation.x} {operation.y}</div>
@@ -61,6 +67,10 @@
           <div>{operation.type} {operation.key}</div>
         {:else if operation.type === 'am_start'}
           <div>{operation.type} {operation.packageName}</div>
+
+        {:else if operation.type === 'motion'}
+          <div>{operation.type} {operation.motionType} {operation.x} {operation.y}</div>
+
         {:else}
           <div>Unknown operation</div>
         {/if}
@@ -75,6 +85,7 @@
     on:mousedown={handleMouseDown}
     on:mouseup={handleMouseUp}
     on:mousemove={throttleMouseMove}
+    on:contextmenu={handleContextMenu}
     >
   </div>
 </div>
@@ -82,7 +93,7 @@
 <script lang="ts">
   import 'svelte-material-ui/bare.css'
   import { t } from 'svelte-i18n'
-  import { getConfigId, getDeviceSize } from '../utils/app'
+  import { getConfigId, getCurrentExeDir, getCurrentExePath, getDeviceSize } from '../utils/app'
   import { onMount } from 'svelte'
   import { getConfigById } from '../utils/configs'
   import prismaClientLike from '../utils/prisma-like-client'
@@ -102,19 +113,66 @@
 
   let motionAdbShell:Child | null = null
 
+  // const scrcpyAdbCommandArgs = ['CLASSPATH=/data/local/tmp/scrcpy-server.jar', 'app_process', '/', 'com.genymobile.scrcpy.Server', '1.25', 'tunnel_forward=true']
+  let scrcpyCtrlShell:Child | null = null
+
+  enum MotionType {
+    Down = 0,
+    Up = 1,
+    Move = 2
+  }
+
+  type Operation = ({
+    type: 'tap'
+    x: number
+    y: number
+  } | {
+    type: 'keyevent'
+    key: number
+  } | {
+    type: 'am_start'
+    packageName: string
+  } | {
+    type: 'motion'
+    motionType: MotionType,
+    x: number
+    y: number
+  })
+
+  type OperationWithTime = Operation & {
+    time: Date
+  }
+
+  let operations : OperationWithTime[] = []
+
+
   let mouseEventQueue: {
-    type: 'down' | 'up' | 'move'
+    type: MotionType
     x: number
     y: number
   }[] = []
 
+  function handleContextMenu (e: MouseEvent) {
+    e.preventDefault()
+  }
+
   let motionAdbShellLock = false
-  function addMouseEvent (type: 'down' | 'up' | 'move', x: number, y: number) {
+  function addMouseEvent (type: MotionType, x: number, y: number) {
     mouseEventQueue.push({
       type,
       x,
       y
     })
+
+    operations.push({
+      type: 'motion',
+      motionType: type,
+      x,
+      y,
+      time: new Date()
+    })
+
+    operations = operations
 
     if (motionAdbShellLock) return
 
@@ -122,8 +180,9 @@
     motionAdbShellLock = true
     setTimeout(async () => {
       for (const event of mouseEventQueue) {
-        if (motionAdbShell) {
-          await motionAdbShell.write(`input motionevent ${event.type} ${event.x} ${event.y}\n`)
+        if (scrcpyCtrlShell) {
+          // await motionAdbShell.write(`input motionevent ${event.type} ${event.x} ${event.y}\n`)
+          await scrcpyCtrlShell.write(`touch ${event.x} ${event.y} ${event.type}\n`)
         }
       }
       mouseEventQueue = []
@@ -142,18 +201,22 @@
 
   let isMouseDown = false
   async function handleMouseDown (e: MouseEvent) {
+    if (e.button !== 0) return
+
     console.log('mousedown', e)
     isMouseDown = true
     const [x, y] = getXYFromEvent(e)
-    addMouseEvent('down', x, y)
+    addMouseEvent(MotionType.Down, x, y)
     // if (motionAdbShell) motionAdbShell.write(`input motionevent down ${x} ${y}\n`)
   }
 
   async function handleMouseUp (e: MouseEvent) {
+    if (e.button !== 0) return
+
     console.log('mouseup', e)
     isMouseDown = false
     const [x, y] = getXYFromEvent(e)
-    addMouseEvent('up', x, y)
+    addMouseEvent(MotionType.Up, x, y)
     // if (motionAdbShell) motionAdbShell.write(`input motionevent up ${x} ${y}\n`)
   }
 
@@ -174,11 +237,11 @@
     if (!isMouseDown) return
     console.log('mousemove', e)
     const [x, y] = getXYFromEvent(e)
-    addMouseEvent('move', x, y)
+    addMouseEvent(MotionType.Move, x, y)
     // if (motionAdbShell) motionAdbShell.write(`input motionevent move ${x} ${y}\n`)
   }
 
-  const throttleMouseMove = throttle(handleMouseMove, 50)
+  const throttleMouseMove = throttle(handleMouseMove, 10)
 
   async function handleClick (e : MouseEvent) {
     console.log('click', e)
@@ -207,23 +270,6 @@
 
   let applications :string[] = []
 
-  type Operation = ({
-    type: 'tap'
-    x: number
-    y: number
-  } | {
-    type: 'keyevent'
-    key: number
-  } | {
-    type: 'am_start'
-    packageName: string
-  })
-
-  type OperationWithTime = Operation & {
-    time: Date
-  }
-
-  let operations : OperationWithTime[] = []
 
   function addOperation (operation: Operation) {
     operations.push({
@@ -325,6 +371,22 @@
     adbKey: 25
   }]
 
+  async function setApplicatons () {
+    const allPm = [] as string[]
+    const pmList = new Command('adb', ['-s', adbId, 'shell', 'pm', 'list', 'packages'])
+    pmList.stdout.on('data', (data) => {
+      const lines = data.toString().split('\n')
+      for (const line of lines) {
+        if (line.startsWith('package:')) {
+          // applications.push(line.slice(8).trim())
+          allPm.push(line.slice(8).trim())
+        }
+      }
+    })
+    await pmList.spawn()
+    applications = allPm
+  }
+
 
   onMount(async () => {
     const configId = await getConfigId()
@@ -356,22 +418,46 @@
     adbId = device.adbId
 
 
-    const pmList = new Command('adb', ['-s', adbId, 'shell', 'pm', 'list', 'packages'])
-    pmList.stdout.on('data', (data) => {
-      const lines = data.toString().split('\n')
-      for (const line of lines) {
-        if (line.startsWith('package:')) {
-          applications.push(line.slice(8).trim())
-        }
-      }
-    })
-    await pmList.spawn()
-
-    applications = applications
-
     const adbShellCmd = new Command('adb', ['shell'])
     const adbShell = await adbShellCmd.spawn()
     motionAdbShell = adbShell
+  
+    // tauri get executable path
+    // const executeDir = await tauri.promisified({ cmd: 'get_executable_path' })
+    // console.log('executeDir', await executableDir())
+    const currentExeDir = await getCurrentExeDir()
+    console.log('currentExeDir', currentExeDir)
+
+
+    const scrcpyJarPath = currentExeDir + '/scrcpy-server.jar'
+
+    const pushScrcpyJarCmd = new Command('adb', ['-s', adbId, 'push', scrcpyJarPath, '/data/local/tmp/scrcpy-server.jar'])
+    // pushScrcpyJarCmd.on('close', () => {
+    //   console.log('pushScrcpyJarCmd close')
+    // })
+    pushScrcpyJarCmd.on('error', (err) => {
+      console.log('pushScrcpyJarCmd error', err)
+    })
+    // pushScrcpyJarCmd.stdout.on('data', line => console.log(`command stdout: "${line}"`))
+    await pushScrcpyJarCmd.execute()
+
+    const ctrlCmd = new Command('scrcpy-control', [])
+    ctrlCmd.on('close', () => {
+      console.log('ctrlCmd close')
+    })
+    ctrlCmd.on('error', (err) => {
+      console.log('ctrlCmd error', err)
+    })
+    ctrlCmd.stdout.on('data', line => console.log(`command stdout: "${line}"`))
+    ctrlCmd.stderr.on('data', line => console.log(`command stderr: "${line}"`))
+
+
+    scrcpyCtrlShell = await ctrlCmd.spawn()
+
+    return () => {
+      motionAdbShell?.kill()
+      scrcpyCtrlShell?.kill()
+    }
   })
 
 </script>
@@ -397,9 +483,15 @@
   }
 
   .record-panel{
-    height: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
     width: 400px;
     background-color: #ccc;
+  }
+
+  .record-operations{
+    overflow: auto;
   }
 
   .record-interface{
