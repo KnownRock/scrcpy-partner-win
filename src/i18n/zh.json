@@ -62,8 +62,6 @@
   "OK": "确定",
   "Scrcpy Partner Home": "Scrcpy Partner 首页",
   "Loading...": "加载中...",
-
-
   "Set window maximum size (e.g. 1024)": "设置窗口最大尺寸 (例如 1024)",
   "Set video bit rate (e.g. 2M or 2000k)": "设置视频比特率 (例如 2M 或 2000k)",
   "Set max frame rate (default 60)": "设置最大帧率 (默认 60)",
@@ -99,5 +97,7 @@
   "Prefer text (e.g. copy/paste) to control device": "优先使用文本 (例如复制/粘贴) 控制设备",
   "Send raw key events": "发送原始按键事件",
   "Disable key repeat": "禁用按键重复",
-  "Forward all clicks (default: only forward clicks on the device screen)": "转发所有点击 (默认: 只转发设备屏幕上的点击)"
+  "Forward all clicks (default: only forward clicks on the device screen)": "转发所有点击 (默认: 只转发设备屏幕上的点击)",
+  "Get current activity": "获取当前活动",
+  "Fresh apps": "刷新应用"
 }

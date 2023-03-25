@@ -96,5 +96,6 @@
   "Disable key repeat": "Disable key repeat",
   "Forward all clicks (default: only forward clicks on the device screen)": "Forward all clicks (default: only forward clicks on the device screen)",
   "select application": "select application",
-  "Get current activity": "Get current activity"
+  "Get current activity": "Get current activity",
+  "Fresh apps": "Fresh apps"
 }
