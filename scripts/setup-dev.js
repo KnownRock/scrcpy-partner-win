@@ -8,12 +8,12 @@ async function main () {
   const args = process.argv.slice(2)
 
   await execAsync(
-    'copy  .\\scrcpy-server.jar .\\src-tauri\\target\\debug\\scrcpy-server.jar'
+    'copy  .\\libs\\scrcpy-server.jar .\\src-tauri\\target\\debug\\scrcpy-server.jar'
   )
 
   // when in dev mode use this location mini-prisma.exe
   await execAsync(
-    'copy  .\\scrcpy-server.jar .\\src-tauri\\target\\release\\scrcpy-server.jar'
+    'copy  .\\libs\\scrcpy-server.jar .\\src-tauri\\target\\release\\scrcpy-server.jar'
   )
 
   console.log('running prisma server')
