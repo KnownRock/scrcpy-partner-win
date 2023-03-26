@@ -78,6 +78,6 @@ export async function getCurrentExeDir (): Promise<string> {
 }
 
 // fn set_record_panel_with_motion_record(record_panel_with_motion_record: bool) {
-export async function setRecordPanelWithMotionRecord (recordPanelWithMotionRecord: boolean): void {
+export async function setRecordPanelWithMotionRecord (recordPanelWithMotionRecord: boolean): Promise<void> {
   await callTauriFunction('set_record_panel_with_motion_record', { recordPanelWithMotionRecord })
 }
