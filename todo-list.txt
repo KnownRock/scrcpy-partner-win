@@ -17,4 +17,4 @@
 [v] add i18n
 [ ] add language selector
 [ ] add drag list to handle op record list
-[?] use scrcpy server socket to control?
+[v] use scrcpy server socket to control
