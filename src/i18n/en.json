@@ -97,5 +97,15 @@
   "Forward all clicks (default: only forward clicks on the device screen)": "Forward all clicks (default: only forward clicks on the device screen)",
   "select application": "select application",
   "Get current activity": "Get current activity",
-  "Fresh apps": "Fresh apps"
+  "Fresh apps": "Fresh apps",
+  "app/activity": "app/activity",
+  "Record": "Record",
+  "Record Script": "Record Script",
+  "Script Name": "Script Name",
+  "With Motion Record": "With Motion Record",
+  "Recording": "Recording",
+  "Key Events": "Key Events",
+  "Functions": "Functions",
+  "Recordes": "Recordes",
+  "Apps": "Apps"
 }

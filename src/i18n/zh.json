@@ -99,5 +99,16 @@
   "Disable key repeat": "禁用按键重复",
   "Forward all clicks (default: only forward clicks on the device screen)": "转发所有点击 (默认: 只转发设备屏幕上的点击)",
   "Get current activity": "获取当前活动",
-  "Fresh apps": "刷新应用"
+  "Fresh apps": "刷新应用",
+  "select application": "选择应用",
+  "app/activity": "应用/活动",
+  "Record": "录制",
+  "Record Script": "录制脚本",
+  "Script Name": "脚本名称",
+  "With Motion Record": "运动记录",
+  "Recording": "记录",
+  "Key Events": "按键事件",
+  "Recordes": "记录",
+  "Functions": "功能",
+  "Apps": "应用"
 }
