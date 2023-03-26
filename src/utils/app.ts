@@ -76,3 +76,8 @@ export async function getCurrentExePath (): Promise<string> {
 export async function getCurrentExeDir (): Promise<string> {
   return await callTauriFunction<string>('get_current_exe_dir')
 }
+
+// fn set_record_panel_with_motion_record(record_panel_with_motion_record: bool) {
+export async function setRecordPanelWithMotionRecord (recordPanelWithMotionRecord: boolean): void {
+  await callTauriFunction('set_record_panel_with_motion_record', { recordPanelWithMotionRecord })
+}

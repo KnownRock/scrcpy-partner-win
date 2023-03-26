@@ -537,3 +537,98 @@ async fn test_call_prisma() {
     let object = serde_json::from_str::<serde_json::Value>(&output).unwrap();
     assert!(object["error"].as_str().unwrap().len() > 0);
 }
+
+use winapi::shared::windef::RECT;
+pub fn save_size_and_position(rect: RECT, is_borderless: bool, config_id: String) {
+    dbg!("save window size and position");
+    println!("config id: {:?}", config_id);
+    println!(
+        "rect: yt:{} xl:{} xr:{}",
+        &rect.top, &rect.left, &rect.right
+    );
+
+    fn get_prisma_json(config_id: String, key: String, value: String) -> String {
+        serde_json::json!({
+            "where": {
+                "deviceConfigId_key": {
+                    "deviceConfigId": config_id,
+                    "key": key
+                }
+            },
+            "update":{
+                "value": serde_json::json!(value).to_string()
+            },
+            "create": {
+                "deviceConfigId": config_id,
+                "key": key,
+                "value": serde_json::json!(value).to_string()
+            }
+        })
+        .to_string()
+    }
+
+    tokio::runtime::Runtime::new()
+        .unwrap()
+        .block_on(async move {
+            let new_top = rect.top;
+            let mut new_left = rect.left;
+            let mut new_height = rect.bottom - rect.top;
+            let mut new_width = rect.right - rect.left;
+
+            // FIXME: windows borader size magic number
+            if !is_borderless {
+                new_left = new_left + 8;
+                new_height = new_height - 8;
+                new_width = new_width - 16;
+            }
+
+            call_prisma(
+                "deviceConfigValue".to_string(),
+                "upsert".to_string(),
+                get_prisma_json(
+                    config_id.clone(),
+                    "--window-x".to_string(),
+                    serde_json::json!(new_left).to_string(),
+                ),
+            )
+            .await;
+
+            call_prisma(
+                "deviceConfigValue".to_string(),
+                "upsert".to_string(),
+                get_prisma_json(
+                    config_id.clone(),
+                    "--window-y".to_string(),
+                    serde_json::json!(new_top).to_string(),
+                ),
+            )
+            .await;
+
+            if new_width > 0 {
+                call_prisma(
+                    "deviceConfigValue".to_string(),
+                    "upsert".to_string(),
+                    get_prisma_json(
+                        config_id.clone(),
+                        "--window-width".to_string(),
+                        serde_json::json!(new_width).to_string(),
+                    ),
+                )
+                .await;
+            }
+            if new_height > 0 {
+                call_prisma(
+                    "deviceConfigValue".to_string(),
+                    "upsert".to_string(),
+                    get_prisma_json(
+                        config_id.clone(),
+                        "--window-height".to_string(),
+                        serde_json::json!(new_height).to_string(),
+                    ),
+                )
+                .await;
+            }
+
+            std::process::exit(0);
+        });
+}

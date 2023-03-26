@@ -19,7 +19,7 @@ mod sendkey;
 mod tauri_funcs;
 mod wins;
 
-use cmds::{kill_process, run_scrcpy};
+use cmds::{kill_process, run_scrcpy, save_size_and_position};
 use tauri_funcs::{init_main_window, init_record_window, init_tool_window};
 use winapi::shared::windef::RECT;
 use wins::{set_window_loc_and_size_by_hwnd, set_window_loc_by_hwnd};
@@ -40,6 +40,8 @@ fn unhook_all_window_events() {
 static mut fuc_loc_callback: Option<
     fn(rect: RECT, window: &mut tauri::Window, is_borderless: bool),
 > = None;
+
+static mut IS_RECORD_PANEL_WITH_MOTION_RECORD: bool = false;
 
 // TODO: refactor this, using closure to avoid global variable
 unsafe extern "system" fn win_event_loc_callback(
@@ -70,7 +72,12 @@ unsafe extern "system" fn win_event_loc_callback(
 
     match &mut RECORD_WINDOW {
         Some(window) => {
-            set_window_loc_and_size_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
+            set_window_loc_and_size_by_hwnd(
+                HWND,
+                window,
+                IS_WINDOW_BORDERLESS,
+                IS_RECORD_PANEL_WITH_MOTION_RECORD,
+            );
         }
         None => {}
     }
@@ -124,102 +131,6 @@ unsafe extern "system" fn win_event_order_callback(
     // }
 }
 
-fn save_size_and_position(rect: RECT) {
-    unsafe {
-        dbg!("save window size and position");
-        println!("config id: {:?}", &CONFIG_ID);
-        println!(
-            "rect: yt:{} xl:{} xr:{}",
-            &rect.top, &rect.left, &rect.right
-        );
-
-        fn get_prisma_json(config_id: String, key: String, value: String) -> String {
-            serde_json::json!({
-                "where": {
-                    "deviceConfigId_key": {
-                        "deviceConfigId": config_id,
-                        "key": key
-                    }
-                },
-                "update":{
-                    "value": serde_json::json!(value).to_string()
-                },
-                "create": {
-                    "deviceConfigId": config_id,
-                    "key": key,
-                    "value": serde_json::json!(value).to_string()
-                }
-            })
-            .to_string()
-        }
-
-        tokio::runtime::Runtime::new()
-            .unwrap()
-            .block_on(async move {
-                let new_top = rect.top;
-                let mut new_left = rect.left;
-                let mut new_height = rect.bottom - rect.top;
-                let mut new_width = rect.right - rect.left;
-
-                // FIXME: windows borader size magic number
-                if !IS_WINDOW_BORDERLESS {
-                    new_left = new_left + 8;
-                    new_height = new_height - 8;
-                    new_width = new_width - 16;
-                }
-
-                call_prisma(
-                    "deviceConfigValue".to_string(),
-                    "upsert".to_string(),
-                    get_prisma_json(
-                        CONFIG_ID.to_string(),
-                        "--window-x".to_string(),
-                        serde_json::json!(new_left).to_string(),
-                    ),
-                )
-                .await;
-
-                call_prisma(
-                    "deviceConfigValue".to_string(),
-                    "upsert".to_string(),
-                    get_prisma_json(
-                        CONFIG_ID.to_string(),
-                        "--window-y".to_string(),
-                        serde_json::json!(new_top).to_string(),
-                    ),
-                )
-                .await;
-
-                if new_width > 0 {
-                    call_prisma(
-                        "deviceConfigValue".to_string(),
-                        "upsert".to_string(),
-                        get_prisma_json(
-                            CONFIG_ID.to_string(),
-                            "--window-width".to_string(),
-                            serde_json::json!(new_width).to_string(),
-                        ),
-                    )
-                    .await;
-                }
-                if new_height > 0 {
-                    call_prisma(
-                        "deviceConfigValue".to_string(),
-                        "upsert".to_string(),
-                        get_prisma_json(
-                            CONFIG_ID.to_string(),
-                            "--window-height".to_string(),
-                            serde_json::json!(new_height).to_string(),
-                        ),
-                    )
-                    .await;
-                }
-
-                std::process::exit(0);
-            });
-    }
-}
-
 unsafe extern "system" fn win_event_close_callback(
     _hwin_event_hook: HWINEVENTHOOK,
     _event: winapi::shared::minwindef::DWORD,
@@ -245,7 +156,7 @@ unsafe extern "system" fn win_event_close_callback(
             let rect = wins::get_window_rect_by_hwnd(HWND);
 
             if IS_AUTO_SAVE_LOCATION_AND_SIZE {
-                save_size_and_position(rect);
+                save_size_and_position(rect, IS_WINDOW_BORDERLESS, CONFIG_ID.clone());
             } else {
                 std::process::exit(0);
             }
@@ -320,6 +231,24 @@ fn watch_window_size_and_position_and_order(pid: DWORD) {
 #[tauri::command]
 fn adb_devices_l() -> String {
     get_adb_devices_raw()
+}
+
+// IS_RECORD_PANEL_WITH_MOTION_ROCORD
+#[tauri::command]
+fn set_record_panel_with_motion_record(record_panel_with_motion_record: bool) {
+    unsafe {
+        IS_RECORD_PANEL_WITH_MOTION_RECORD = record_panel_with_motion_record;
+
+        match &mut RECORD_WINDOW {
+            Some(window) => set_window_loc_and_size_by_hwnd(
+                HWND,
+                window,
+                IS_WINDOW_BORDERLESS,
+                IS_RECORD_PANEL_WITH_MOTION_RECORD,
+            ),
+            None => {}
+        }
+    }
 }
 
 #[tauri::command]
@@ -421,44 +350,8 @@ fn init_tool_hooks(tool_window: tauri::Window) {
 }
 
 #[tauri::command]
-async fn show_main_window(app: tauri::AppHandle) {
-    match app.get_window("main") {
-        Some(window) => {
-            window.show().unwrap();
-        }
-        None => {
-            // TODO: error handle
-        }
-    }
-    match app.get_window("splashscreen") {
-        Some(window) => {
-            window.close().unwrap();
-        }
-        None => {}
-    }
-}
-
-#[tauri::command]
 async fn get_config_id() -> String {
     unsafe { CONFIG_ID.clone() }
-}
-
-#[tauri::command]
-async fn show_tool_window(app: tauri::AppHandle) {
-    match app.get_window("tool") {
-        Some(_window) => {
-            // window.show().unwrap();
-        }
-        None => {
-            // TODO: error handle
-        }
-    }
-    match app.get_window("splashscreen") {
-        Some(window) => {
-            window.close().unwrap();
-        }
-        None => {}
-    }
 }
 
 #[tauri::command]
@@ -602,7 +495,8 @@ fn main() {
             get_config_id,
             get_device_size,
             get_current_exe_path,
-            get_current_exe_dir
+            get_current_exe_dir,
+            set_record_panel_with_motion_record
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");

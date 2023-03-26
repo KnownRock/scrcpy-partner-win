@@ -94,10 +94,13 @@ pub fn set_window_loc_by_hwnd(
         .unwrap();
 }
 
+static RECORD_WINDOW_WIDTH: i32 = 600;
+
 pub fn set_window_loc_and_size_by_hwnd(
     hwnd_usize: usize,
     window: &mut tauri::Window,
     is_window_borderless: bool,
+    is_record_panel_with_motion_record: bool,
 ) {
     if hwnd_usize == 0 {
         return;
@@ -123,8 +126,12 @@ pub fn set_window_loc_and_size_by_hwnd(
 
     // make leftbar
     {
-        width = width + 400;
-        new_left = new_left - 400;
+        if is_record_panel_with_motion_record {
+            width = width + RECORD_WINDOW_WIDTH;
+        } else {
+            width = RECORD_WINDOW_WIDTH;
+        }
+        new_left = new_left - RECORD_WINDOW_WIDTH;
     }
 
     window
