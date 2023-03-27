@@ -306,22 +306,6 @@ async fn start(exec: String, cwd: String) {
 }
 
 #[tauri::command]
-async fn get_device_size(adb_id: String) -> String {
-    let mut adb = Command::new("adb");
-    adb.arg("-s");
-    adb.arg(adb_id);
-    adb.arg("shell");
-    adb.arg("wm");
-    adb.arg("size");
-
-    let output = adb.output().unwrap();
-    let output_str = String::from_utf8(output.stdout).unwrap();
-    println!("output_str: {:?}", output_str);
-
-    output_str
-}
-
-#[tauri::command]
 async fn sendkey(
     key_code: usize,
     scan_code: usize,
@@ -493,7 +477,6 @@ fn main() {
             open,
             start,
             get_config_id,
-            get_device_size,
             get_current_exe_path,
             get_current_exe_dir,
             set_record_panel_with_motion_record

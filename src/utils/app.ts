@@ -53,19 +53,6 @@ export async function start (exec: string, cwd: string): Promise<void> {
   await callTauriFunction('start', { exec, cwd })
 }
 
-// async fn get_device_size(adbId: String) -> String {
-export async function getDeviceSize (adbId: string): Promise<[number, number]> {
-  // Physical size: 1080x2400
-  const result = await callTauriFunction<string>('get_device_size', { adbId })
-
-  const d = result.match(/Physical size: (\d+)x(\d+)/)
-
-  if (d != null) {
-    return [parseInt(d[1]), parseInt(d[2])]
-  } else {
-    return [0, 0]
-  }
-}
 
 // async fn get_current_exe_path() -> String {
 export async function getCurrentExePath (): Promise<string> {
