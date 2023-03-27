@@ -30,7 +30,7 @@
       <Apps execute={execute} adbId={adbId}/>
     {:else if opActive === 'operations'}
     <div class="record-operations">
-      <Operations operations={operations} />
+      <Operations operations={operations}  execute={executeWithoutAdd} />
     </div>
       
     {/if}
@@ -40,6 +40,9 @@
       <Button>
         Reset
       </Button>
+      <Button variant="outlined" on:click={play}>
+        Play
+      </Button>
       <Button variant="raised">
         Save
       </Button>
@@ -47,16 +50,7 @@
     
   </div>
   <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div class="record-interface" 
-    bind:clientHeight={height}
-    bind:clientWidth={width}
-    on:mousedown={handleMouseDown}
-    on:mouseup={handleMouseUp}
-    on:mousemove={throttleMouseMove}
-    on:contextmenu={handleContextMenu}
-    on:mouseleave={handleMouseLeave}
-    >
-  </div>
+  <RecordInterface execute={execute} adbId={adbId} />
 </div>
 
 
@@ -65,15 +59,14 @@
   import 'svelte-material-ui/bare.css'
 
 
-  import { getConfigId, getDeviceSize, setRecordPanelWithMotionRecord } from '../utils/app'
+  import { getConfigId, setRecordPanelWithMotionRecord } from '../utils/app'
   import { onMount } from 'svelte'
   import { getConfigById } from '../utils/configs'
   import prismaClientLike from '../utils/prisma-like-client'
   import { appWindow } from '@tauri-apps/api/window'
   import TabBar from './Record/TabBar.svelte'
   import KeyEvents from './Record/KeyEvents.svelte'
-  import { type RecordOperationWithTime, type RecordOperation, KeyEventType } from '../types'
-  import { MotionType } from '../types'
+  import type{ RecordOperation } from '../types'
 
   import ScrcpyControlClient from './Record/ScrcpyControlClient'
   import Operations from './Record/Operations.svelte'
@@ -82,16 +75,13 @@
   import FormField from '@smui/form-field'
   import Checkbox from '@smui/checkbox'
   import Apps from './Record/Apps.svelte'
-
+  import RecordInterface from './Record/RecordInterface.svelte'
   let withMotion = false
   let isRecording = true
 
   let name = ''
-
-  let height = 0
-  let width = 0
   let adbId = ''
-  let deviceSize = [0, 0]
+
 
   let opActive
 
@@ -100,31 +90,35 @@
   let scrcpyControlClient: ScrcpyControlClient | null = null
 
 
-  let operations : RecordOperationWithTime[] = []
+  const record : RecordOperation[] = []
 
 
-  function handleContextMenu (e: MouseEvent) {
-    execute({
-      type: 'keyevent',
-      key: 4,
-      keyEventType: KeyEventType.Down
-    })
+  let operations = record
+  let lastTime = null as null | number
+  function addOperation (operation: RecordOperation) {
+    if (lastTime == null) {
+      lastTime = Date.now()
+    } else {
+      operations.push({
+        type: 'delay',
+        ms: Date.now() - lastTime
+      })
+    }
 
-    execute({
-      type: 'keyevent',
-      key: 4,
-      keyEventType: KeyEventType.Up
-    })
-
-    e.preventDefault()
+    operations.push(operation)
+  
+    operations = operations
+  }
+  
+  function executeWithoutAdd (operation: RecordOperation) {
+    scrcpyControlClient?.execute(operation)
   }
 
-  function addOperation (operation: RecordOperation) {
-    operations.push({
-      ...operation,
-      time: new Date()
-    })
-    operations = operations
+  function play () {
+    for (let i = 0; i < operations.length; i++) {
+      const operation = operations[i]
+      scrcpyControlClient?.execute(operation)
+    }
   }
 
 
@@ -133,91 +127,6 @@
 
     addOperation(operation)
   }
-
-
-  function getXYFromEvent (e: MouseEvent) {
-    const [deviceWidth, deviceHeight] = deviceSize
-    const x = ~~(e.offsetX / width * deviceWidth)
-    const y = ~~(e.offsetY / height * deviceHeight)
-    return [x, y]
-  }
-
-  let isMouseDown = false
-  async function handleMouseDown (e: MouseEvent) {
-    if (e.button !== 0) return
-
-    console.log('mousedown', e)
-    isMouseDown = true
-    const [x, y] = getXYFromEvent(e)
-    execute({
-      type: 'motion',
-      motionType: MotionType.Down,
-      x,
-      y
-    })
-    // addMouseEvent(MotionType.Down, x, y)
-
-    // if (motionAdbShell) motionAdbShell.write(`input motionevent down ${x} ${y}\n`)
-  }
-
-  async function handleMouseUp (e: MouseEvent) {
-    if (e.button !== 0) return
-
-    console.log('mouseup', e)
-    isMouseDown = false
-    const [x, y] = getXYFromEvent(e)
-    // addMouseEvent(MotionType.Up, x, y)
-    execute({
-      type: 'motion',
-      motionType: MotionType.Up,
-      x,
-      y
-    })
-    // if (motionAdbShell) motionAdbShell.write(`input motionevent up ${x} ${y}\n`)
-  }
-
-  async function handleMouseLeave (e: MouseEvent) {
-    if (e.button !== 0) return
-
-    console.log('mouseleave', e)
-    isMouseDown = false
-    const [x, y] = getXYFromEvent(e)
-    execute({
-      type: 'motion',
-      motionType: MotionType.Up,
-      x,
-      y
-    })
-  }
-
-  const throttle = (fn: Function, delay: number) => {
-    let lastCall = 0
-    return function (...args: any[]) {
-      const now = (new Date()).getTime()
-      if (now - lastCall < delay) {
-        return
-      }
-      lastCall = now
-      return fn(...args)
-    }
-  }
-
-
-  async function handleMouseMove (e: MouseEvent) {
-    if (!isMouseDown) return
-    console.log('mousemove', e)
-    const [x, y] = getXYFromEvent(e)
-    // addMouseEvent(MotionType.Move, x, y)
-    execute({
-      type: 'motion',
-      motionType: MotionType.Move,
-      x,
-      y
-    })
-  }
-
-  const throttleMouseMove = throttle(handleMouseMove, 10)
-
 
   onMount(async () => {
     const configId = await getConfigId()
@@ -242,9 +151,6 @@
 
       return
     }
-
-    deviceSize = await getDeviceSize(device.adbId)
-    console.log('deviceSize', deviceSize)
 
     adbId = device.adbId
 
@@ -300,10 +206,7 @@
     padding:10px;
   }
 
-  .record-interface{
-    flex: 1;
-    background-color: transparent;
-  }
+
 
   .record-save{
     display: flex;

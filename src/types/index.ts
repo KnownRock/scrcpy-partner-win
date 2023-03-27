@@ -1,3 +1,4 @@
+
 export enum KeyEventType {
   Down = 0,
   Up = 1
@@ -6,6 +7,11 @@ export enum MotionType {
   Down = 0,
   Up = 1,
   Move = 2
+}
+export interface RecordOperationGroup {
+  type: 'group'
+  name: string
+  operations: RecordOperation[]
 }
 
 export type RecordOperation = ({
@@ -24,8 +30,14 @@ export type RecordOperation = ({
   motionType: MotionType
   x: number
   y: number
+} | {
+  type: 'scroll'
+  x: number
+  y: number
+  v: number
+  h: number
+} | RecordOperationGroup
+| {
+  type: 'delay'
+  ms: number
 })
-
-export type RecordOperationWithTime = RecordOperation & {
-  time: Date
-}

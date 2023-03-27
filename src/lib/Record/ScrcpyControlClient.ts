@@ -6,6 +6,10 @@ interface ScrcpyControlClientArgs {
   adbId: string
 }
 
+async function sleep (timeout: number): Promise<void> {
+  await new Promise(resolve => setTimeout(resolve, timeout))
+}
+
 export default class ScrcpyControlClient {
   private adbShell: Child | null = null
   private readonly adbId = '' as string
@@ -109,6 +113,12 @@ export default class ScrcpyControlClient {
           break
         case 'motion':
           await this.controlShell.write(`touch ${operation.x} ${operation.y} ${operation.motionType}\n`)
+          break
+        case 'scroll':
+          await this.controlShell.write(`scroll ${operation.x} ${operation.y} ${operation.h} ${operation.v}\n`)
+          break
+        case 'delay':
+          await sleep(operation.ms)
           break
       }
     }
