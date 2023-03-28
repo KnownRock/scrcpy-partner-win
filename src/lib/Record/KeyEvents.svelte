@@ -61,5 +61,11 @@
     command: 'volumeDown',
     icon: 'volume_down',
     adbKey: 25
+  }, {
+    // https://stackoverflow.com/questions/7585105/turn-on-screen-on-device/41198273#41198273
+    label: 'Wake Up',
+    command: 'wakeUp',
+    icon: 'brightness_5',
+    adbKey: 224
   }]
 </script>

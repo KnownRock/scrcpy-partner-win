@@ -36,8 +36,15 @@ export type RecordOperation = ({
   y: number
   v: number
   h: number
-} | RecordOperationGroup
+}
+| RecordOperationGroup
 | {
   type: 'delay'
   ms: number
-})
+}
+| {
+  type: 'exec_script'
+  scriptId: string
+  name: string
+}
+)

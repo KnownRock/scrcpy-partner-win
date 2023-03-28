@@ -94,6 +94,8 @@
   async function handleMouseLeave (e: MouseEvent) {
     if (e.button !== 0) return
 
+    if (!isMouseDown) return
+
     console.log('mouseleave', e)
     isMouseDown = false
     const [x, y] = getXYFromEvent(e)

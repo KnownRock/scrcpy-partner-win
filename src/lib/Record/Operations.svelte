@@ -6,11 +6,12 @@
           <Paper variant="outlined" style="padding-top:10px;padding-bottom:10px">
             <div style="margin-top:16px;margin-bottom:-16px">
               <OperationFucPanel 
-                operation={operation} 
-                operations={operations}
+                bind:operation={operation} 
+                bind:operations={operations}
                 execute={execute}
                 fresh={fresh}
                 type={'group'}
+                bind:selection={selection}
               />
             </div>
             
@@ -33,7 +34,33 @@
             </Content>
           </Paper>
       {:else}
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 5px;">
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <div 
+        on:click={(e) => {
+          e.stopPropagation()
+          if (e.shiftKey) {
+            if (selection[0] === -1) {
+              selection[0] = index
+              selection[1] = index
+            } else {
+              selection[1] = index
+            }
+          } else {
+            if (index === selection[0] && index === selection[1]) {
+              selection[0] = -1
+              selection[1] = -1
+              return
+            }
+
+            selection[0] = index
+            selection[1] = index
+          }
+
+          // selection = selection
+          // fresh()
+        }}
+        class={index >= selection[0] && index <= selection[1] ? 'operation-item-selected' : 'operation-item'}
+        style="display: flex; align-items: center; justify-content: space-between; padding: 5px;">
           <div  class="mdc-typography--headline6">
             {#if operation.type === 'tap'}
               <span>[{translateOperationType(operation.type)}] X:{operation.x} X:{operation.y}</span>
@@ -43,10 +70,14 @@
               <span>[{translateOperationType(operation.type)}] Name:{operation.packageName}</span>
             {:else if operation.type === 'motion'}
               <span>[{translateOperationType(operation.type)}] Type:{translateMotionType(operation.motionType)} x:{operation.x} y:{operation.y}</span>
-              {:else if operation.type === 'delay'}
-                <span>[{translateOperationType(operation.type)}] 
+            {:else if operation.type === 'delay'}
+              <span>[{translateOperationType(operation.type)}] 
                 <input type="number" bind:value={operation.ms} style="width: 50px; text-align: center;" /> ms
               </span>
+            {:else if operation.type === 'exec_script'}
+              <span>[{translateOperationType(operation.type)}] Name:{operation.name}</span>
+
+
               {:else}
               <span>Unknown operation</span>
             {/if}
@@ -55,8 +86,9 @@
 
           <OperationFucPanel 
             type={'item'}
-            operation={operation} 
-            operations={operations}
+            bind:operation={operation} 
+            bind:operations={operations}
+            bind:selection={selection}
             execute={execute}
             fresh={fresh}
           />
@@ -78,6 +110,8 @@
   export let execute: (operation: RecordOperation) => void
   import { v4 as uuidv4 } from 'uuid'
   let uuid = uuidv4()
+
+  export let selection: [number, number]
 
 
   function fresh () {
@@ -116,6 +150,8 @@
         return 'Motion'
       case 'delay':
         return 'Delay'
+      case 'exec_script':
+        return 'Execute Script'
       default:
         return 'Unknown'
     }
@@ -124,5 +160,14 @@
 </script>
 
 <style>
+  .operation-item-selected {
+    background-color: #afafaf;
+
+    user-select: none;
+  }
+
+  .operation-item {
+    user-select: none;
+  }
   
 </style>

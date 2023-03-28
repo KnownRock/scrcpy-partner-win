@@ -1,6 +1,7 @@
 import { type Child, Command } from '@tauri-apps/api/shell'
 import type { RecordOperation } from '../../types'
 import { getCurrentExeDir } from '../../utils/app'
+import prismaClientLike from '../../utils/prisma-like-client'
 
 interface ScrcpyControlClientArgs {
   adbId: string
@@ -84,7 +85,11 @@ export default class ScrcpyControlClient {
     }
   }
 
-  async execute (operation: RecordOperation): Promise<void> {
+  async execute (operation: RecordOperation, {
+    scale
+  }: {
+    scale: number
+  }): Promise<void> {
     if (this.controlShell === null) {
       throw new Error('controlShell is null')
     }
@@ -120,8 +125,33 @@ export default class ScrcpyControlClient {
           await this.controlShell.write(`scroll ${operation.x} ${operation.y} ${operation.h} ${operation.v}\n`)
           break
         case 'delay':
-          await sleep(operation.ms)
+          await sleep(operation.ms / scale)
           break
+        case 'exec_script':
+
+          // eslint-disable-next-line no-case-declarations
+          const script = await prismaClientLike.recordScript.findUnique({
+            where: {
+              id: operation.scriptId
+            },
+            include: {
+              recordScript: true
+            }
+          })
+
+          if (script === null) {
+            throw new Error('script not found')
+          }
+
+          // eslint-disable-next-line no-case-declarations
+          const operations = JSON.parse(script.recordScript.data)
+          for (const operation of operations) {
+            await this.execute(operation, { scale })
+          }
+
+          break
+        default:
+          throw new Error('unknown operation type')
       }
     }
     this.executeLock = false

@@ -16,6 +16,10 @@
       id: 'functions'
     },
     {
+      label: $t('Scripts'),
+      id: 'scripts'
+    },
+    {
       label: $t('Recordes'),
       id: 'operations'
     }

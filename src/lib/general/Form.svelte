@@ -33,6 +33,8 @@
       cancelCallback = value.cancelCallback
       updateTime++
       title = value.title ?? 'Form'
+    } else {
+      open = false
     }
   })
 

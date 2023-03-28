@@ -111,5 +111,14 @@
   "Recordes": "记录",
   "Functions": "功能",
   "Apps": "应用",
-  "Execute": "执行"
+  "Execute": "执行",
+  "Script Description": "脚本说明",
+  "Description": "说明",
+  "Scripts": "脚本",
+  "Scale": "速度",
+  "Speed": "速度",
+  "Open": "打开",
+  "open": "打开",
+  "New": "新建",
+  "Play": "运行"
 }
