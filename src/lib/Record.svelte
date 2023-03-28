@@ -55,7 +55,7 @@
     <TabBar bind:active={opActive} />
     {#if opActive === 'keyEvents'}
       <KeyEvents  execute={execute}/>
-    {:else if opActive === 'Apps'}
+    {:else if opActive === 'apps'}
       <Apps execute={execute} adbId={adbId}/>
     {:else if opActive === 'operations'}
       <div class="record-operations">
@@ -338,17 +338,27 @@
     if (lastTime == null) {
       lastTime = Date.now()
     } else {
-      operations.push({
-        type: 'delay',
-        ms: Date.now() - lastTime
-      })
-      lastTime = Date.now()
+      if (selection[1] === -1) {
+        operations.push({
+          type: 'delay',
+          ms: Date.now() - lastTime
+        })
+        lastTime = Date.now()
+      } else {
+        operations.splice(selection[1], 0, {
+          type: 'delay',
+          ms: Date.now() - lastTime
+        })
+        lastTime = Date.now()
+        selection = [selection[0], selection[1] + 1]
+      }
     }
 
     if (selection[1] === -1) {
       operations.push(operation)
     } else {
       operations.splice(selection[1], 0, operation)
+      selection = [selection[0], selection[1] + 1]
     }
 
   
