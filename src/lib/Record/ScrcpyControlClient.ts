@@ -74,10 +74,12 @@ export default class ScrcpyControlClient {
   async close (): Promise<void> {
     if (this.controlShell !== null) {
       await this.controlShell.kill()
+      console.log('controlShell killed')
       this.controlShell = null
     }
     if (this.adbShell !== null) {
       await this.adbShell.kill()
+      console.log('adbShell killed')
       this.adbShell = null
     }
   }
