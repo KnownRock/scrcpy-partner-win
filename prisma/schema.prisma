@@ -72,7 +72,11 @@ model RecordScriptData {
 
 model RecordScript {
   id             String       @id @default(uuid())
-  name           String
+  name           String       @unique
+  description    String
+
+  scale          Float
+
   recordScript   RecordScriptData @relation(fields: [recordScriptId], references: [id], onDelete: Cascade)
   recordScriptId String
 
