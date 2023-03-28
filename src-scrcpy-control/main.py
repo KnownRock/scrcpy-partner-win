@@ -312,6 +312,7 @@ commands = [
     'tunnel_forward=true',
     # 'max_size=180',
     'max_fps=1',
+    'power_on=false',
     ]
 server_stream = device.shell(
   commands,
