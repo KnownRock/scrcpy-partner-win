@@ -47,7 +47,7 @@ async function main () {
 
 
   const { stdout: stdout4, stderr: stderr4 } = await execAsync(
-    'copy  .\\main.exe .\\src-tauri\\target\\release\\mini-prisma.exe',
+    'copy  .\\main.exe ..\\src-tauri\\target\\release\\mini-prisma.exe',
     {
       cwd: './src-mini-prisma'
     }
