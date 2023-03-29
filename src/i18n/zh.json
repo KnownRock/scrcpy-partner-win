@@ -120,5 +120,20 @@
   "Open": "打开",
   "open": "打开",
   "New": "新建",
-  "Play": "运行"
+  "Play": "运行",
+  "Add Exec": "添加执行",
+  "Add Start": "添加开始",
+  "Add Script": "添加脚本",
+  "Select Script": "选择脚本",
+  "Add": "添加",
+  "Key Event": "键盘事件",
+  "Key Event Type": "按键事件类型",
+  "Down": "向下",
+  "Up": "向上",
+  "Key Event Code": "按键事件代码",
+  "ADB Command": "ADB 命令",
+  "Motion Event X": "动作事件 X",
+  "Motion Event Y": "运动事件 Y",
+  "Motion Event Type": "运动事件类型",
+  "Move": "移动"
 }

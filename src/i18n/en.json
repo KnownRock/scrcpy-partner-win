@@ -117,5 +117,22 @@
   "Open": "Open",
   "open": "open",
   "New": "New",
-  "Play": "Play"
+  "Play": "Play",
+  "Add Exec": "Add Exec",
+  "Add Start": "Add Start",
+  "Add Script": "Add Script",
+  "OK": "OK",
+  "Script": "Script",
+  "Select Script": "Select Script",
+  "Add": "Add",
+  "Key Event": "Key Event",
+  "Key Event Type": "Key Event Type",
+  "Down": "Down",
+  "Up": "Up",
+  "Key Event Code": "Key Event Code",
+  "ADB Command": "ADB Command",
+  "Motion Event X": "Motion Event X",
+  "Motion Event Y": "Motion Event Y",
+  "Motion Event Type": "Motion Event Type",
+  "Move": "Move"
 }
