@@ -352,13 +352,14 @@ resolution = struct.unpack(">HH", res)
 video_socket.setblocking(False)
 
 # TODO: handle rotation
-real_size = os.popen('adb shell wm size').read().split(' ')[-1].strip()
+real_size = os.popen(f'adb -s {adb_id} shell wm size').read().split(' ')[-1].strip()
 print(real_size)
 
 real_resolution = real_size.split('x')
 real_resolution = [int(i) for i in real_resolution]
 
 print(resolution)
+
 from time import sleep
     
 class MockClient:
@@ -443,7 +444,8 @@ f_dict = {
     "set_screen_power_mode": handle_set_screen_power_mode_args,
     "swipe": handle_swipe_args,
 }
-    
+
+print('init done')
 
 while True:
     inp = input()
@@ -457,7 +459,7 @@ while True:
         fuc = args[0]
         f_args = args[1:]
         
-        print(fuc, f_args)
+        # print(fuc, f_args)
         
         # controlSender.__getattribute__(fuc)(*f_args)
         # print(f_args)

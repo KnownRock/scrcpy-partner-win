@@ -70,6 +70,7 @@
 
   {/if}
 
+  {#if execMode === 'exec' || execMode === 'start'}
   <Textfield
     label={$t('Icon')}
     bind:value={model.icon}
@@ -77,6 +78,16 @@
   <IconButton class="material-icons">
     {model.icon}
   </IconButton>
+  {:else}
+  <Textfield
+    label={$t('Icon')}
+    bind:value={modelScript.icon}
+  />
+  <IconButton class="material-icons">
+    {modelScript.icon}
+  </IconButton>
+  {/if}
+  
   <a href="https://fonts.google.com/icons" target="_blank" rel="noreferrer">Google Material Icons</a>
 
 </div>

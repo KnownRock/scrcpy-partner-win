@@ -66,10 +66,26 @@ export default class ScrcpyControlClient {
         console.error('reconnect error', err)
       })
     })
-    ctrlCmd.stdout.on('data', line => { console.log(`command stdout: "${line as string}"`) })
-    ctrlCmd.stderr.on('data', line => { console.error(`command stderr: "${line as string}"`) })
+
+    let resolveInit: () => void = () => {}
+
+    const promise = new Promise<void>((resolve) => {
+      resolveInit = resolve
+    })
+
+    ctrlCmd.stdout.on('data', line => {
+      if (line.trim() === 'init done') {
+        resolveInit()
+      }
+
+      console.log(`command stdout: "${line as string}"`)
+    })
+    ctrlCmd.stderr.on('data', line => {
+      console.error(`command stderr: "${line as string}"`)
+    })
 
     this.controlShell = await ctrlCmd.spawn()
+    await promise
   }
 
   async close (): Promise<void> {

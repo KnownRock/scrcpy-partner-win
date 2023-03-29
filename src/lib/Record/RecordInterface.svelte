@@ -296,8 +296,12 @@
   async function initDeviceSize () {
     deviceSize = await getDeviceSize(adbId)
   }
+
+  $:adbId && initDeviceSize()
+
+
   onMount(() => {
-    initDeviceSize()
+    // initDeviceSize()
   })
 
 </script>
