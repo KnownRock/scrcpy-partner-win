@@ -3,7 +3,7 @@
   import 'svelte-material-ui/bare.css'
   import IconButton from '@smui/icon-button'
   import { onMount } from 'svelte'
-  import { exit, getConfigId } from '../utils/app'
+  import { exit, getConfigId, open, start } from '../utils/app'
   import Grid from 'svelte-grid'
   import { commandKeyDict } from './Tool/command-key-dict'
   import { lanuchSelf } from '../utils/devices'
@@ -16,7 +16,10 @@
   import { callTauriFunction } from '../utils/tauri'
   import { t } from 'svelte-i18n'
   import { appWindow, LogicalSize } from '@tauri-apps/api/window'
-  import { Command } from '@tauri-apps/api/shell'
+  import ScrcpyControlClient from '../utils/ScrcpyControlClient'
+  import prismaClientLike from '../utils/prisma-like-client'
+
+  let adbId = ''
 
   const componentDict = {
     setting: Setting
@@ -214,6 +217,9 @@
     console.log('config', config)
 
     if (config) {
+      const device = config.device
+      adbId = device.adbId
+
       const queriedSidebarConfig = config.sideBarConfig
 
       if (queriedSidebarConfig) {
@@ -224,6 +230,12 @@
       }
     } else {
       sidebarConfig = getDefaultSidebarConfig()
+    }
+
+    return () => {
+      console.log('unmount')
+      scrcpyControlClient?.close()
+      scrcpyControlClient = null
     }
   })
 
@@ -243,16 +255,54 @@
         lanuchSelf([])
       }
       if (item.cmdName === 'open') {
-        const cmd = new Command(item.opts.exec, item.opts.args.split(' ').filter((i) => i), {
-          cwd: item.opts.cwd
-        })
-        cmd.spawn()
+        open(item.opts.exec, item.opts.args.split(' ').filter((i) => i), item.opts.cwd)
       }
       if (item.cmdName === 'start') {
-        const cmd = new Command('cmd', [
-          '/C', 'start', '/d', item.opts.cwd, item.opts.exec
-        ])
-        cmd.spawn()
+        start(item.opts.exec, item.opts.cwd)
+      }
+      if (item.cmdName === 'exec_script') {
+        execScript(item.opts.scriptId)
+      }
+    }
+  }
+  
+
+  let loadingPromise: Promise<void> | null = null
+  let scrcpyControlClient: ScrcpyControlClient | null = null
+  async function execScript (scriptId) {
+    if (loadingPromise) {
+      await loadingPromise
+    }
+
+    if (!scrcpyControlClient) {
+      loadingPromise = new Promise((resolve) => {
+        scrcpyControlClient = new ScrcpyControlClient({ adbId })
+        scrcpyControlClient
+          .init()
+          .then(() => {
+            loadingPromise = null
+            resolve()
+          })
+      })
+
+      await loadingPromise
+    }
+
+    const script = await prismaClientLike.recordScript.findUnique({
+      where: {
+        id: scriptId
+      },
+      include: {
+        recordScript: true
+      }
+    })
+
+    if (script) {
+      const operations = JSON.parse(script.recordScript.data)
+      for (const operation of operations) {
+        await scrcpyControlClient?.execute(operation, {
+          scale: script.scale
+        })
       }
     }
   }
@@ -297,7 +347,11 @@
       display: flex; justify-content: center; align-items: center;
       height: 100%; width: 100%;
       "
-      on:dblclick={() => { delItem(dataItem) }} >
+      on:dblclick={() => {
+        if (mode === 'setting') {
+          delItem(dataItem)
+        }
+        }} >
         <IconButton
         disabled={mode === 'setting'}
         

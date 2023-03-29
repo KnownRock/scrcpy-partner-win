@@ -17,55 +17,76 @@ datasource db {
   // url      = "file:./main.db"
 }
 
-model Device{
-  id       String @id @default(uuid())
-  adbId    String
-  name     String
-  model    String
-  product  String
-  config   DeviceConfig[]
+model Device {
+  id      String         @id @default(uuid())
+  adbId   String
+  name    String
+  model   String
+  product String
+  config  DeviceConfig[]
 
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt
-  lastSeenAt  DateTime?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  lastSeenAt DateTime?
 }
 
-model DeviceConfig{
-  id       String     @id @default(uuid())
-  name     String
-  device   Device  @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  deviceId String
-  deviceConfigValue DeviceConfigValue[] 
+model DeviceConfig {
+  id                String              @id @default(uuid())
+  name              String
+  device            Device              @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  deviceId          String
+  deviceConfigValue DeviceConfigValue[]
 
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt
-  lastSeenAt  DateTime?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  lastSeenAt DateTime?
 
   sideBarConfigId String?
   sideBarConfig   SideBarConfig? @relation(fields: [sideBarConfigId], references: [id])
 }
 
-model SideBarConfig{
-  id       String     @id @default(uuid())
-  name     String
-  value    String
+model SideBarConfig {
+  id    String @id @default(uuid())
+  name  String
+  value String
 
   deviceConfig DeviceConfig[]
 }
 
-
-model DeviceConfigValue{
-  id       String     @id @default(uuid())
-  value    String
-  key      String
-  deviceConfig   DeviceConfig  @relation(fields: [deviceConfigId], references: [id], onDelete: Cascade)
+model DeviceConfigValue {
+  id             String       @id @default(uuid())
+  value          String
+  key            String
+  deviceConfig   DeviceConfig @relation(fields: [deviceConfigId], references: [id], onDelete: Cascade)
   deviceConfigId String
 
   @@unique([deviceConfigId, key])
 }
 
+model RecordScriptData {
+  id    String @id @default(uuid())
+  data  String
+
+  RecordScript RecordScript[]
+}
+
+model RecordScript {
+  id             String       @id @default(uuid())
+  name           String       @unique
+  description    String
+
+  scale          Float
+
+  recordScript   RecordScriptData @relation(fields: [recordScriptId], references: [id], onDelete: Cascade)
+  recordScriptId String
+
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  lastSeenAt DateTime?
+}
+
 // This only for unit test
 model Test {
-  id       Int     @id @default(autoincrement())
-  name     String
+  id   Int    @id @default(autoincrement())
+  name String
 }

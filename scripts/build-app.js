@@ -55,6 +55,15 @@ async function main () {
 
   console.log(stdout4)
 
+  await execAsync(
+    'copy  .\\libs\\scrcpy-server.jar .\\src-tauri\\target\\debug\\scrcpy-server.jar'
+  )
+
+  // when in dev mode use this location mini-prisma.exe
+  await execAsync(
+    'copy  .\\libs\\scrcpy-server.jar .\\src-tauri\\target\\release\\scrcpy-server.jar'
+  )
+
   const { stdout: stdout5, stderr: stderr5 } = await execAsync(
     'del .\\main.exe',
     {

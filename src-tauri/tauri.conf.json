@@ -13,9 +13,25 @@
   "tauri": {
     "allowlist": {
       "all": false,
+      "path": {
+        "all": true
+      },
+
       "shell": {
-        "all": false,
-        "open": true
+        "all": true,
+        "scope": [{
+          "name": "adb",
+          "cmd": "adb",
+          "args": true
+        },{
+          "name": "scrcpy",
+          "cmd": "scrcpy",
+          "args": true
+        }, {
+          "name": "scrcpy-control",
+          "cmd": "scrcpy-control",
+          "args": true
+        }]
       },
       "dialog": {
         "all": true, 

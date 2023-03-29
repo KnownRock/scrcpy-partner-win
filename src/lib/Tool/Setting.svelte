@@ -13,6 +13,8 @@
   import ExecDialog from './ExecDialog.svelte'
   import { addableItems, addableItems2 } from './addable-items'
   import { getConfigWithSidebarConfig, getDefaultSidebarConfig } from './config'
+  import Form from '../general/Form.svelte'
+  import { openRecordWindow } from '../../utils/app'
 
   const fullAddableItems = addableItems.concat(addableItems2)
 
@@ -24,9 +26,14 @@
 
   let showAddDialogVisible = false
   let showAddStartDialogVisible = false
+  let showAddScriptDialogVisible = false
 
   async function showAddDialog () {
     showAddDialogVisible = true
+  }
+
+  async function showAddScriptDialog () {
+    showAddScriptDialogVisible = true
   }
 
   async function showAddStartDialog () {
@@ -106,26 +113,51 @@
 
 </script>
 
+
+
 <ExecDialog
   execMode="exec"
   bind:show={showAddDialogVisible}
   onSubmit={(model) => {
-     const execButtonInfo = {
-    icon: model.icon,
-    uiType: 'icon-button',
+    if (model.type === '2') return
 
-    cmdType: 'app-cmd',
-    cmdName: 'open',
-    opts: {
-      exec: model.exec,
-      args: model.args,
-      cwd: model.cwd
+    const execButtonInfo = {
+      icon: model.icon,
+      uiType: 'icon-button',
+
+      cmdType: 'app-cmd',
+      cmdName: 'open',
+      opts: {
+        exec: model.exec,
+        args: model.args,
+        cwd: model.cwd
+      }
     }
-
-  }
 
     addAbleItems(execButtonInfo)
     showAddDialogVisible = false
+  }}
+  
+/>
+
+<ExecDialog
+  execMode="exec_script"
+  bind:show={showAddScriptDialogVisible}
+  onSubmit={(model) => {
+    if (model.type === '2') {
+      const execButtonInfo = {
+      icon: model.icon,
+      uiType: 'icon-button',
+
+      cmdType: 'app-cmd',
+      cmdName: 'exec_script',
+      opts: {
+        scriptId: model.scriptId
+      }
+    }
+    addAbleItems(execButtonInfo)
+    showAddScriptDialogVisible = false
+    }
   }}
   
 />
@@ -134,25 +166,29 @@
   bind:show={showAddStartDialogVisible}
   execMode="start"
   onSubmit={(model) => {
-     const execButtonInfo = {
-    icon: model.icon,
-    uiType: 'icon-button',
+    if (model.type === '2') return
 
-    cmdType: 'app-cmd',
-    cmdName: 'start',
-    opts: {
-      exec: model.exec,
-      args: model.args,
-      cwd: model.cwd
+    const execButtonInfo = {
+      icon: model.icon,
+      uiType: 'icon-button',
+
+      cmdType: 'app-cmd',
+      cmdName: 'start',
+      opts: {
+        exec: model.exec,
+        args: model.args,
+        cwd: model.cwd
+      }
+
     }
-
-  }
 
     addAbleItems(execButtonInfo)
     showAddDialogVisible = false
   }}
   
 />
+
+<Form />
 
 <Loading />
 <div
@@ -214,14 +250,30 @@
       <IconButton class="material-icons" on:click={() => showAddStartDialog()}>
         terminal
       </IconButton>
+
+      <IconButton class="material-icons" on:click={() => showAddScriptDialog()}>
+        code
+      </IconButton>
     </div>
   </div>
 
   <div
     style="
-      display: flex; justify-content: flex-end;
+      display: flex; justify-content: space-between;
       "
   >
+  <div>
+    <Button
+      on:click={() => {
+        openRecordWindow()
+      }}
+      style="margin-right: 10px;"
+    >
+      {$t('Record')}
+    </Button>
+
+  </div>
+    <div>
     <Button
       on:click={() => {
         resetSidebarConfig()
@@ -239,5 +291,6 @@
       <!-- Save -->
       {$t('Save')}
     </Button>
+    </div>
   </div>
 </div>

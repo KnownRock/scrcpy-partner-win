@@ -161,6 +161,7 @@
         if (deviceDict[device]) {
           await runScrcpyCommand(getScrcpyArgsFromArgs(args))
           init(true)
+          appWindow.close()
         } else {
           error = `${$t('Device')} ${device} ${$t('not connected')}`
         }
@@ -177,6 +178,7 @@
         if (newDeviceDict[device]) {
           await runScrcpyCommand(getScrcpyArgsFromArgs(args).concat(['--serial', device]))
           init(true)
+          appWindow.close()
           // change tcpip arg to serial arg
         } else {
           error = `${$t('Device')} ${device} ${$t('not connected')}`
@@ -241,6 +243,7 @@
         await runScrcpyCommand(getScrcpyArgsFromArgs(getArgsFromRawArgs(rawArgs)))
 
         await init(true, isAutoSaveLocationAndSize, isWindowBorderless, configId)
+        appWindow.close()
 
         updateDeviceLastSeenAt(device.id)
         updateConfigLastSeenAt(config.id)
@@ -252,8 +255,7 @@
       console.log('normal startup')
 
       await init()
-
-      appWindow.hide()
+      appWindow.close()
     }, 10)
   })
 

@@ -19,7 +19,11 @@ module.exports = {
         // https://typescript-eslint.io/linting/troubleshooting/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
         'no-undef': 'off',
         // https://github.com/sveltejs/eslint-plugin-svelte3/issues/73
-        'import/first': 'off'
+        'import/first': 'off',
+
+        // https://github.com/typescript-eslint/typescript-eslint/issues/2621
+        'no-unused-vars': 'off',
+        '@typescript-eslint/no-unused-vars': 'error'
       }
     },
     {

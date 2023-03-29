@@ -5,7 +5,7 @@ import 'svelte-material-ui/bare.css'
 import { v4 as uuidv4 } from 'uuid'
 import { addableItems } from './addable-items'
 import prismaClientLike from '../../utils/prisma-like-client'
-import type { DeviceConfig, SideBarConfig as PrismaSidebarConfig } from '@prisma/client'
+import type { Device, DeviceConfig, SideBarConfig as PrismaSidebarConfig } from '@prisma/client'
 interface SidebarConfig {
   name: string
   activeLayer: number
@@ -74,14 +74,19 @@ export function getDefaultSidebarConfig (): SidebarConfig {
   return sidebarConfig
 }
 
-export async function getConfigWithSidebarConfig (currentConfigId): Promise<DeviceConfig & { sideBarConfig: PrismaSidebarConfig }
+export async function getConfigWithSidebarConfig (currentConfigId): Promise<
+DeviceConfig & {
+  sideBarConfig: PrismaSidebarConfig
+  device: Device
+}
 | null> {
   const config = await prismaClientLike.deviceConfig.findUnique({
     where: {
       id: currentConfigId
     },
     include: {
-      sideBarConfig: true
+      sideBarConfig: true,
+      device: true
     }
   })
 

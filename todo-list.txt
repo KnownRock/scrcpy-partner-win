@@ -3,16 +3,28 @@
 [ ] move init logical from loading.svelte to utils
 [v] fix sidebar size
 [v] generate links for config open
-[ ] fix mini prisma server close after app close
+[v] fix mini prisma server close after app close
 [v] add a shortcut add function
 [?] fix ipc pipe startup issue in dev mode
-[x] add adb scripts management
+[v] add adb scripts management
 [v] add sidebar buttons management & settings
-[x] add mouse events recoding
+[v] add mouse events recoding
 [ ] config default name
 [v] fix autocomplete input issue
 [ ] sidebar config management
 [v] add a application panel
-[ ] add a adb event recorder
+[v] add a adb event recorder
 [v] add i18n
 [ ] add language selector
+[ ] add drag list to handle op record list
+[v] use scrcpy server socket to control
+[ ] use custom group drag list to handle op record list
+[ ] any record script as a record group which can contain multiple record group and ops
+[ ] make a inf list for operations (src\lib\Record\Operations.svelte)
+[ ] drop move event when time is too short
+[ ] disable crop parameter or record input handle cropped area or notify when record
+[ ] init scrcpy in js and show error in ui
+[ ] record script management & editor
+[ ] using relative path to exec adb and scrcpy
+
+[ ] * use native client to make it cross-platform
