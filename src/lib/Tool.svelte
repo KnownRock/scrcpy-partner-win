@@ -347,7 +347,11 @@
       display: flex; justify-content: center; align-items: center;
       height: 100%; width: 100%;
       "
-      on:dblclick={() => { delItem(dataItem) }} >
+      on:dblclick={() => {
+        if (mode === 'setting') {
+          delItem(dataItem)
+        }
+        }} >
         <IconButton
         disabled={mode === 'setting'}
         
