@@ -47,4 +47,8 @@ export type RecordOperation = ({
   scriptId: string
   name: string
 }
+| {
+  type: 'adb_cmd'
+  cmd: string
+}
 )

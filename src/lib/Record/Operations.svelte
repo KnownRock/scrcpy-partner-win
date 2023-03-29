@@ -76,9 +76,11 @@
               </span>
             {:else if operation.type === 'exec_script'}
               <span>[{translateOperationType(operation.type)}] Name:{operation.name}</span>
+            
+            {:else if operation.type === 'adb_cmd'}
+              <span>[{translateOperationType(operation.type)}] Command:{operation.cmd}</span>
 
-
-              {:else}
+            {:else}
               <span>Unknown operation</span>
             {/if}
           </div>
@@ -152,6 +154,8 @@
         return 'Delay'
       case 'exec_script':
         return 'Execute Script'
+      case 'adb_cmd':
+        return 'ADB Command'
       default:
         return 'Unknown'
     }
