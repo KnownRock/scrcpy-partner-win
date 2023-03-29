@@ -6,14 +6,51 @@
   on:close={() => { show = false }}
 >
 <Header>
-  <Title id="fullscreen-title">{ $t('Run Application') }</Title>
+  <Title id="fullscreen-title">{ ({
+    exec_script: $t('Add Script'),
+    start: $t('Add Start'),
+    exec: $t('Add Exec')
+  })[execMode]
+   }</Title>
 </Header>
 <Content>
   <div style="display:flex;flex-direction:column;">
+
+ 
+
+  
+
+  {#if execMode === 'exec_script'}
+    <Textfield
+      label="Name"
+      bind:value={modelScript.name}
+    />
+    <Textfield
+      disabled={true}
+      label="Script ID"
+      bind:value={modelScript.scriptId}
+    />
+
+    <Button on:click={() => {
+      setDialog([{
+        label: 'Open',
+        callback: async (record) => {
+          modelScript.scriptId = record.id
+          modelScript.name = record.name
+
+          hide()
+        }
+      }])
+    }}>
+      <!-- Select Executable -->
+      {$t('Select Script')}
+    </Button>
+  {:else}
   <Textfield
     label="Name"
     bind:value={model.exec}
   />
+
   <Button on:click={setExecPath}>
     <!-- Select Executable -->
     {$t('Select Executable')}
@@ -30,6 +67,9 @@
     label={$t('Working Directory')}
     bind:value={model.cwd}
   />
+
+  {/if}
+
   <Textfield
     label={$t('Icon')}
     bind:value={model.icon}
@@ -51,7 +91,11 @@
     <Button
       on:click={() => {
         show = false
-        onSubmit(model)
+        if (execMode === 'exec_script') {
+          onSubmit(modelScript)
+        } else {
+          onSubmit(model)
+        }
       }}
     >
       <!-- OK -->
@@ -70,19 +114,30 @@
   import { open as openFileDialog } from '@tauri-apps/api/dialog'
   import Dialog, { Actions, Header, Title } from '@smui/dialog'
   import { Content } from '@smui/card'
+  import { hide, setDialog } from '../../utils/record'
+
+  export let execMode: 'exec' | 'start' | 'exec_script' = 'exec'
+
   const model = {
+    type: '1' as '1',
     exec: '',
     args: '',
     cwd: '',
     icon: 'web_asset'
   }
 
+  const modelScript = {
+    type: '2' as '2',
+    name: '',
+    scriptId: '',
+    icon: 'web_asset'
+  }
+
   type Model = typeof model
+  type ModelScript = typeof modelScript
 
-  export let execMode: 'exec' | 'start' = 'exec'
 
-
-  export let onSubmit = (model: Model) => {}
+  export let onSubmit : (model: Model | ModelScript) => void
   export let show = false
 
   $: show && (() => {

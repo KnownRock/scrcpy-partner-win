@@ -68,6 +68,8 @@
         </Button>
 
       </div>
+    {:else if opActive === 'functions'}
+      <Functions addOperation={addOperation} />
       
     {/if}
 
@@ -104,10 +106,12 @@
   import { t } from 'svelte-i18n'
   import 'svelte-material-ui/bare.css'
 
+  import Functions from './Record/Functions.svelte'
+
   import { generalDialogForm } from '../store'
   import Slider from '@smui/slider'
 
-  import { getConfigId, setRecordPanelWithMotionRecord } from '../utils/app'
+  import { closeRecordWindow, getConfigId, setRecordPanelWithMotionRecord } from '../utils/app'
   import { onMount } from 'svelte'
   import { getConfigById } from '../utils/configs'
   import prismaClientLike from '../utils/prisma-like-client'
@@ -116,7 +120,7 @@
   import KeyEvents from './Record/KeyEvents.svelte'
   import type{ RecordOperation } from '../types'
 
-  import ScrcpyControlClient from './Record/ScrcpyControlClient'
+  import ScrcpyControlClient from '../utils/ScrcpyControlClient'
   import Operations from './Record/Operations.svelte'
   import Textfield from '@smui/textfield'
   import Button, { Label } from '@smui/button'
@@ -127,6 +131,7 @@
   import { v4 as uuidv4 } from 'uuid'
   import IconButton from '@smui/icon-button'
   import Form from './general/Form.svelte'
+  import { setDialog } from '../utils/record'
 
   let withMotion = false
   let isRecording = true
@@ -141,8 +146,11 @@
   let scale = 1.0
   // id = id
 
-  function close () {
+  async function close () {
     // generalDialogForm.set(null)
+    scrcpyControlClient?.close()
+    // await appWindow.close()
+    closeRecordWindow()
   }
 
   function createNew () {
@@ -178,7 +186,7 @@
               id: record.id
             }
           })
-          setDialog()
+          setDialog(buttonsDict[mode])
         }
       }],
 
@@ -193,52 +201,8 @@
         }
       }]
     }
-
-    const buttons = buttonsDict[mode]
-
-    async function setDialog () {
-      const records = await prismaClientLike.recordScript.findMany({})
-      generalDialogForm.set({
-        title: 'Record',
-        show: true,
-        buttons: [{
-          label: 'Cancel',
-          action: 'cancel',
-          callback: () => {
-            return true
-          }
-        }],
-        formItems: [
-          {
-            type: 'table',
-            columns: [
-              {
-                label: 'Name',
-                name: 'name'
-              },
-              {
-                label: 'Description',
-                name: 'description'
-              },
-              {
-                label: 'Actions',
-                name: 'actions',
-                buttons
-              }
-            ],
-            label: 'Record Scripts',
-            name: 'recordScripts',
-
-            value: records as Array<Record<string, any>>
-          }
-        ],
-        cancelCallback: () => {
-          return true
-        }
-      })
-    }
-
-    setDialog()
+  
+    setDialog(buttonsDict[mode])
   }
 
 
@@ -335,6 +299,7 @@
   
   let lastTime = null as null | number
   function addOperation (operation: RecordOperation) {
+    // debugger
     if (lastTime == null) {
       lastTime = Date.now()
     } else {
@@ -345,7 +310,7 @@
         })
         lastTime = Date.now()
       } else {
-        operations.splice(selection[1], 0, {
+        operations.splice(selection[1] + 1, 0, {
           type: 'delay',
           ms: Date.now() - lastTime
         })
@@ -357,7 +322,7 @@
     if (selection[1] === -1) {
       operations.push(operation)
     } else {
-      operations.splice(selection[1], 0, operation)
+      operations.splice(selection[1] + 1, 0, operation)
       selection = [selection[0], selection[1] + 1]
     }
 
@@ -382,9 +347,14 @@
 
 
   function execute (operation: RecordOperation) {
-    scrcpyControlClient?.execute(operation, {
-      scale
-    })
+    try {
+      scrcpyControlClient?.execute(operation, {
+        scale
+      })
+    } catch (e) {
+      console.error(e)
+    }
+  
 
     if (isRecording) {
       addOperation(operation)
@@ -419,7 +389,7 @@
 
     // listen tauri event
     scrcpyControlClient = new ScrcpyControlClient({ adbId })
-    // await scrcpyControlClient.init()
+    await scrcpyControlClient.init()
 
     return () => {
       scrcpyControlClient?.close()

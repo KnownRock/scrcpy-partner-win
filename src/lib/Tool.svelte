@@ -16,6 +16,10 @@
   import { callTauriFunction } from '../utils/tauri'
   import { t } from 'svelte-i18n'
   import { appWindow, LogicalSize } from '@tauri-apps/api/window'
+  import ScrcpyControlClient from '../utils/ScrcpyControlClient'
+  import prismaClientLike from '../utils/prisma-like-client'
+
+  let adbId = ''
 
   const componentDict = {
     setting: Setting
@@ -213,6 +217,9 @@
     console.log('config', config)
 
     if (config) {
+      const device = config.device
+      adbId = device.adbId
+
       const queriedSidebarConfig = config.sideBarConfig
 
       if (queriedSidebarConfig) {
@@ -223,6 +230,12 @@
       }
     } else {
       sidebarConfig = getDefaultSidebarConfig()
+    }
+
+    return () => {
+      console.log('unmount')
+      scrcpyControlClient?.close()
+      scrcpyControlClient = null
     }
   })
 
@@ -246,6 +259,50 @@
       }
       if (item.cmdName === 'start') {
         start(item.opts.exec, item.opts.cwd)
+      }
+      if (item.cmdName === 'exec_script') {
+        execScript(item.opts.scriptId)
+      }
+    }
+  }
+  
+
+  let loadingPromise: Promise<void> | null = null
+  let scrcpyControlClient: ScrcpyControlClient | null = null
+  async function execScript (scriptId) {
+    if (loadingPromise) {
+      await loadingPromise
+    }
+
+    if (!scrcpyControlClient) {
+      loadingPromise = new Promise((resolve) => {
+        scrcpyControlClient = new ScrcpyControlClient({ adbId })
+        scrcpyControlClient
+          .init()
+          .then(() => {
+            loadingPromise = null
+            resolve()
+          })
+      })
+
+      await loadingPromise
+    }
+
+    const script = await prismaClientLike.recordScript.findUnique({
+      where: {
+        id: scriptId
+      },
+      include: {
+        recordScript: true
+      }
+    })
+
+    if (script) {
+      const operations = JSON.parse(script.recordScript.data)
+      for (const operation of operations) {
+        await scrcpyControlClient?.execute(operation, {
+          scale: script.scale
+        })
       }
     }
   }
