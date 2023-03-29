@@ -1,7 +1,7 @@
 import { type Child, Command } from '@tauri-apps/api/shell'
-import type { RecordOperation } from '../../types'
-import { getCurrentExeDir } from '../../utils/app'
-import prismaClientLike from '../../utils/prisma-like-client'
+import type { RecordOperation } from '../types'
+import { getCurrentExeDir } from './app'
+import prismaClientLike from './prisma-like-client'
 
 interface ScrcpyControlClientArgs {
   adbId: string
@@ -150,6 +150,10 @@ export default class ScrcpyControlClient {
           }
 
           break
+        case 'adb_cmd':
+          await this.adbShell.write(`${operation.cmd}\n`)
+          break
+
         default:
           throw new Error('unknown operation type')
       }
