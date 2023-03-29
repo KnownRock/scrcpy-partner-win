@@ -407,7 +407,6 @@ async fn init(
             dbg!(&CONFIG_ID);
 
             init_tool_window(&app);
-            init_record_window(&app);
 
             println!("*** tool init done ***")
         }
@@ -446,6 +445,28 @@ async fn get_current_exe_dir() -> String {
         .to_string()
 }
 
+#[tauri::command]
+async fn close_record_window() {
+    unsafe {
+        if let Some(window) = &RECORD_WINDOW {
+            window.close().unwrap();
+            RECORD_WINDOW = None;
+        }
+    }
+}
+
+#[tauri::command]
+async fn open_record_window(app: tauri::AppHandle) {
+    unsafe {
+        if let Some(window) = &RECORD_WINDOW {
+            window.show().unwrap();
+        } else {
+            // will set RECORD_WINDOW in on_page_load
+            init_record_window(&app);
+        }
+    }
+}
+
 fn main() {
     let app_handle = tauri::Builder::default();
     app_handle
@@ -457,6 +478,14 @@ fn main() {
             } else if window.label() == "record" {
                 unsafe {
                     RECORD_WINDOW = Some(window);
+                    match &mut RECORD_WINDOW {
+                        Some(window) => {
+                            set_window_loc_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
+                            window.show().unwrap();
+                        }
+                        None => {}
+                    }
+
                     println!("record window loaded");
                 }
             } else {
@@ -479,7 +508,9 @@ fn main() {
             get_config_id,
             get_current_exe_path,
             get_current_exe_dir,
-            set_record_panel_with_motion_record
+            set_record_panel_with_motion_record,
+            close_record_window,
+            open_record_window,
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");
