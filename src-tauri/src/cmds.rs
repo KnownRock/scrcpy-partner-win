@@ -194,30 +194,6 @@ fn test_filter_tcpip_arg_from_args() {
     assert_eq!(new_pars.len(), 13);
 }
 
-// async fn get_pars_by_config_id(config_id: String) {
-//     let config = call_prisma(
-//         "deviceConfig".to_string(),
-//         "findUnique".to_string(),
-//         serde_json::json!({
-//             "where": {
-//                 "id": config_id,
-//             },
-//         })
-//         .to_string(),
-//     )
-//     .await
-//     .unwrap();
-
-//     println!("config: {:?}", config);
-
-//     let
-// }
-
-// #[tokio::test]
-// async fn test_get_pars_by_config_id() {
-//     get_pars_by_config_id("ckq0q0q0q0000".to_string()).await;
-// }
-
 fn get_add_serial_arg_by_tcpip_device(device: &str, pars: &Vec<String>) -> Vec<String> {
     let mut pars = pars.clone();
     let serial = device.to_string();
