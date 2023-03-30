@@ -45,7 +45,11 @@
     pid?: number,
     error?: string
   } > {
-    const scrcpyCommand = new Command('scrcpy', args)
+    const scrcpyCommand = new Command('scrcpy', args, {
+      env: {
+        SCRCPY_SERVER_PATH: './scrcpy-server'
+      }
+    })
 
     let error = ''
     scrcpyCommand.stdout.on('data', (data) => {
