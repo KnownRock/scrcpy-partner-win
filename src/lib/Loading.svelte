@@ -24,12 +24,13 @@
   import CircularProgress from '@smui/circular-progress'
   import arg, { type Result } from 'arg'
   import { onMount } from 'svelte'
-  import { init, getEnvArgs, exit, runScrcpyCommand } from '../utils/app'
+  import { init, getEnvArgs, exit, getProcessHwnd } from '../utils/app'
   import {
     connectTcpipDevice, getDevices,
     updateDeviceLastSeenAt
     , type DeviceExt
   } from '../utils/devices'
+  import { type Child, Command } from '@tauri-apps/api/shell'
   import Button from '@smui/button'
   import { getConfigById, updateConfigLastSeenAt } from '../utils/configs'
   import { argsTemplate } from '../utils/scrcpy'
@@ -37,6 +38,62 @@
 
   async function sleep (ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  async function runScrcpyCommand (args) : Promise<{
+    hwnd?: number,
+    pid?: number,
+    error?: string
+  } > {
+    const scrcpyCommand = new Command('scrcpy', args)
+
+    let error = ''
+    scrcpyCommand.stdout.on('data', (data) => {
+      console.log('stdout', data)
+    })
+    scrcpyCommand.stderr.on('data', (data) => {
+      console.log('stderr', data)
+      error += data
+    })
+    let closed = false
+    scrcpyCommand.on('close', (code) => {
+      console.log('close', code)
+      closed = true
+    })
+
+    const child: Child = await scrcpyCommand.spawn()
+
+    let hwnd = 0
+
+    // eslint-disable-next-line
+    return new Promise(async (resolve) => {
+      while (true) {
+        await sleep(100)
+
+        if (closed) {
+          if (error) {
+            console.log('error', error)
+            resolve({ error })
+          } else {
+            resolve({ error: 'closed' })
+          }
+          break
+        }
+
+        if (hwnd === 0) {
+          hwnd = await getProcessHwnd(child.pid)
+          console.log('hwnd', hwnd)
+        } else {
+          console.log('hwnd', hwnd)
+          console.log('pid', child.pid)
+
+          if (hwnd !== 0) {
+            resolve({ hwnd, pid: child.pid })
+            break
+          }
+        }
+      }
+    })
   }
 
   let error = ''
@@ -121,6 +178,8 @@
         permissive: true
       })
     } catch (e) {
+      console.error(e)
+      return null
     }
 
     return args
@@ -159,9 +218,24 @@
       if (serialDeviceInArgs) {
         const device = serialDeviceInArgs
         if (deviceDict[device]) {
-          await runScrcpyCommand(getScrcpyArgsFromArgs(args))
-          init(true)
-          appWindow.close()
+          const {
+            hwnd,
+            pid,
+            error: err
+          } = await runScrcpyCommand(getScrcpyArgsFromArgs(args))
+
+          if (err) {
+            error = err
+            return
+          }
+          if (!pid || !hwnd) {
+            error = $t('Failed to start scrcpy')
+            return
+          }
+
+          init(true, pid, hwnd)
+          // appWindow.close() // because close cause scrcpy process exit
+          appWindow.hide()
         } else {
           error = `${$t('Device')} ${device} ${$t('not connected')}`
         }
@@ -176,9 +250,24 @@
         const newDeviceDict = await getAdbDeviceDict()
   
         if (newDeviceDict[device]) {
-          await runScrcpyCommand(getScrcpyArgsFromArgs(args).concat(['--serial', device]))
-          init(true)
-          appWindow.close()
+          const {
+            hwnd,
+            pid,
+            error: err
+          } = await runScrcpyCommand(getScrcpyArgsFromArgs(args).concat(['--serial', device]))
+  
+          if (err) {
+            error = err
+            return
+          }
+          if (!pid || !hwnd) {
+            error = $t('Failed to start scrcpy')
+            return
+          }
+  
+          init(true, pid, hwnd)
+          // appWindow.close() // because close cause scrcpy process exit
+          appWindow.hide()
           // change tcpip arg to serial arg
         } else {
           error = `${$t('Device')} ${device} ${$t('not connected')}`
@@ -240,9 +329,21 @@
         const args = getArgsFromRawArgs(rawArgs)
         const isWindowBorderless = args?.['--window-borderless'] === true
   
-        await runScrcpyCommand(getScrcpyArgsFromArgs(getArgsFromRawArgs(rawArgs)))
+        const {
+          hwnd,
+          pid,
+          error: err
+        } = await runScrcpyCommand(getScrcpyArgsFromArgs(getArgsFromRawArgs(rawArgs)))
 
-        await init(true, isAutoSaveLocationAndSize, isWindowBorderless, configId)
+        if (err) {
+          error = err
+          return
+        }
+        if (!pid || !hwnd) {
+          error = $t('Failed to start scrcpy')
+          return
+        }
+        await init(true, pid, hwnd, isAutoSaveLocationAndSize, isWindowBorderless, configId)
         appWindow.close()
 
         updateDeviceLastSeenAt(device.id)
