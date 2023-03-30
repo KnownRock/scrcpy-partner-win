@@ -6,12 +6,17 @@ export async function getExecMode (): Promise<string> {
 
 export async function init
 (
+
   isToolMode: boolean = false,
+  pid: number = 0,
+  hwnd: number = 0,
   isAutoSaveLocationAndSize: boolean = false,
   isWindowBorderless: boolean = false,
   configId = ''
 ): Promise<void> {
   await callTauriFunction('init', {
+    pid,
+    hwnd,
     isToolMode,
     isAutoSaveLocationAndSize,
     isWindowBorderless,
@@ -76,4 +81,9 @@ export async function closeRecordWindow (): Promise<void> {
 // async fn open_record_window() {
 export async function openRecordWindow (): Promise<void> {
   await callTauriFunction('open_record_window')
+}
+
+// async fn get_process_hwnd(pid: u32) -> usize {
+export async function getProcessHwnd (pid: number): Promise<number> {
+  return await callTauriFunction<number>('get_process_hwnd', { pid })
 }

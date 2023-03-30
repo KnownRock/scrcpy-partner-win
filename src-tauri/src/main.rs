@@ -22,7 +22,7 @@ mod wins;
 use cmds::{kill_process, run_scrcpy, save_size_and_position};
 use tauri_funcs::{init_main_window, init_record_window, init_tool_window};
 use winapi::shared::windef::RECT;
-use wins::{set_window_loc_and_size_by_hwnd, set_window_loc_by_hwnd};
+use wins::{get_hwnd_by_pid, set_window_loc_and_size_by_hwnd, set_window_loc_by_hwnd};
 static mut TOOL_WINDOW: Option<tauri::Window> = None;
 static mut RECORD_WINDOW: Option<tauri::Window> = None;
 
@@ -356,6 +356,11 @@ fn exit() {
 }
 
 #[tauri::command]
+async fn get_process_hwnd(pid: u32) -> usize {
+    get_hwnd_by_pid(pid) as usize
+}
+
+#[tauri::command]
 async fn run_scrcpy_command(args: Vec<String>) -> bool {
     dbg!(args.clone());
 
@@ -386,6 +391,8 @@ static mut CONFIG_ID: String = String::new();
 #[tauri::command]
 async fn init(
     app: tauri::AppHandle,
+    pid: usize,
+    hwnd: usize,
     is_tool_mode: bool,
     is_auto_save_location_and_size: bool,
     // isWindowBorderless
@@ -394,6 +401,9 @@ async fn init(
 ) -> String {
     if is_tool_mode {
         unsafe {
+            PID = pid as u32;
+            HWND = hwnd;
+
             assert!(HWND != 0, "Failed to get hwnd");
             assert!(PID != 0, "Failed to get pid");
 
@@ -511,6 +521,7 @@ fn main() {
             set_record_panel_with_motion_record,
             close_record_window,
             open_record_window,
+            get_process_hwnd
         ])
         .run(tauri::generate_context!())
         .expect("***********************\nerror while running tauri application");
