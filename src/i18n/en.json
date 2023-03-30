@@ -134,5 +134,6 @@
   "Motion Event X": "Motion Event X",
   "Motion Event Y": "Motion Event Y",
   "Motion Event Type": "Motion Event Type",
-  "Move": "Move"
+  "Move": "Move",
+  "Failed to start scrcpy": "Failed to start scrcpy"
 }

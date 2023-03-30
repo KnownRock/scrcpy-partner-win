@@ -135,5 +135,6 @@
   "Motion Event X": "动作事件 X",
   "Motion Event Y": "运动事件 Y",
   "Motion Event Type": "运动事件类型",
-  "Move": "移动"
+  "Move": "移动",
+  "Failed to start scrcpy": "启动 scrcpy 失败"
 }
