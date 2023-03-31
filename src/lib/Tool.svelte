@@ -232,6 +232,11 @@
       sidebarConfig = getDefaultSidebarConfig()
     }
 
+    if (!scrcpyControlClient) {
+      scrcpyControlClient = new ScrcpyControlClient({ adbId })
+      scrcpyControlClient.init()
+    }
+
     return () => {
       console.log('unmount')
       scrcpyControlClient?.close()
