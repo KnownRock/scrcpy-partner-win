@@ -30,7 +30,11 @@ export default class ScrcpyControlClient {
   }
 
   async initAdbShell (adbId: string): Promise<void> {
-    const adbShellCmd = new Command('adb', ['-s', adbId, 'shell'])
+    // const adbShellCmd = new Command('adb', ['-s', adbId, 'shell'])
+    const adbShellCmd = import.meta.env.MODE === 'development'
+      ? new Command('adb-dev', ['-s', adbId, 'shell'])
+      : new Command('adb', ['-s', adbId, 'shell'])
+
     adbShellCmd.on('close', () => {
       console.log('adbShellCmd close')
     })
@@ -51,10 +55,17 @@ export default class ScrcpyControlClient {
   async initControlShell (adbId: string): Promise<void> {
     const currentExeDir = await getCurrentExeDir()
     const scrcpyJarPath = currentExeDir + '/scrcpy-server.jar'
-    const pushScrcpyJarCmd = new Command('adb', ['-s', adbId, 'push', scrcpyJarPath, '/data/local/tmp/scrcpy-server.jar'])
+    // const pushScrcpyJarCmd = new Command('adb', ['-s', adbId, 'push', scrcpyJarPath, '/data/local/tmp/scrcpy-server.jar'])
+    const pushScrcpyJarCmd = import.meta.env.MODE === 'development'
+      ? new Command('adb-dev', ['-s', adbId, 'push', scrcpyJarPath, '/data/local/tmp/scrcpy-server.jar'])
+      : new Command('adb', ['-s', adbId, 'push', scrcpyJarPath, '/data/local/tmp/scrcpy-server.jar'])
     await pushScrcpyJarCmd.execute()
 
-    const ctrlCmd = new Command('scrcpy-control', [adbId])
+    // const ctrlCmd = new Command('scrcpy-control', [adbId])
+    const ctrlCmd = import.meta.env.MODE === 'development'
+      ? new Command('scrcpy-control-dev', [adbId])
+      : new Command('scrcpy-control', [adbId])
+
     ctrlCmd.on('close', () => {
       console.log('ctrlCmd close')
     })

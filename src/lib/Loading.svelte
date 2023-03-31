@@ -45,11 +45,19 @@
     pid?: number,
     error?: string
   } > {
-    const scrcpyCommand = new Command('scrcpy', args, {
-      env: {
-        SCRCPY_SERVER_PATH: './scrcpy-server'
-      }
-    })
+    const cmd = import.meta.env.MODE === 'development'
+      ? 'scrcpy-dev'
+      : 'scrcpy'
+  
+    const env : {
+      [key:string]: string
+    } = !(import.meta.env.MODE === 'development')
+      ? {
+          SCRCPY_SERVER_PATH: './scrcpy-server'
+        }
+      : {}
+
+    const scrcpyCommand = new Command(cmd, args, { env })
 
     let error = ''
     scrcpyCommand.stdout.on('data', (data) => {

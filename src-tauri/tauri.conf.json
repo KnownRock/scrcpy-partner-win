@@ -21,14 +21,26 @@
         "all": true,
         "scope": [{
           "name": "adb",
-          "cmd": "adb",
+          "cmd": "./adb",
           "args": true
         },{
           "name": "scrcpy",
-          "cmd": "scrcpy",
+          "cmd": "./scrcpy",
           "args": true
         }, {
           "name": "scrcpy-control",
+          "cmd": "./scrcpy-control",
+          "args": true
+        },{
+          "name": "adb-dev",
+          "cmd": "adb",
+          "args": true
+        },{
+          "name": "scrcpy-dev",
+          "cmd": "scrcpy",
+          "args": true
+        }, {
+          "name": "scrcpy-control-dev",
           "cmd": "scrcpy-control",
           "args": true
         }]

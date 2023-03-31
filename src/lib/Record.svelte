@@ -426,7 +426,7 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
-    width: 600px;
+    width: 30em;
     background-color: rgb(240, 240, 240);
     overflow: hidden;
   }
