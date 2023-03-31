@@ -1,7 +1,7 @@
 use std::mem;
-use tauri::LogicalPosition;
 use tauri::LogicalSize;
 use tauri::Position;
+use tauri::{LogicalPosition, PhysicalPosition, PhysicalSize};
 use winapi::ctypes::c_void;
 use winapi::shared::minwindef::BOOL;
 use winapi::shared::minwindef::LPARAM;
@@ -86,10 +86,17 @@ pub fn set_window_loc_by_hwnd(
         new_right = rect.right - 8;
     }
 
+    // window
+    //     .set_position(Position::Logical(LogicalPosition::new(
+    //         (new_right) as f64,
+    //         (rect.top + 40i32) as f64,
+    //     )))
+    //     .unwrap();
+
     window
-        .set_position(Position::Logical(LogicalPosition::new(
-            (new_right) as f64,
-            (rect.top + 40i32) as f64,
+        .set_position(Position::Physical(PhysicalPosition::new(
+            (new_right),
+            (rect.top + 40i32),
         )))
         .unwrap();
 }
@@ -124,6 +131,8 @@ pub fn set_window_loc_and_size_by_hwnd(
     let mut width = new_right - new_left;
     let height = new_bottom - new_top;
 
+    dbg!(width, height);
+
     // make leftbar
     {
         if is_record_panel_with_motion_record {
@@ -135,14 +144,20 @@ pub fn set_window_loc_and_size_by_hwnd(
     }
 
     window
-        .set_position(Position::Logical(LogicalPosition::new(
-            (new_left) as f64,
-            (new_top) as f64,
+        .set_position(Position::Physical(PhysicalPosition::new(
+            (new_left),
+            (new_top),
         )))
         .unwrap();
 
+    let p_size = PhysicalSize::new(width as u32, height as u32);
+    let l_size = LogicalSize::new(width as f64, height as f64);
+
+    dbg!(p_size, l_size);
+
     window
-        .set_size(LogicalSize::new(width as f64, height as f64))
+        .set_size(PhysicalSize::new(width as u32, height as u32))
+        // .set_size(LogicalSize::new(width as f64, height as f64))
         .unwrap();
 }
 

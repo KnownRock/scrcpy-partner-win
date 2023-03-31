@@ -490,7 +490,12 @@ fn main() {
                     RECORD_WINDOW = Some(window);
                     match &mut RECORD_WINDOW {
                         Some(window) => {
-                            set_window_loc_by_hwnd(HWND, window, IS_WINDOW_BORDERLESS);
+                            set_window_loc_and_size_by_hwnd(
+                                HWND,
+                                window,
+                                IS_WINDOW_BORDERLESS,
+                                IS_RECORD_PANEL_WITH_MOTION_RECORD,
+                            );
                             window.show().unwrap();
                         }
                         None => {}
