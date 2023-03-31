@@ -1,6 +1,6 @@
 <Form />
 <div class="record-container">
-  <div class="record-panel">
+  <div class="record-panel" style="width:{recordPanelWidth}">
     <div class="record-info">  
       <div style="display:flex; align-items: center; justify-content: space-between;">
         <h1>
@@ -132,6 +132,8 @@
   import IconButton from '@smui/icon-button'
   import Form from './general/Form.svelte'
   import { setDialog } from '../utils/record'
+
+  let recordPanelWidth = '600px'
 
   let withMotion = false
   let isRecording = true
@@ -391,8 +393,24 @@
     scrcpyControlClient = new ScrcpyControlClient({ adbId })
     await scrcpyControlClient.init()
 
+    // https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio
+    const mqString = `(resolution: ${window.devicePixelRatio}dppx)`
+    const media = matchMedia(mqString)
+
+    function updatePixelRatio () {
+      const pixelRatio = window.devicePixelRatio
+      recordPanelWidth = 600 / pixelRatio + 'px'
+    }
+
+    media.addEventListener('change', updatePixelRatio)
+
+    updatePixelRatio()
+
+    window.addEventListener('resize', updatePixelRatio)
+
     return () => {
       scrcpyControlClient?.close()
+      media.removeEventListener('change', updatePixelRatio)
     }
   })
 
@@ -426,7 +444,7 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
-    width: 30em;
+    /* width: 600px; */
     background-color: rgb(240, 240, 240);
     overflow: hidden;
   }
