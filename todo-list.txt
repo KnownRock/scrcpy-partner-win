@@ -20,11 +20,13 @@
 [v] use scrcpy server socket to control
 [ ] use custom group drag list to handle op record list
 [ ] any record script as a record group which can contain multiple record group and ops
-[ ] make a inf list for operations (src\lib\Record\Operations.svelte)
+[v] make a inf list for operations (src\lib\Record\Operations.svelte)
 [ ] drop move event when time is too short
 [ ] disable crop parameter or record input handle cropped area or notify when record
 [v] init scrcpy in js and show error in ui
 [ ] record script management & editor
 [v] using relative path to exec adb and scrcpy
+[ ] screen cap button
+[ ] raw js script executer
 
 [ ] * use native client to make it cross-platform
