@@ -87,6 +87,7 @@
 }
 
 .row{
+  flex: 1;
   overflow: auto;
 }
 
