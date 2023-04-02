@@ -366,20 +366,20 @@
     }
   }
 
-  function executeWithAutoDelay (operation: RecordOperation) {
-    try {
-      scrcpyControlClient?.execute(operation, {
-        scale
-      })
-    } catch (e) {
-      console.error(e)
-    }
+  // function executeWithAutoDelay (operation: RecordOperation) {
+  //   try {
+  //     scrcpyControlClient?.execute(operation, {
+  //       scale
+  //     })
+  //   } catch (e) {
+  //     console.error(e)
+  //   }
   
 
-    if (isRecording) {
-      addOperation(operation, false)
-    }
-  }
+  //   if (isRecording) {
+  //     addOperation(operation, false)
+  //   }
+  // }
 
 
   function execute (operation: RecordOperation) {
