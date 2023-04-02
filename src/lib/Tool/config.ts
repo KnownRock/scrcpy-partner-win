@@ -90,7 +90,7 @@ DeviceConfig & {
     }
   })
 
-  return config as DeviceConfig & { sideBarConfig: PrismaSidebarConfig } | null
+  return config as DeviceConfig & { sideBarConfig: PrismaSidebarConfig, device: Device } | null
 }
 
 export function getInitConfig (): SidebarConfig {
