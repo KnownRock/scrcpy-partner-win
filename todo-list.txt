@@ -28,5 +28,6 @@
 [v] using relative path to exec adb and scrcpy
 [ ] screen cap button
 [ ] raw js script executer
+[ ] operations panel ui improvements
 
 [ ] * use native client to make it cross-platform

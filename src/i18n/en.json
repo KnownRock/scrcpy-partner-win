@@ -135,5 +135,12 @@
   "Motion Event Y": "Motion Event Y",
   "Motion Event Type": "Motion Event Type",
   "Move": "Move",
-  "Failed to start scrcpy": "Failed to start scrcpy"
+  "Failed to start scrcpy": "Failed to start scrcpy",
+  "Motion Record Mode": "Motion Record Mode",
+  "Motion": "Motion",
+  "Tap": "Tap",
+  "Message": "Message",
+  "Key Code": "Key Code",
+  "Package Name": "Package Name",
+  "Select": "Select"
 }

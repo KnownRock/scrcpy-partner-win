@@ -51,4 +51,8 @@ export type RecordOperation = ({
   type: 'adb_cmd'
   cmd: string
 }
+| {
+  type: 'message'
+  message: string
+}
 )

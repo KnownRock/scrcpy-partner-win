@@ -136,5 +136,12 @@
   "Motion Event Y": "运动事件 Y",
   "Motion Event Type": "运动事件类型",
   "Move": "移动",
-  "Failed to start scrcpy": "启动 scrcpy 失败"
+  "Failed to start scrcpy": "启动 scrcpy 失败",
+  "Motion": "运动",
+  "Tap": "轻敲",
+  "Motion Record Mode": "运动记录模式",
+  "Message": "信息",
+  "Key Code": "键盘代码",
+  "Package Name": "包裹名字",
+  "Select": "选择"
 }

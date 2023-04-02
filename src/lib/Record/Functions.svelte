@@ -81,6 +81,20 @@
       {$t('Add')}
     </Button>
   </div>
+
+  <!-- message -->
+  <div class="item">
+    <Textfield
+      style="flex:1"
+      label={$t('Message')}
+      bind:value={message}
+    />
+    <Button on:click={() => addMessage()}>
+      {$t('Add')}
+    </Button>
+  </div>
+
+
 </div>
 
 <script lang="ts">
@@ -90,6 +104,7 @@
   import { KeyEventType, MotionType } from '../../types'
   import { t } from 'svelte-i18n'
   import Select, { Option } from '@smui/select'
+  
 
   export let addOperation: (operation: RecordOperation) => void
 
@@ -102,10 +117,19 @@
   let motionY = 0
   let motionType = MotionType.Down
   
+  let message = ''
+
   function addDelay () {
     addOperation({
       type: 'delay',
       ms: delay
+    })
+  }
+
+  function addMessage () {
+    addOperation({
+      type: 'message',
+      message
     })
   }
 

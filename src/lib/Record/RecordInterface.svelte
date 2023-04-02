@@ -4,6 +4,7 @@
   tabindex="0"
   bind:clientHeight={height}
   bind:clientWidth={width}
+  on:click={handleClick}
   on:mousedown={handleMouseDown}
   on:mouseup={handleMouseUp}
   on:mousemove={throttleMouseMove}
@@ -27,6 +28,7 @@
 
   export let execute: (operation: RecordOperation) => void
   export let adbId: string
+  export let motionRecordMode: 'motion' | 'tap'
 
   function getXYFromEvent (e: MouseEvent) {
     const [deviceWidth, deviceHeight] = deviceSize
@@ -49,10 +51,24 @@
     return [x, y]
   }
 
+  function handleClick (e: MouseEvent) {
+    if (e.button !== 0) return
+    if (motionRecordMode === 'motion') return
+
+    console.log('click', e)
+    const [x, y] = getXYFromEvent(e)
+    execute({
+      type: 'tap',
+      x,
+      y
+    })
+  }
+
 
   let isMouseDown = false
   async function handleMouseDown (e: MouseEvent) {
     if (e.button !== 0) return
+    if (motionRecordMode === 'tap') return
 
     console.log('mousedown', e)
     isMouseDown = true
@@ -210,6 +226,7 @@
 
   async function handleMouseUp (e: MouseEvent) {
     if (e.button !== 0) return
+    if (motionRecordMode === 'tap') return
 
     console.log('mouseup', e)
     isMouseDown = false
@@ -242,6 +259,7 @@
 
   async function handleMouseLeave (e: MouseEvent) {
     if (e.button !== 0) return
+    if (motionRecordMode === 'tap') return
 
     if (!isMouseDown) return
 
@@ -270,6 +288,7 @@
 
   async function handleMouseMove (e: MouseEvent) {
     if (!isMouseDown) return
+    if (motionRecordMode === 'tap') return
     console.log('mousemove', e)
     const [x, y] = getXYFromEvent(e)
     // addMouseEvent(MotionType.Move, x, y)

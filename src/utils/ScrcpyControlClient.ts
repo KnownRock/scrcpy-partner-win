@@ -143,7 +143,7 @@ export default class ScrcpyControlClient {
           await this.adbShell.write(`am start -n ${operation.packageName}\n`)
           break
         case 'tap':
-          await this.controlShell.write(`tap ${operation.x} ${operation.y}\n`)
+          await this.adbShell.write(`input tap ${operation.x} ${operation.y}\n`)
           break
         case 'motion':
           await this.controlShell.write(`touch ${operation.x} ${operation.y} ${operation.motionType}\n`)

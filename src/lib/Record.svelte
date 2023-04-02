@@ -28,6 +28,15 @@
         <span slot="label">{$t('With Motion Record')}</span>
       </FormField>
 
+      <Select
+        label={$t('Motion Record Mode')}
+        bind:value={motionRecordMode}
+        disabled={!withMotion}
+      >
+        <Option value="motion">{$t('Motion')}</Option>
+        <Option value="tap">{$t('Tap')}</Option>
+      </Select>
+
       <div>
         <Textfield
           style="width: 100%;"
@@ -58,18 +67,18 @@
     {:else if opActive === 'apps'}
       <Apps execute={execute} adbId={adbId}/>
     {:else if opActive === 'operations'}
-      <div class="record-operations">
-        <Operations bind:selection={selection} operations={operations}  execute={executeWithoutAdd} />
-      </div>
+      <Operations bind:selection={selection} operations={operations}  execute={executeWithoutAdd} />
     {:else if opActive === 'scripts'}
       <div>
         <Button on:click={() => openSelecter('select')}>
           Open
         </Button>
-
       </div>
     {:else if opActive === 'functions'}
-      <Functions addOperation={addOperation} />
+      <Functions addOperation={(operation) => {
+          addOperation(operation, false)
+        }
+      } />
       
     {/if}
 
@@ -98,7 +107,11 @@
     
   </div>
   <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <RecordInterface execute={execute} adbId={adbId} />
+  <RecordInterface 
+    execute={execute} 
+    adbId={adbId}
+    motionRecordMode={motionRecordMode}
+   />
 </div>
 
 
@@ -132,6 +145,7 @@
   import IconButton from '@smui/icon-button'
   import Form from './general/Form.svelte'
   import { setDialog } from '../utils/record'
+  import Select, { Option } from '@smui/select'
 
   let recordPanelWidth = '600px'
 
@@ -140,6 +154,8 @@
 
   let adbId = ''
   let selection: [number, number] = [-1, -1]
+
+  let motionRecordMode = 'motion' as 'motion' | 'tap'
 
   let name = ''
   let recordId = ''
@@ -300,26 +316,29 @@
 
   
   let lastTime = null as null | number
-  function addOperation (operation: RecordOperation) {
+  function addOperation (operation: RecordOperation, autoDelay = true) {
+    if (autoDelay) {
     // debugger
-    if (lastTime == null) {
-      lastTime = Date.now()
-    } else {
-      if (selection[1] === -1) {
-        operations.push({
-          type: 'delay',
-          ms: Date.now() - lastTime
-        })
+      if (lastTime == null) {
         lastTime = Date.now()
       } else {
-        operations.splice(selection[1] + 1, 0, {
-          type: 'delay',
-          ms: Date.now() - lastTime
-        })
-        lastTime = Date.now()
-        selection = [selection[0], selection[1] + 1]
+        if (selection[1] === -1) {
+          operations.push({
+            type: 'delay',
+            ms: Date.now() - lastTime
+          })
+          lastTime = Date.now()
+        } else {
+          operations.splice(selection[1] + 1, 0, {
+            type: 'delay',
+            ms: Date.now() - lastTime
+          })
+          lastTime = Date.now()
+          selection = [selection[0], selection[1] + 1]
+        }
       }
     }
+
 
     if (selection[1] === -1) {
       operations.push(operation)
@@ -344,6 +363,21 @@
       scrcpyControlClient?.execute(operation, {
         scale
       })
+    }
+  }
+
+  function executeWithAutoDelay (operation: RecordOperation) {
+    try {
+      scrcpyControlClient?.execute(operation, {
+        scale
+      })
+    } catch (e) {
+      console.error(e)
+    }
+  
+
+    if (isRecording) {
+      addOperation(operation, false)
     }
   }
 
@@ -391,7 +425,7 @@
 
     // listen tauri event
     scrcpyControlClient = new ScrcpyControlClient({ adbId })
-    await scrcpyControlClient.init()
+    // await scrcpyControlClient.init()
 
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio
     const mqString = `(resolution: ${window.devicePixelRatio}dppx)`
@@ -447,10 +481,6 @@
     /* width: 600px; */
     background-color: rgb(240, 240, 240);
     overflow: hidden;
-  }
-
-  .record-operations{
-    overflow: auto;
   }
 
   .record-info{
