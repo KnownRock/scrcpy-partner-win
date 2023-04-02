@@ -337,8 +337,7 @@
 </script>
 
 
-<Form />
-<Loading />
+
 <div class="main-container">
   <div 
   class="tool-container"
@@ -434,7 +433,8 @@
     
   {/if}
 </div>
-
+<Form />
+<Loading />
 
 
 <style>
