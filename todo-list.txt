@@ -26,8 +26,9 @@
 [v] init scrcpy in js and show error in ui
 [ ] record script management & editor
 [v] using relative path to exec adb and scrcpy
-[ ] screen cap button
+[v] screen cap button
 [ ] raw js script executer
 [ ] operations panel ui improvements
+[ ] fix scrcpy client not close after refresh page
 
 [ ] * use native client to make it cross-platform
