@@ -109,3 +109,13 @@ export const addableItems2: AddableItem[] = Array.from({ length: 9 }, (v, i) => 
 
   return layerButton
 })
+
+export const addableItems3: AddableItem[] = [{
+  uiType: 'icon-button',
+  icon: 'screenshot',
+
+  cmdType: 'app-cmd',
+  cmdName: 'capture'
+}]
+
+export const fullAddableItems = addableItems.concat(addableItems3).concat(addableItems2)

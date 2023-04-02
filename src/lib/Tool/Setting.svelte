@@ -11,13 +11,12 @@
   import Button from '@smui/button'
   import Select, { Option } from '@smui/select'
   import ExecDialog from './ExecDialog.svelte'
-  import { addableItems, addableItems2 } from './addable-items'
+  import { fullAddableItems } from './addable-items'
   import { getConfigWithSidebarConfig, getDefaultSidebarConfig } from './config'
-  import Form from '../general/Form.svelte'
+  
   import { openRecordWindow } from '../../utils/app'
   import { hide, setDialog } from '../../utils/sidebar-config'
 
-  const fullAddableItems = addableItems.concat(addableItems2)
 
   export let sidebarConfig
   export let activeLayer
@@ -94,9 +93,33 @@
       item
     }
 
+    const gridMatrix = new Array(gridSize[1]).fill(0).map(() => new Array(gridSize[0]).fill(0))
+    sidebarConfig.layers[activeLayer].items.forEach((item) => {
+      for (let i = 0; i < item.coord.h; i++) {
+        for (let j = 0; j < item.coord.w; j++) {
+          gridMatrix[item.coord.y + i][item.coord.x + j] = 1
+        }
+      }
+    })
+  
+
+    let x = 0
+    let y = 0
+
+    for (let i = 0; i < gridMatrix.length; i++) {
+      for (let j = 0; j < gridMatrix[i].length; j++) {
+        if (gridMatrix[i][j] === 0) {
+          x = j
+          y = i
+          break
+        }
+      }
+    }
+
+
     const gridPosAndSize = gridHelp.item({
-      x: 0,
-      y: 0,
+      x,
+      y,
       w: 1,
       h: 1
     })
@@ -246,9 +269,7 @@
   
 />
 
-<Form />
 
-<Loading />
 <div
   style="
     padding:0 10px 0 50px; min-height:500px;

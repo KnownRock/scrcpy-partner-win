@@ -18,6 +18,8 @@
   import { appWindow, LogicalSize } from '@tauri-apps/api/window'
   import ScrcpyControlClient from '../utils/ScrcpyControlClient'
   import prismaClientLike from '../utils/prisma-like-client'
+  import Loading from './general/Loading.svelte'
+  import Form from './general/Form.svelte'
   const componentDict = {
     setting: Setting
   }
@@ -247,7 +249,7 @@
   })
 
 
-  function execute (item) {
+  async function execute (item) {
     if (item.cmdType === 'scrcpy-cmd') {
       sendKey(item.cmdName)
     }
@@ -269,6 +271,19 @@
       }
       if (item.cmdName === 'exec_script') {
         execScript(item.opts.scriptId)
+      }
+      if (item.cmdName === 'capture') {
+        if (scrcpyControlClient) {
+          await scrcpyControlClient.execute({
+            type: 'adb_cmd',
+            cmd: 'mkdir -p /sdcard/ScreenCapture'
+          })
+
+          await scrcpyControlClient.execute({
+            type: 'adb_cmd',
+            cmd: 'screencap -p /sdcard/ScreenCapture/$(date +%Y%m%d%H%M%S).png'
+          })
+        }
       }
     }
   }

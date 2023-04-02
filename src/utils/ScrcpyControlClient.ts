@@ -116,6 +116,8 @@ export default class ScrcpyControlClient {
     scale
   }: {
     scale: number
+  } = {
+    scale: 1
   }): Promise<void> {
     if (this.controlShell === null) {
       throw new Error('controlShell is null')
