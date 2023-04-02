@@ -79,5 +79,16 @@
 
 
 <style>
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.row{
+  overflow: auto;
+}
+
 
 </style>                                                                        
