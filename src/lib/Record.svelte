@@ -425,7 +425,7 @@
 
     // listen tauri event
     scrcpyControlClient = new ScrcpyControlClient({ adbId })
-    // await scrcpyControlClient.init()
+    await scrcpyControlClient.init()
 
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio
     const mqString = `(resolution: ${window.devicePixelRatio}dppx)`
