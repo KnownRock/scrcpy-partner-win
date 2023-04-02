@@ -15,6 +15,7 @@
   import { getConfigWithSidebarConfig, getDefaultSidebarConfig } from './config'
   import Form from '../general/Form.svelte'
   import { openRecordWindow } from '../../utils/app'
+  import { hide, setDialog } from '../../utils/sidebar-config'
 
   const fullAddableItems = addableItems.concat(addableItems2)
 
@@ -23,10 +24,57 @@
   export let gridSize
   export let items
   export let currentConfigId
+  export let currentSideBarConfigId
 
   let showAddDialogVisible = false
   let showAddStartDialogVisible = false
   let showAddScriptDialogVisible = false
+
+  function openSidebarConfigWindow () {
+    setDialog([{
+      label: 'Open',
+      callback: async (entity) => {
+        console.log('open', entity)
+
+        await prismaClientLike.sideBarConfig.findUnique({
+          where: {
+            id: entity.id
+          }
+        }).then((config) => {
+          if (config) {
+            sidebarConfig = JSON.parse(config.value)
+          }
+        })
+
+        currentSideBarConfigId = entity.id
+
+        hide()
+
+        return true
+      }
+    }, {
+      label: 'Delete',
+      callback: async (entity) => {
+        generalLoading.set({
+          show: true
+        })
+
+        await prismaClientLike.sideBarConfig.delete({
+          where: {
+            id: entity.id
+          }
+        })
+
+        openSidebarConfigWindow()
+
+        generalLoading.set({
+          show: false
+        })
+
+        return true
+      }
+    }])
+  }
 
   async function showAddDialog () {
     showAddDialogVisible = true
@@ -71,20 +119,30 @@
     const config = await getConfigWithSidebarConfig(currentConfigId)
 
     if (config) {
+      const sbc = await prismaClientLike.sideBarConfig.upsert({
+        where: {
+          id: currentSideBarConfigId
+        },
+        update: {
+          name: sidebarConfig.name,
+          value: JSON.stringify(sidebarConfig)
+        },
+        create: {
+          name: sidebarConfig.name,
+          value: JSON.stringify(sidebarConfig)
+        }
+      })
+
+      currentSideBarConfigId = sbc.id
+
       prismaClientLike.deviceConfig.update({
         where: {
           id: currentConfigId
         },
         data: {
           sideBarConfig: {
-            update: {
-              name: sidebarConfig.name,
-              value: JSON.stringify(sidebarConfig)
-            },
-            create: {
-              name: sidebarConfig.name,
-  
-              value: JSON.stringify(sidebarConfig)
+            connect: {
+              id: currentSideBarConfigId
             }
           }
         }
@@ -274,6 +332,16 @@
 
   </div>
     <div>
+    <Button
+      on:click={() => {
+        openSidebarConfigWindow()
+      }}
+      style="margin-right: 10px;"
+    >
+      <!-- Open -->
+      {$t('Open')}
+    </Button>
+
     <Button
       on:click={() => {
         resetSidebarConfig()

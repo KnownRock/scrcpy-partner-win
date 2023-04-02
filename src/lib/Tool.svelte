@@ -18,22 +18,21 @@
   import { appWindow, LogicalSize } from '@tauri-apps/api/window'
   import ScrcpyControlClient from '../utils/ScrcpyControlClient'
   import prismaClientLike from '../utils/prisma-like-client'
-
-  let adbId = ''
-
   const componentDict = {
     setting: Setting
-  }
-
-
-  function setToolWindowSize (width: number, height: number) {
-    appWindow.setSize(new LogicalSize(width, height))
   }
 
   type Application = {
     label: string
     id: keyof typeof componentDict
   }
+
+  let adbId = ''
+
+  function setToolWindowSize (width: number, height: number) {
+    appWindow.setSize(new LogicalSize(width, height))
+  }
+
 
   let sidebarConfig = getInitConfig()
   
@@ -206,6 +205,7 @@
 
 
   let currentConfigId = ''
+  let currentSideBarConfigId = '' as string// uuidv4()
   onMount(async () => {
     appWindow.show()
     const configId = await getConfigId()
@@ -220,7 +220,9 @@
       const device = config.device
       adbId = device.adbId
 
+      currentSideBarConfigId = config.sideBarConfigId ?? ''
       const queriedSidebarConfig = config.sideBarConfig
+
 
       if (queriedSidebarConfig) {
         const config = JSON.parse(queriedSidebarConfig.value)
@@ -409,6 +411,7 @@
     bind:gridSize={gridSize}
     bind:activeLayer={activeLayer}
     bind:currentConfigId={currentConfigId}
+    bind:currentSideBarConfigId={currentSideBarConfigId}
   />
 
   </div> 
