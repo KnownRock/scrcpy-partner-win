@@ -1,7 +1,7 @@
 <script lang="ts">
   import IconButton from '@smui/icon-button'
   import Textfield from '@smui/textfield'
-  import Loading from '../general/Loading.svelte'
+
   import gridHelp from 'svelte-grid/build/helper/index.mjs'
   import { v4 as uuidv4 } from 'uuid'
   import { t } from 'svelte-i18n'
