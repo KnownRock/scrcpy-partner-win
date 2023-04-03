@@ -14,11 +14,18 @@
   </div>
 
   <div class="item">
-    <Textfield
+    <!-- <Textfield
       style="flex:1"
       label={$t('Key Event Code')}
       bind:value={keyCode}
       type="number"
+    /> -->
+    <Autocomplete
+      style="flex:1;"
+      {options}
+      label={$t('Key Code')}
+      getOptionLabel={(option) => keyCodeToString(option)}
+      bind:value={keyCode}
     />
     {#key keyType}
     <Select
@@ -104,12 +111,14 @@
   import { KeyEventType, MotionType } from '../../types'
   import { t } from 'svelte-i18n'
   import Select, { Option } from '@smui/select'
+  import Autocomplete from '@smui-extra/autocomplete'
+  import { keyCodeToString, getOptions } from '../../utils/keycode'
   
-
+  const options = getOptions().map((option) => option.id)
   export let addOperation: (operation: RecordOperation) => void
 
   let delay = 1000
-  let keyCode = 0
+  let keyCode = 15
   let keyType = KeyEventType.Down
   let adbCmd = ''
 
