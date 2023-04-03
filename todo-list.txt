@@ -28,7 +28,7 @@
 [v] using relative path to exec adb and scrcpy
 [v] screen cap button
 [ ] raw js script executer
-[ ] operations panel ui improvements
+[v] operations panel ui improvements
 [ ] fix scrcpy client not close after refresh page
 [ ] fix setting add script textfield
 [ ] icon selector
