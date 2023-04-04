@@ -388,6 +388,8 @@ static mut IS_WINDOW_BORDERLESS: bool = false;
 static mut CONFIG_ID: String = String::new();
 // static mut C: Option<FnMut(usize, usize, usize, usize)> = None;
 
+// remember to call `.manage(MyState::default())`
+
 #[tauri::command]
 async fn init(
     app: tauri::AppHandle,
@@ -398,7 +400,10 @@ async fn init(
     // isWindowBorderless
     is_window_borderless: bool,
     config_id: String,
-) -> String {
+    state: tauri::State<'_, MyState>,
+    // why Result<(), ()>
+    // https://github.com/tauri-apps/tauri/discussions/4317
+) -> Result<(), ()> {
     if is_tool_mode {
         unsafe {
             PID = pid as u32;
@@ -407,16 +412,26 @@ async fn init(
             assert!(HWND != 0, "Failed to get hwnd");
             assert!(PID != 0, "Failed to get pid");
 
+            let mut state = state.app_state.lock().unwrap();
+
             println!("Mode: tool");
 
             IS_AUTO_SAVE_LOCATION_AND_SIZE = is_auto_save_location_and_size;
             IS_WINDOW_BORDERLESS = is_window_borderless;
-            CONFIG_ID = config_id;
+            CONFIG_ID = config_id.clone();
 
             dbg!(&IS_AUTO_SAVE_LOCATION_AND_SIZE);
             dbg!(&CONFIG_ID);
 
-            init_tool_window(&app);
+            let win = init_tool_window(&app);
+
+            state.set_tool_window(win);
+            state.set_pid_and_hwnd(pid, hwnd);
+            state.set_save_info(
+                is_auto_save_location_and_size,
+                is_window_borderless,
+                config_id,
+            );
 
             println!("*** tool init done ***")
         }
@@ -425,7 +440,7 @@ async fn init(
         init_main_window(&app);
     }
 
-    "ok".to_string()
+    Ok(())
 }
 
 #[tauri::command]
@@ -477,14 +492,20 @@ async fn open_record_window(app: tauri::AppHandle) {
     }
 }
 
+mod state;
+use state::AppState;
+struct MyState {
+    app_state: std::sync::Mutex<AppState>,
+}
 fn main() {
-    let app_handle = tauri::Builder::default();
-    app_handle
+    tauri::Builder::default()
+        .manage(MyState {
+            app_state: std::sync::Mutex::new(AppState::default()),
+        })
         .on_page_load(|window, _payload| {
-            println!("page loaded, window: {:?}", window.label());
             if window.label() == "tool" {
                 init_tool_hooks(window);
-                println!("*** tool window loaded ***")
+                println!("*** tool window loaded ***");
             } else if window.label() == "record" {
                 unsafe {
                     RECORD_WINDOW = Some(window);

@@ -42,7 +42,7 @@ pub fn init_tool_window(app: &tauri::AppHandle) {
 }
 
 #[cfg(debug_assertions)]
-pub fn init_tool_window(app: &tauri::AppHandle) {
+pub fn init_tool_window(app: &tauri::AppHandle) -> tauri::Window {
     let tool_window =
         tauri::WindowBuilder::new(app, "tool", tauri::WindowUrl::App("tool.html".into()))
             // .visible(false)
@@ -59,6 +59,11 @@ pub fn init_tool_window(app: &tauri::AppHandle) {
             height: 50.0,
         }))
         .unwrap();
+
+    return tool_window;
+
+    // println!("tool_window_loaded++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+    // tool_window.emit("tool_window_loaded", ()).unwrap();
 }
 
 pub fn init_record_window(app: &tauri::AppHandle) {
