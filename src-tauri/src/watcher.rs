@@ -1,12 +1,13 @@
 use winapi::um::winuser::{
-    SetWinEventHook, EVENT_OBJECT_DESTROY, EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_REORDER,
-    WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS, WINEVENT_SKIPOWNTHREAD,
+    SetFocus, SetForegroundWindow, SetWinEventHook, EVENT_OBJECT_DESTROY,
+    EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_REORDER, WINEVENT_OUTOFCONTEXT,
+    WINEVENT_SKIPOWNPROCESS, WINEVENT_SKIPOWNTHREAD,
 };
 
 use winapi::shared::minwindef::DWORD;
 use winapi::shared::ntdef::LONG;
-use winapi::shared::windef::HWINEVENTHOOK;
 use winapi::shared::windef::RECT;
+use winapi::shared::windef::{HWINEVENTHOOK, HWND};
 
 use crate::cmds::{kill_process, save_size_and_position};
 use crate::sendkey;
@@ -158,13 +159,14 @@ impl Watcher {
     }
 
     fn on_order(&mut self) {
-        // let app_state = &mut self.app_state;
         if self.app_state.is_none() {
             return;
         }
 
         let app_state = &mut self.app_state.as_mut().unwrap();
 
+        // prevent tool window and record window from being covered by other windows
+        // prevent tool window and record window change focus
         if !app_state.tool_window.is_none() {
             let tool_window = app_state.tool_window.as_mut().unwrap();
             tool_window.set_always_on_top(true).unwrap();
@@ -230,6 +232,8 @@ impl Watcher {
                 order: win_event_order_hook,
                 close: win_event_close_hook,
             };
+
+            SetForegroundWindow(app_state.hwnd as HWND);
         };
     }
 }
@@ -317,7 +321,7 @@ unsafe extern "system" fn win_event_order_callback(
         return;
     }
 
-    WATCHER.on_move(hwnd_usize);
+    WATCHER.on_order();
 }
 
 pub struct AppState {
