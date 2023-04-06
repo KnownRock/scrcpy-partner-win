@@ -35,5 +35,6 @@
 [ ] a record script processbar
 [ ] appliaction kill function
 [ ] home page with svelte grid drag
+[ ] make a single config page  
 
 [ ] * use native client to make it cross-platform
