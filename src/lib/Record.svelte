@@ -44,7 +44,7 @@
         <IconButton class="material-icons" on:click={toggleMotionRecordMode}
           size="mini"
         >
-          {#if motionRecordMode === 'motion'}
+          {#if motionRecordMode !== 'motion'}
             touch_app
           {:else}
             gesture
