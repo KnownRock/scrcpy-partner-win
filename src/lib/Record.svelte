@@ -12,30 +12,48 @@
         </IconButton>
       </div>  
    
-      <Textfield
-        label={$t('Script Name')}
-        bind:value={name}
-      />
-      <!-- isRecording -->
-      <FormField>
-        <Checkbox bind:checked={isRecording} />
-        <span slot="label">{$t('Recording')}</span>
-      </FormField>
+
+      <div style="display:flex; align-items: center; ">
+
+        
+        <Textfield
+          label={$t('Script Name')}
+          bind:value={name}
+        />
+        <!-- isRecording -->
+        <FormField>
+          <Checkbox bind:checked={isRecording} />
+          <span slot="label">{$t('Recording')}</span>
+        </FormField>
 
 
-      <FormField>
-        <Checkbox bind:checked={withMotion} />
-        <span slot="label">{$t('With Motion Record')}</span>
-      </FormField>
+        <FormField>
+          <Checkbox bind:checked={withMotion} />
+          <span slot="label">{$t('With Motion Record')}</span>
+        </FormField>
 
-      <Select
-        label={$t('Motion Record Mode')}
-        bind:value={motionRecordMode}
-        disabled={!withMotion}
-      >
-        <Option value="motion">{$t('Motion')}</Option>
-        <Option value="tap">{$t('Tap')}</Option>
-      </Select>
+        <!-- <Select
+          label={$t('Motion Record Mode')}
+          bind:value={motionRecordMode}
+          disabled={!withMotion}
+        >
+          <Option value="motion">{$t('Motion')}</Option>
+          <Option value="tap">{$t('Tap')}</Option>
+        </Select> -->
+
+        <IconButton class="material-icons" on:click={toggleMotionRecordMode}
+          size="mini"
+        >
+          {#if motionRecordMode === 'motion'}
+            touch_app
+          {:else}
+            gesture
+          {/if}
+        
+
+        </IconButton>
+
+      </div>
 
       <div>
         <Textfield
@@ -145,7 +163,6 @@
   import IconButton from '@smui/icon-button'
   import Form from './general/Form.svelte'
   import { setDialog } from '../utils/record'
-  import Select, { Option } from '@smui/select'
 
   let recordPanelWidth = '600px'
 
@@ -156,6 +173,14 @@
   let selection: [number, number] = [-1, -1]
 
   let motionRecordMode = 'motion' as 'motion' | 'tap'
+
+  function toggleMotionRecordMode () {
+    if (motionRecordMode === 'motion') {
+      motionRecordMode = 'tap'
+    } else {
+      motionRecordMode = 'motion'
+    }
+  }
 
   let name = ''
   let recordId = ''
