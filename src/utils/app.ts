@@ -37,10 +37,6 @@ export async function createMsLink (link: string, args: string[]): Promise<void>
   await callTauriFunction('create_ms_link', { link, args })
 }
 
-export async function runScrcpyCommand (args: string[]): Promise<boolean> {
-  return await callTauriFunction<boolean>('run_scrcpy_command', { args })
-}
-
 // get_config_id
 export async function getConfigId (): Promise<string> {
   return await callTauriFunction<string>('get_config_id')

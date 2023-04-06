@@ -1,18 +1,11 @@
 import { invoke } from '@tauri-apps/api/tauri'
-import { callTauriFunction } from './tauri'
 
 import type { Device } from '@prisma/client/index.d'
 import prismaClientLike from './prisma-like-client'
 import { getNoAdditionalPropertiesSchema } from './prisma-field-filter'
 import { v4 as uuidv4 } from 'uuid'
-// export interface Device {
-//   name: string
-//   id: string
-//   model: string
-//   device: string
-//   deviceProduct: string
-//   transportId: string
-// }
+import { executeAdb } from '../lib/Record/AdbCmd'
+
 type DeviceExt = Device & {
   isConnected: boolean
   isSaved: boolean
@@ -20,7 +13,7 @@ type DeviceExt = Device & {
 }
 
 async function getAdbDevices (): Promise<Device[]> {
-  const rawOutput = (await callTauriFunction<string>('adb_devices_l'))
+  const rawOutput = await executeAdb(['devices', '-l'])
 
   const lines = rawOutput.split('\n')
   const deviceLines = lines.slice(1, lines.length).filter(line => /\S/.exec(line))
@@ -147,7 +140,11 @@ export async function lanuchSelf (args: string[]): Promise<void> {
 }
 
 export async function connectTcpipDevice (ip: string, isConnect: boolean = true): Promise<void> {
-  await invoke('connect_tcpip_device', { ip, isConnect })
+  if (isConnect) {
+    await executeAdb(['connect', ip])
+  } else {
+    await executeAdb(['disconnect', ip])
+  }
 }
 
 export async function updateDeviceLastSeenAt (deviceId: string): Promise<void> {

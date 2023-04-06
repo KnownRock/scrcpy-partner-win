@@ -1,7 +1,7 @@
 use std::mem;
 use tauri::LogicalSize;
 use tauri::Position;
-use tauri::{LogicalPosition, PhysicalPosition, PhysicalSize};
+use tauri::{PhysicalPosition, PhysicalSize};
 use winapi::ctypes::c_void;
 use winapi::shared::minwindef::BOOL;
 use winapi::shared::minwindef::LPARAM;
@@ -95,8 +95,8 @@ pub fn set_window_loc_by_hwnd(
 
     window
         .set_position(Position::Physical(PhysicalPosition::new(
-            (new_right),
-            (rect.top + 40i32),
+            new_right,
+            rect.top + 40i32,
         )))
         .unwrap();
 }
@@ -144,10 +144,7 @@ pub fn set_window_loc_and_size_by_hwnd(
     }
 
     window
-        .set_position(Position::Physical(PhysicalPosition::new(
-            (new_left),
-            (new_top),
-        )))
+        .set_position(Position::Physical(PhysicalPosition::new(new_left, new_top)))
         .unwrap();
 
     let p_size = PhysicalSize::new(width as u32, height as u32);
