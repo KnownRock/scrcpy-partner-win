@@ -34,5 +34,6 @@
 [ ] icon selector
 [ ] a record script processbar
 [ ] appliaction kill function
+[ ] home page with svelte grid drag
 
 [ ] * use native client to make it cross-platform
