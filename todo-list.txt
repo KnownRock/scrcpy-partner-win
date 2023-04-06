@@ -36,5 +36,5 @@
 [ ] appliaction kill function
 [ ] home page with svelte grid drag
 [ ] make a single config page  
-
+[ ] refactor front code
 [ ] * use native client to make it cross-platform
