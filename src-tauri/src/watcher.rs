@@ -8,7 +8,9 @@ use winapi::shared::ntdef::LONG;
 use winapi::shared::windef::HWINEVENTHOOK;
 use winapi::shared::windef::RECT;
 
-use crate::cmds::save_size_and_position;
+use crate::cmds::{kill_process, save_size_and_position};
+use crate::sendkey;
+use crate::tauri_funcs::init_record_window;
 use crate::wins::{self, set_window_loc_and_size_by_hwnd, set_window_loc_by_hwnd};
 
 struct Hooks {
@@ -31,6 +33,63 @@ impl Watcher {
             Some(self.hooks.order),
             Some(self.hooks.close),
         ]);
+    }
+
+    pub fn sendkey(
+        &self,
+        key_code: usize,
+        scan_code: usize,
+        extend_key_flag: usize,
+        is_alt: bool,
+        is_shift: bool,
+    ) {
+        if self.app_state.is_none() {
+            return;
+        }
+
+        let app_state = &self.app_state.as_ref().unwrap();
+        let hwnd = app_state.hwnd;
+        sendkey::sendkey(hwnd, key_code, scan_code, extend_key_flag, is_alt, is_shift)
+    }
+
+    pub fn close_record_window(&mut self) {
+        if self.app_state.is_none() {
+            return;
+        }
+
+        if self.app_state.as_ref().unwrap().record_window.is_none() {
+            return;
+        }
+
+        let app_state = self.app_state.as_mut().unwrap();
+
+        app_state.record_window.as_mut().unwrap().close().unwrap();
+        app_state.record_window = None;
+    }
+
+    pub fn open_record_window(&mut self, app: &tauri::AppHandle) {
+        if let Some(window) = self.app_state.as_ref().unwrap().record_window.as_ref() {
+            window.show().unwrap();
+        } else {
+            // will set RECORD_WINDOW in on_page_load
+            let win = init_record_window(&app);
+            self.app_state.as_mut().unwrap().set_record_window(win);
+        }
+    }
+
+    pub fn exit(&self) {
+        if self.app_state.is_none() {
+            return;
+        }
+
+        let app_state = &self.app_state.as_ref().unwrap();
+        let pid = app_state.pid;
+
+        kill_process(pid as u32);
+
+        self.unhook_all_window_events();
+
+        std::process::exit(0);
     }
 
     pub fn set_app_state(&mut self, app_state: AppState) {
@@ -296,10 +355,6 @@ impl AppState {
 
     pub fn get_config_id(&self) -> String {
         self.config_id.clone()
-    }
-
-    pub fn unset_record_window(&mut self) {
-        self.record_window = None;
     }
 
     pub fn set_tool_window(&mut self, window: tauri::Window) {

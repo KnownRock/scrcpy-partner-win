@@ -13,10 +13,8 @@ mod sendkey;
 mod tauri_funcs;
 mod wins;
 
-use cmds::kill_process;
-use tauri_funcs::{init_main_window, init_record_window, init_tool_window};
+use tauri_funcs::{init_main_window, init_tool_window};
 use wins::get_hwnd_by_pid;
-static mut RECORD_WINDOW: Option<tauri::Window> = None;
 
 // IS_RECORD_PANEL_WITH_MOTION_ROCORD
 #[tauri::command]
@@ -80,11 +78,8 @@ async fn sendkey(
     is_alt: bool,
     is_shift: bool,
 ) {
-    unsafe { sendkey::sendkey(HWND, key_code, scan_code, extend_key_flag, is_alt, is_shift) }
+    unsafe { WATCHER.sendkey(key_code, scan_code, extend_key_flag, is_alt, is_shift) }
 }
-
-static mut HWND: usize = 0;
-static mut PID: u32 = 0;
 
 #[tauri::command]
 async fn get_config_id() -> String {
@@ -99,13 +94,8 @@ async fn get_env_args() -> Vec<String> {
 #[tauri::command]
 fn exit() {
     unsafe {
-        if PID != 0 {
-            kill_process(PID);
-            PID = 0;
-        }
+        WATCHER.exit();
     }
-
-    std::process::exit(0);
 }
 
 #[tauri::command]
@@ -113,12 +103,6 @@ async fn get_process_hwnd(pid: u32) -> usize {
     get_hwnd_by_pid(pid) as usize
 }
 
-static mut IS_AUTO_SAVE_LOCATION_AND_SIZE: bool = false;
-static mut IS_WINDOW_BORDERLESS: bool = false;
-static mut CONFIG_ID: String = String::new();
-// static mut C: Option<FnMut(usize, usize, usize, usize)> = None;
-
-// remember to call `.manage(MyState::default())`
 use watcher::WATCHER;
 
 #[tauri::command]
@@ -137,14 +121,9 @@ async fn init(
 ) -> Result<(), ()> {
     if is_tool_mode {
         unsafe {
-            PID = pid as u32;
-            HWND = hwnd;
-
-            assert!(HWND != 0, "Failed to get hwnd");
-            assert!(PID != 0, "Failed to get pid");
-
             println!("Mode: tool");
 
+            // TODO: refactor code
             let win = init_tool_window(&app);
 
             let mut app_state = AppState::new();
@@ -198,25 +177,14 @@ async fn get_current_exe_dir() -> String {
 #[tauri::command]
 async fn close_record_window() {
     unsafe {
-        if let Some(window) = &RECORD_WINDOW {
-            window.close().unwrap();
-            // RECORD_WINDOW = None;
-
-            WATCHER.app_state.as_mut().unwrap().unset_record_window();
-        }
+        WATCHER.close_record_window();
     }
 }
 
 #[tauri::command]
 async fn open_record_window(app: tauri::AppHandle) {
     unsafe {
-        if let Some(window) = &RECORD_WINDOW {
-            window.show().unwrap();
-        } else {
-            // will set RECORD_WINDOW in on_page_load
-            let win = init_record_window(&app);
-            WATCHER.app_state.as_mut().unwrap().set_record_window(win);
-        }
+        WATCHER.open_record_window(&app);
     }
 }
 
