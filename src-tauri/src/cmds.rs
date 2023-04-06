@@ -1,6 +1,9 @@
 use std::process::Command;
 use std::time::Duration;
 
+#[cfg(not(debug_assertions))]
+use std::os::windows::process::CommandExt;
+
 pub fn kill_process(pid: u32) {
     if pid != 0 {
         println!("kill {}", pid);
