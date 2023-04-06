@@ -65,7 +65,7 @@
             updatedAt: null,
             lastSeenAt: null
           },
-          callback: async (device) => {
+          callback: async () => {
             await freshDevices()
           }
         })
