@@ -1,17 +1,14 @@
-use winapi::ctypes::c_void;
 use winapi::um::winuser::{
     SetWinEventHook, EVENT_OBJECT_DESTROY, EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_REORDER,
     WINEVENT_OUTOFCONTEXT, WINEVENT_SKIPOWNPROCESS, WINEVENT_SKIPOWNTHREAD,
 };
 
-use std::borrow::Borrow;
-use std::os::windows::process::CommandExt;
-use std::process::Command;
-
 use winapi::shared::minwindef::DWORD;
 use winapi::shared::ntdef::LONG;
-use winapi::shared::windef::{HWINEVENTHOOK, HWINEVENTHOOK__, HWND__};
+use winapi::shared::windef::HWINEVENTHOOK;
+use winapi::shared::windef::RECT;
 
+use crate::cmds::save_size_and_position;
 use crate::wins::{self, set_window_loc_and_size_by_hwnd, set_window_loc_by_hwnd};
 
 struct Hooks {
@@ -20,12 +17,14 @@ struct Hooks {
     close: HWINEVENTHOOK,
 }
 
-struct WatcherState<'a> {
-    app_state: &'a mut AppState,
+pub struct Watcher {
+    pub app_state: Option<AppState>,
     hooks: Hooks,
+
+    last_rect: Option<RECT>,
 }
 
-impl WatcherState<'_> {
+impl Watcher {
     fn unhook_all_window_events(&self) {
         wins::unhook_all_window_events(vec![
             Some(self.hooks.loc),
@@ -34,7 +33,29 @@ impl WatcherState<'_> {
         ]);
     }
 
-    fn on_close(&self) {
+    pub fn set_app_state(&mut self, app_state: AppState) {
+        self.app_state = Some(app_state);
+    }
+
+    fn on_close(&self, hwnd: usize) {
+        if hwnd == 0 {
+            return;
+        }
+        if self.app_state.is_none() {
+            return;
+        }
+
+        let self_hwnd = self.app_state.as_ref().unwrap().hwnd;
+        if hwnd != self_hwnd {
+            return;
+        }
+
+        save_size_and_position(
+            self.last_rect.unwrap(),
+            self.app_state.as_ref().unwrap().is_window_borderless,
+            self.app_state.as_ref().unwrap().config_id.clone(),
+        );
+
         self.unhook_all_window_events();
 
         std::process::exit(0);
@@ -44,13 +65,20 @@ impl WatcherState<'_> {
         if hwnd == 0 {
             return;
         }
-        let app_state = &mut self.app_state;
+        if self.app_state.is_none() {
+            return;
+        }
+
+        let app_state = &mut self.app_state.as_mut().unwrap();
 
         let self_hwnd = app_state.hwnd;
 
         if hwnd != self_hwnd {
             return;
         }
+
+        let rect = wins::get_window_rect_by_hwnd(hwnd);
+        self.last_rect = Some(rect);
 
         if !app_state.tool_window.is_none() {
             set_window_loc_by_hwnd(
@@ -71,7 +99,12 @@ impl WatcherState<'_> {
     }
 
     fn on_order(&mut self) {
-        let app_state = &mut self.app_state;
+        // let app_state = &mut self.app_state;
+        if self.app_state.is_none() {
+            return;
+        }
+
+        let app_state = &mut self.app_state.as_mut().unwrap();
 
         if !app_state.tool_window.is_none() {
             let tool_window = app_state.tool_window.as_mut().unwrap();
@@ -85,10 +118,83 @@ impl WatcherState<'_> {
             record_window.set_always_on_top(false).unwrap();
         }
     }
+
+    pub fn fresh_loc_and_size(&mut self) {
+        self.on_move(self.app_state.as_ref().unwrap().hwnd);
+        self.on_order();
+    }
+
+    pub fn start(&mut self) {
+        unsafe {
+            if self.app_state.is_none() {
+                panic!("app_state is none");
+            }
+
+            self.unhook_all_window_events();
+
+            let app_state = &mut self.app_state.as_mut().unwrap();
+            let pid = app_state.pid;
+
+            // WIN_EVENT_CLOSE_HOOK
+            let win_event_close_hook = SetWinEventHook(
+                EVENT_OBJECT_DESTROY,
+                EVENT_OBJECT_DESTROY,
+                std::ptr::null_mut(),
+                Some(win_event_close_callback),
+                pid as DWORD,
+                0,
+                WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD,
+            );
+
+            let win_event_loc_hook = SetWinEventHook(
+                EVENT_OBJECT_LOCATIONCHANGE,
+                EVENT_OBJECT_LOCATIONCHANGE,
+                std::ptr::null_mut(),
+                Some(win_event_loc_callback),
+                pid as DWORD,
+                0,
+                WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD,
+            );
+
+            let win_event_order_hook = SetWinEventHook(
+                EVENT_OBJECT_REORDER,
+                EVENT_OBJECT_REORDER,
+                std::ptr::null_mut(),
+                Some(win_event_order_callback),
+                pid as DWORD,
+                0,
+                WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD,
+            );
+
+            self.hooks = Hooks {
+                loc: win_event_loc_hook,
+                order: win_event_order_hook,
+                close: win_event_close_hook,
+            };
+        };
+    }
 }
 
 // FIXME: remove static
-static mut WATCHER_STATE: Option<WatcherState> = None;
+// pub static mut WATCHER: Option<Watcher> = None;
+pub static mut WATCHER: Watcher = Watcher {
+    app_state: None,
+    hooks: Hooks {
+        loc: std::ptr::null_mut(),
+        order: std::ptr::null_mut(),
+        close: std::ptr::null_mut(),
+    },
+    last_rect: None,
+};
+
+// pub fn start(app_state: Option<AppState>) {
+//     unsafe {
+//         WATCHER_STATE = Some(WatcherState {
+//             app_state: app_state,
+//             // hooks: hooks,
+//         })
+//     };
+// }
 
 // pub fn set_watcher(app_state: &mut AppState) {
 //     WATCHER_STATE = Some(WatcherState {
@@ -110,12 +216,13 @@ unsafe extern "system" fn win_event_close_callback(
     _id_event_thread: winapi::shared::minwindef::DWORD,
     _dwms_event_time: winapi::shared::minwindef::DWORD,
 ) {
-    if WATCHER_STATE.is_none() {
+    let hwnd_usize = _hwnd as usize;
+
+    if hwnd_usize == 0 {
         return;
     }
 
-    let watch_state = &mut WATCHER_STATE.as_mut().unwrap();
-    watch_state.on_close();
+    WATCHER.on_close(hwnd_usize);
 }
 
 unsafe extern "system" fn win_event_loc_callback(
@@ -133,12 +240,7 @@ unsafe extern "system" fn win_event_loc_callback(
         return;
     }
 
-    if WATCHER_STATE.is_none() {
-        return;
-    }
-
-    let watch_state = &mut WATCHER_STATE.as_mut().unwrap();
-    watch_state.on_move(hwnd_usize);
+    WATCHER.on_move(hwnd_usize);
 }
 
 unsafe extern "system" fn win_event_order_callback(
@@ -156,29 +258,7 @@ unsafe extern "system" fn win_event_order_callback(
         return;
     }
 
-    if WATCHER_STATE.is_none() {
-        return;
-    }
-
-    let watch_state = &mut WATCHER_STATE.as_mut().unwrap();
-    let app_state = &mut *watch_state.app_state;
-
-    if !app_state.tool_window.is_none() {
-        let tool_window = app_state.tool_window.as_mut().unwrap();
-        tool_window.set_always_on_top(true).unwrap();
-        tool_window.set_always_on_top(false).unwrap();
-    }
-
-    if !app_state.record_window.is_none() {
-        let record_window = app_state.record_window.as_mut().unwrap();
-        record_window.set_always_on_top(true).unwrap();
-        record_window.set_always_on_top(false).unwrap();
-    }
-}
-
-struct HwndCallback {
-    hwnd: usize,
-    callback: fn(),
+    WATCHER.on_move(hwnd_usize);
 }
 
 pub struct AppState {
@@ -210,12 +290,16 @@ impl AppState {
         }
     }
 
-    pub fn default() -> Self {
-        Self::new()
-    }
-
     pub fn set_record_window(&mut self, window: tauri::Window) {
         self.record_window = Some(window);
+    }
+
+    pub fn get_config_id(&self) -> String {
+        self.config_id.clone()
+    }
+
+    pub fn unset_record_window(&mut self) {
+        self.record_window = None;
     }
 
     pub fn set_tool_window(&mut self, window: tauri::Window) {
@@ -227,6 +311,13 @@ impl AppState {
         self.hwnd = hwnd;
     }
 
+    pub fn set_is_record_panel_with_motion_record(
+        &mut self,
+        is_record_panel_with_motion_record: bool,
+    ) {
+        self.is_record_panel_with_motion_record = is_record_panel_with_motion_record;
+    }
+
     pub fn set_save_info(
         &mut self,
         is_auto_save_location_and_size: bool,
@@ -236,67 +327,5 @@ impl AppState {
         self.is_auto_save_location_and_size = is_auto_save_location_and_size;
         self.is_window_borderless = is_window_borderless;
         self.config_id = config_id;
-    }
-
-    pub fn start(&mut self) {
-        unsafe {
-            self.stop();
-
-            // WIN_EVENT_CLOSE_HOOK
-            let win_event_close_hook = SetWinEventHook(
-                EVENT_OBJECT_DESTROY,
-                EVENT_OBJECT_DESTROY,
-                std::ptr::null_mut(),
-                Some(win_event_close_callback),
-                self.pid as DWORD,
-                0,
-                WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD,
-            );
-
-            let win_event_loc_hook = SetWinEventHook(
-                EVENT_OBJECT_LOCATIONCHANGE,
-                EVENT_OBJECT_LOCATIONCHANGE,
-                std::ptr::null_mut(),
-                Some(win_event_loc_callback),
-                self.pid as DWORD,
-                0,
-                WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD,
-            );
-
-            let win_event_order_hook = SetWinEventHook(
-                EVENT_OBJECT_REORDER,
-                EVENT_OBJECT_REORDER,
-                std::ptr::null_mut(),
-                Some(win_event_order_callback),
-                self.pid as DWORD,
-                0,
-                WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS | WINEVENT_SKIPOWNTHREAD,
-            );
-
-            unsafe {
-                let app_s = self;
-                WATCHER_STATE = Some(WatcherState {
-                    app_state: &mut AppState::default(),
-                    hooks: Hooks {
-                        loc: win_event_loc_hook,
-                        close: win_event_close_hook,
-                        order: win_event_order_hook,
-                    },
-                });
-            }
-
-            // WIN_EVENT_CLOSE_HOOK = Some(win_event_close_hook);
-        };
-    }
-
-    pub fn stop(&mut self) {
-        unsafe {
-            match &mut WATCHER_STATE {
-                Some(watch_state) => {
-                    watch_state.unhook_all_window_events();
-                }
-                None => {}
-            }
-        }
     }
 }

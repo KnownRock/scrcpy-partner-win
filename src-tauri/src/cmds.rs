@@ -1,293 +1,5 @@
 use std::process::Command;
-use std::thread::sleep;
 use std::time::Duration;
-use std::{os::windows::process::CommandExt, process::Child};
-use sysinfo::{NetworkExt, NetworksExt, ProcessExt, System, SystemExt};
-
-use crate::wins::get_hwnd_by_pid;
-// use async_process::Stdio;
-pub fn get_adb_devices_raw() -> String {
-    let output = std::process::Command::new("adb")
-        .arg("devices")
-        .arg("-l")
-        .creation_flags(0x08000000)
-        .output()
-        .expect("failed to execute process");
-    let output = String::from_utf8(output.stdout).unwrap();
-
-    output
-}
-
-#[test]
-fn test_get_adb_devices_raw() {
-    let output = get_adb_devices_raw();
-    assert!(output.len() > 0);
-}
-
-pub fn get_adb_devices() -> Vec<String> {
-    let output = get_adb_devices_raw();
-
-    let mut devices = Vec::new();
-    for line in output.lines() {
-        if line.starts_with("List") {
-            continue;
-        }
-
-        if line.len() == 0 {
-            break;
-        }
-
-        let mut iter = line.split_whitespace();
-        let device = iter.next().unwrap();
-        if device == "List" {
-            continue;
-        }
-
-        devices.push(device.to_string());
-    }
-
-    devices
-}
-
-#[test]
-fn test_get_adb_devices() {
-    let devices = get_adb_devices();
-    assert!(devices.len() > 0 || devices.len() == 0);
-}
-
-pub fn get_all_pids() -> Vec<u32> {
-    let mut pids = Vec::new();
-    let system = System::new_all();
-    for proc in system.processes() {
-        let pid = proc.0;
-        let pid_string = pid.to_string();
-        let pid_u32 = pid_string.parse::<u32>().unwrap();
-        pids.push(pid_u32);
-    }
-    pids
-}
-
-#[test]
-fn test_get_all_pids() {
-    let pids = get_all_pids();
-    assert!(pids.len() > 0);
-}
-
-pub fn is_process_alive(pid: u32) -> bool {
-    let pids = get_all_pids();
-    pids.contains(&pid)
-}
-
-#[test]
-fn test_is_process_alive() {
-    let pids = get_all_pids();
-    let pid = pids[0];
-    let alive = is_process_alive(pid);
-    assert!(alive);
-}
-
-fn connect_tcpip(device: &str) {
-    let devices = get_adb_devices();
-    if devices.contains(&device.to_string()) {
-        return;
-    }
-
-    let output = std::process::Command::new("adb")
-        .arg("connect")
-        .arg(format!("{}", device))
-        .creation_flags(0x08000000)
-        .output()
-        .expect("failed to execute process");
-    let output = String::from_utf8(output.stdout).unwrap();
-    println!("connect_tcpip: {}", output);
-}
-
-#[test]
-fn test_connect_tcpip() {
-    connect_tcpip("127.0.0.1:5555");
-}
-
-fn get_tcpip_device(pars: &Vec<String>) -> Option<&str> {
-    for (i, par) in pars.iter().enumerate() {
-        if par == "--tcpip" {
-            if i + 1 < pars.len() {
-                return Some(&pars[i + 1]);
-            }
-        } else if par.starts_with("--tcpip=") {
-            return Some(&par[8..]);
-        } else if par.starts_with("--tcpip ") {
-            return Some(&par[8..]);
-        }
-    }
-    None
-}
-
-#[test]
-fn test_get_tcpip_device() {
-    let pars = vec![
-        "--window-x",
-        "0",
-        "--window-y",
-        "31",
-        "--window-width",
-        "480",
-        "--window-height",
-        "1049",
-        "--max-size",
-        "1080",
-        "--turn-screen-off",
-        "--max-fps=30",
-        "--tcpip=127.0.0.1:5555",
-        "--display-buffer=100",
-    ];
-
-    let pars_strings = pars.iter().map(|s| s.to_string()).collect();
-
-    let device = get_tcpip_device(&pars_strings);
-    assert_eq!(device, Some("10.8.0.8:8888"));
-}
-
-fn filter_tcpip_arg_from_args(pars: &Vec<String>) -> Vec<String> {
-    let mut new_pars = Vec::new();
-    for (i, par) in pars.iter().enumerate() {
-        if par == "--tcpip" {
-            continue;
-        } else if par.starts_with("--tcpip=") {
-            continue;
-        } else if par.starts_with("--tcpip ") {
-            continue;
-        } else {
-            if i >= 1 {
-                if pars[i - 1] == "--tcpip" {
-                    continue;
-                }
-            }
-
-            new_pars.push(par.clone());
-        }
-    }
-    new_pars
-}
-
-#[test]
-fn test_filter_tcpip_arg_from_args() {
-    let pars = vec![
-        "--window-x",
-        "0",
-        "--window-y",
-        "31",
-        "--window-width",
-        "480",
-        "--window-height",
-        "1049",
-        "--max-size",
-        "1080",
-        "--turn-screen-off",
-        "--max-fps=30",
-        "--tcpip=127.0.0.1:5555",
-        "--display-buffer=100",
-    ];
-
-    let pars_strings = pars.iter().map(|s| s.to_string()).collect();
-
-    let new_pars = filter_tcpip_arg_from_args(&pars_strings);
-    assert_eq!(new_pars.len(), 13);
-}
-
-fn get_add_serial_arg_by_tcpip_device(device: &str, pars: &Vec<String>) -> Vec<String> {
-    let mut pars = pars.clone();
-    let serial = device.to_string();
-    pars.push(format!("--serial={}", serial));
-    pars
-}
-
-pub fn run_scrcpy(pars: &Vec<String>) -> Option<(u32, usize)> {
-    // FIXME: make more safe and robust and check args
-    let mut pars = pars.clone();
-    match get_tcpip_device(&pars) {
-        Some(device) => {
-            connect_tcpip(device);
-            pars = get_add_serial_arg_by_tcpip_device(device, &pars);
-            pars = filter_tcpip_arg_from_args(&pars);
-        }
-        None => {}
-    }
-
-    dbg!("The scrcpy args: {:?}", &pars);
-
-    #[cfg(not(debug_assertions))]
-    let child = Command::new("scrcpy.exe")
-        .args(pars)
-        .creation_flags(0x08000000)
-        .spawn()
-        .unwrap();
-    #[cfg(debug_assertions)]
-    let child = Command::new("scrcpy.exe").args(pars).spawn().unwrap();
-
-    let pid = child.id();
-
-    // MEMO: can not use tcpip arg, only can use serial arg and adb connect manually
-    let is_scrcpy_process_alive = is_process_alive(pid);
-    if !is_scrcpy_process_alive {
-        return None;
-    }
-
-    let hwnd_usize;
-    loop {
-        sleep(Duration::from_millis(100));
-
-        if is_process_alive(pid) == false {
-            return None;
-        }
-
-        let hwnd = get_hwnd_by_pid(pid);
-        println!("hwnd: {:?}", hwnd);
-
-        if hwnd as usize != 0 {
-            hwnd_usize = hwnd as usize;
-            break;
-        }
-    }
-
-    if hwnd_usize == 0 {
-        return None;
-    }
-
-    println!("hwnd_usize: {:?}", hwnd_usize);
-
-    Some((pid, hwnd_usize))
-}
-
-#[test]
-fn test_run_scrcpy() {
-    let devices = get_adb_devices();
-
-    if devices.len() == 0 {
-        return;
-    }
-
-    let pars = vec![
-        "-s".to_string(),
-        devices[0].clone(),
-        "-m".to_string(),
-        "240".to_string(),
-        "-b".to_string(),
-        "2M".to_string(),
-    ];
-
-    let result = run_scrcpy(&pars);
-    assert!(result.is_some());
-
-    match result {
-        Some((pid, hwnd)) => {
-            // println!("pid: {}, hwnd: {}", pid, hwnd);
-            if pid != 0 && hwnd != 0 {
-                kill_process(pid);
-            }
-        }
-        None => {}
-    }
-}
 
 pub fn kill_process(pid: u32) {
     if pid != 0 {
@@ -301,14 +13,6 @@ pub fn kill_process(pid: u32) {
     }
 }
 
-#[cfg(debug_assertions)]
-fn get_db_url() -> String {
-    let current_dir = std::env::current_dir().unwrap();
-    let db_path = current_dir.join("../prisma").join("main.db");
-    let db_url = format!("file:{}", db_path.to_str().unwrap());
-    // println!("db_url: {}", db_url);
-    db_url
-}
 #[cfg(not(debug_assertions))]
 fn get_db_url() -> String {
     let current_dir = std::env::current_dir().unwrap();
@@ -322,10 +26,12 @@ static mut PRISMA: Option<String> = None;
 use std::error::Error;
 use std::io;
 use tokio::io::{AsyncReadExt, Interest};
-use uuid::Uuid;
 
+#[cfg(not(debug_assertions))]
 static mut STATIC_PIPE_NAME: Option<String> = None;
+#[cfg(not(debug_assertions))]
 fn generate_pipe_name() -> String {
+    use uuid::Uuid;
     unsafe {
         match &mut STATIC_PIPE_NAME {
             Some(_) => {}
@@ -341,6 +47,7 @@ fn generate_pipe_name() -> String {
 }
 
 // FIXME: kill prisma process after main process is killed in spec conditions
+
 pub async fn call_prisma(
     table: String,
     func: String,
@@ -350,29 +57,24 @@ pub async fn call_prisma(
         match &mut PRISMA {
             Some(_) => {}
             None => {
-                let db_url = get_db_url();
-
-                let current_dir = std::env::current_dir().unwrap();
-                dbg!(current_dir);
-
-                let exe_path;
                 #[cfg(debug_assertions)]
                 {
-                    exe_path = "./target/release/mini-prisma.exe";
+                    let pipe_name = format!("\\\\.\\pipe\\{}", "spw-mini-prisma");
+                    // FIXME: make it more safe
+                    tokio::time::sleep(Duration::from_millis(1000)).await;
+
+                    PRISMA = Some(pipe_name);
                 }
                 #[cfg(not(debug_assertions))]
                 {
+                    let db_url = get_db_url();
+                    let current_dir = std::env::current_dir().unwrap();
+                    let exe_path;
+
                     exe_path = "./mini-prisma.exe";
-                }
 
-                let mut pipe_name = generate_pipe_name();
-                #[cfg(debug_assertions)]
-                {
-                    pipe_name = format!("\\\\.\\pipe\\{}", "spw-mini-prisma");
-                }
+                    let mut pipe_name = generate_pipe_name();
 
-                #[cfg(not(debug_assertions))]
-                {
                     // // TODO: add some error handling
                     let child = Command::new(exe_path)
                         .arg(db_url)
@@ -380,12 +82,12 @@ pub async fn call_prisma(
                         .creation_flags(0x08000000)
                         .spawn()
                         .unwrap();
+
+                    // FIXME: make it more safe
+                    tokio::time::sleep(Duration::from_millis(1000)).await;
+
+                    PRISMA = Some(pipe_name);
                 }
-
-                // FIXME: make it more safe
-                tokio::time::sleep(Duration::from_millis(1000)).await;
-
-                PRISMA = Some(pipe_name);
             }
         }
     };
@@ -435,9 +137,6 @@ pub async fn call_prisma(
             tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
         }
 
-        let mut full_data = vec![0; 1024 * 1024];
-        let mut ptr = 0;
-
         // FIXME: may unicode problem
         loop {
             let ready = client
@@ -458,8 +157,6 @@ pub async fn call_prisma(
             }
         }
     }
-
-    Ok("{\"error\": \"no data\"}".to_string())
 }
 
 #[tokio::test]
@@ -567,7 +264,8 @@ pub fn save_size_and_position(rect: RECT, is_borderless: bool, config_id: String
                     serde_json::json!(new_left).to_string(),
                 ),
             )
-            .await;
+            .await
+            .unwrap();
 
             call_prisma(
                 "deviceConfigValue".to_string(),
@@ -578,7 +276,8 @@ pub fn save_size_and_position(rect: RECT, is_borderless: bool, config_id: String
                     serde_json::json!(new_top).to_string(),
                 ),
             )
-            .await;
+            .await
+            .unwrap();
 
             if new_width > 0 {
                 call_prisma(
@@ -590,7 +289,8 @@ pub fn save_size_and_position(rect: RECT, is_borderless: bool, config_id: String
                         serde_json::json!(new_width).to_string(),
                     ),
                 )
-                .await;
+                .await
+                .unwrap();
             }
             if new_height > 0 {
                 call_prisma(
@@ -602,7 +302,8 @@ pub fn save_size_and_position(rect: RECT, is_borderless: bool, config_id: String
                         serde_json::json!(new_height).to_string(),
                     ),
                 )
-                .await;
+                .await
+                .unwrap();
             }
 
             std::process::exit(0);
