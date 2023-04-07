@@ -31,17 +31,23 @@ async function init (url, pipeName) {
 
       console.log(table, func, argJson)
 
-      prisma[table][func](argJson).then((result) => {
-        // console.log(JSON.stringify(result))
-        socket.write(JSON.stringify({ data: result }))
-      }).catch((e) => {
-        console.error(e)
-        socket.write(JSON.stringify({ error: e.message }))
-      }).finally(() => {
-        setTimeout(() => {
-          socket.end()
-        }, 0)
-      })
+      try {
+        prisma[table][func](argJson).then((result) => {
+          // console.log(JSON.stringify(result))
+          socket.write(JSON.stringify({ data: result }))
+        }).catch((e) => {
+          console.error(e)
+          socket.write(JSON.stringify({ error: e.message }))
+        }).finally(() => {
+          setTimeout(() => {
+            socket.end()
+          }, 0)
+        })
+      } catch (error) {
+        console.error(error)
+        socket.write(JSON.stringify({ error: error.message }))
+        socket.end()
+      }
     })
   })
 
