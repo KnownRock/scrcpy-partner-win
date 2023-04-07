@@ -116,7 +116,7 @@ async fn write_to_pipe(pipe_name: String, text: String) -> Result<String, Box<dy
             .await?;
         if ready.is_writable() {
             match client.try_write(text.as_bytes()) {
-                Ok(n) => {}
+                Ok(_) => {}
                 Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
                     continue;
                 }
