@@ -37,4 +37,6 @@
 [ ] home page with svelte grid drag
 [ ] make a single config page  
 [ ] refactor front code
+[ ] fix setting page dom covered issue
+[ ] add execute script error handling
 [ ] * use native client to make it cross-platform
