@@ -253,6 +253,13 @@
     if (item.cmdType === 'scrcpy-cmd') {
       sendKey(item.cmdName)
     }
+    if (item.cmdType === 'scrcpy-control-cmd') {
+      scrcpyControlClient?.execute({
+        type: item.cmdName,
+        key: item.opts.key,
+        keyEventType: item.opts.keyEventType
+      })
+    }
     if (item.cmdType === 'app-cmd') {
       if (item.cmdName === 'exit') {
         exit()
@@ -272,6 +279,8 @@
       if (item.cmdName === 'exec_script') {
         execScript(item.opts.scriptId)
       }
+  
+
       if (item.cmdName === 'capture') {
         if (scrcpyControlClient) {
           await scrcpyControlClient.execute({
@@ -390,12 +399,25 @@
           delItem(dataItem)
         }
         }} >
+
+        {#if dataItem.item.uiType === 'icon-button'}
         <IconButton
-        disabled={mode === 'setting'}
-        
-       class="material-icons" on:click={() => execute(dataItem.item)}>
-        {dataItem.item.icon}
-      </IconButton> 
+          disabled={mode === 'setting'}
+          class="material-icons" on:click={() => execute(dataItem.item)}>
+          {dataItem.item.icon}
+        </IconButton> 
+        {/if}
+        {#if dataItem.item.uiType === 'icon-button-2'}
+        <IconButton
+          disabled={mode === 'setting'}
+          class="material-icons" 
+          on:mousedown={() => execute(dataItem.item.cmds[0])}
+          on:mouseup={() => execute(dataItem.item.cmds[1])}
+        >
+          {dataItem.item.icon}
+        </IconButton>
+        {/if}
+
       </div>
       
     </Grid>

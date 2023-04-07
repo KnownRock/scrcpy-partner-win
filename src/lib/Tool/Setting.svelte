@@ -312,7 +312,7 @@
 
     <div style="display:flex;    width: 350px;    flex-flow: row wrap;">
       {#each fullAddableItems as item}
-        {#if item.uiType === 'icon-button'}
+        {#if item.uiType === 'icon-button' || item.uiType === 'icon-button-2'}
           <IconButton
             class="material-icons"
             on:click={() => addAbleItems(item)}

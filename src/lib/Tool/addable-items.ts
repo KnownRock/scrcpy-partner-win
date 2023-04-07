@@ -1,19 +1,38 @@
-interface AddableItem {
-  uiType: 'icon-button'
-  icon: string
-
-  cmdType: 'scrcpy-cmd' | 'app-cmd'
+import { KeyEventType } from '../../types'
+interface cmd {
+  cmdType: 'scrcpy-cmd' | 'app-cmd' | 'scrcpy-control-cmd'
   cmdName: string
-
   opts?: Record<string, any>
 }
 
+type AddableItem = ({
+  uiType: 'icon-button'
+  icon: string
+} & cmd) | {
+  uiType: 'icon-button-2'
+  icon: string
+
+  cmds: [cmd, cmd]
+}
 export const addableItems: AddableItem[] = [{
-  uiType: 'icon-button',
+  uiType: 'icon-button-2',
   icon: 'power_settings_new',
 
-  cmdType: 'scrcpy-cmd',
-  cmdName: 'power'
+  cmds: [{
+    cmdType: 'scrcpy-control-cmd',
+    cmdName: 'keyevent',
+    opts: {
+      key: 26,
+      keyEventType: KeyEventType.Down
+    }
+  }, {
+    cmdType: 'scrcpy-control-cmd',
+    cmdName: 'keyevent',
+    opts: {
+      key: 26,
+      keyEventType: KeyEventType.Up
+    }
+  }]
 }, {
   uiType: 'icon-button',
   icon: 'volume_up',
