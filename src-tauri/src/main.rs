@@ -2,7 +2,8 @@
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
 )]
-
+#[macro_use]
+extern crate lazy_static;
 use std::env;
 
 use std::os::windows::process::CommandExt;

@@ -24,32 +24,137 @@ fn get_db_url() -> String {
     db_url
 }
 
-use tokio::net::windows::named_pipe;
-static mut PRISMA: Option<String> = None;
 use std::error::Error;
 use std::io;
 use tokio::io::{AsyncReadExt, Interest};
+use tokio::net::windows::named_pipe;
 
 #[cfg(not(debug_assertions))]
-static mut STATIC_PIPE_NAME: Option<String> = None;
+use uuid::Uuid;
 #[cfg(not(debug_assertions))]
-fn generate_pipe_name() -> String {
-    use uuid::Uuid;
+lazy_static! {
+    static ref PRISMA_PIPE_NAME: String = format!("\\\\.\\pipe\\{}", Uuid::new_v4());
+}
+#[cfg(debug_assertions)]
+lazy_static! {
+    static ref PRISMA_PIPE_NAME: String = format!("\\\\.\\pipe\\{}", "spw-mini-prisma");
+}
+
+enum PrismaState {
+    NotStart,
+    Initing,
+    Ready,
+}
+static mut PRISMA_STATE: PrismaState = PrismaState::NotStart;
+
+async fn start_prisma() {
+    #[cfg(debug_assertions)]
+    {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        let db_url = get_db_url();
+        let current_dir = std::env::current_dir().unwrap();
+        let exe_path;
+
+        exe_path = "./mini-prisma.exe";
+
+        let mut pipe_name = unsafe { PRISMA_PIPE_NAME.clone() };
+
+        // // TODO: add some error handling
+        let child = Command::new(exe_path)
+            .arg(db_url)
+            .arg(pipe_name.clone())
+            .creation_flags(0x08000000)
+            .spawn()
+            .unwrap();
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+
     unsafe {
-        match &mut STATIC_PIPE_NAME {
-            Some(_) => {}
-            None => {
-                let uuid = Uuid::new_v4();
-                let pipe_name = format!("\\\\.\\pipe\\{}", uuid);
-                STATIC_PIPE_NAME = Some(pipe_name);
+        let pipe_name = PRISMA_PIPE_NAME.clone();
+        wait_for_pipe(pipe_name.clone()).await;
+
+        PRISMA_STATE = PrismaState::Ready;
+    }
+}
+
+async fn wait_for_pipe(pipe_name: String) {
+    loop {
+        match named_pipe::ClientOptions::new().open(pipe_name.clone()) {
+            Ok(_) => {
+                break;
+            }
+            Err(_) => {
+                tokio::time::sleep(Duration::from_millis(100)).await;
             }
         }
     }
-
-    unsafe { STATIC_PIPE_NAME.clone().unwrap() }
 }
 
-// FIXME: kill prisma process after main process is killed in spec conditions
+async fn wait_for_state_ready() {
+    loop {
+        match unsafe { &PRISMA_STATE } {
+            PrismaState::Ready => {
+                break;
+            }
+            _ => {
+                tokio::time::sleep(Duration::from_millis(100)).await;
+            }
+        }
+    }
+}
+
+async fn write_to_pipe(pipe_name: String, text: String) -> Result<String, Box<dyn Error>> {
+    let mut client = named_pipe::ClientOptions::new().open(pipe_name).unwrap();
+
+    loop {
+        let ready = client
+            .ready(Interest::READABLE | Interest::WRITABLE)
+            .await?;
+        if ready.is_writable() {
+            match client.try_write(text.as_bytes()) {
+                Ok(n) => {}
+                Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                    continue;
+                }
+                Err(_) => {
+                    continue;
+                }
+            }
+
+            break;
+        }
+    }
+    #[cfg(debug_assertions)]
+    {
+        tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+    }
+
+    loop {
+        let ready = client
+            .ready(Interest::READABLE | Interest::WRITABLE)
+            .await?;
+
+        if ready.is_readable() {
+            let mut data = Vec::<u8>::new();
+            client.read_to_end(&mut data).await?;
+
+            let mut text = String::from_utf8(data).unwrap();
+            text = text.trim_end_matches(char::from(0)).to_string();
+
+            return Ok(text);
+        }
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+    }
+}
 
 pub async fn call_prisma(
     table: String,
@@ -57,108 +162,32 @@ pub async fn call_prisma(
     arg_json: String,
 ) -> Result<String, Box<dyn Error>> {
     unsafe {
-        match &mut PRISMA {
-            Some(_) => {}
-            None => {
-                #[cfg(debug_assertions)]
-                {
-                    let pipe_name = format!("\\\\.\\pipe\\{}", "spw-mini-prisma");
-                    // FIXME: make it more safe
-                    tokio::time::sleep(Duration::from_millis(1000)).await;
-
-                    PRISMA = Some(pipe_name);
-                }
-                #[cfg(not(debug_assertions))]
-                {
-                    let db_url = get_db_url();
-                    let current_dir = std::env::current_dir().unwrap();
-                    let exe_path;
-
-                    exe_path = "./mini-prisma.exe";
-
-                    let mut pipe_name = generate_pipe_name();
-
-                    // // TODO: add some error handling
-                    let child = Command::new(exe_path)
-                        .arg(db_url)
-                        .arg(pipe_name.clone())
-                        .creation_flags(0x08000000)
-                        .spawn()
-                        .unwrap();
-
-                    // FIXME: make it more safe
-                    tokio::time::sleep(Duration::from_millis(1000)).await;
-
-                    PRISMA = Some(pipe_name);
-                }
+        match PRISMA_STATE {
+            PrismaState::NotStart => {
+                PRISMA_STATE = PrismaState::Initing;
+                start_prisma().await;
+            }
+            PrismaState::Initing => {
+                wait_for_state_ready().await;
+            }
+            PrismaState::Ready => {
+                // do nothing
             }
         }
-    };
 
-    unsafe {
-        let pipe_name = PRISMA.as_ref().unwrap();
+        let pipe_name = PRISMA_PIPE_NAME.clone();
 
-        let mut client = named_pipe::ClientOptions::new().open(pipe_name).unwrap();
+        let json = serde_json::json!({
+            "table": table,
+            "func": func,
+            "arg_json": arg_json
+        });
 
-        loop {
-            let ready = client
-                .ready(Interest::READABLE | Interest::WRITABLE)
-                .await?;
+        let text = json.to_string();
 
-            if ready.is_writable() {
-                // write a json string to the pipe
-                let json = serde_json::json!({
-                    "table": table,
-                    "func": func,
-                    "arg_json": arg_json
-                });
+        let output = write_to_pipe(pipe_name.clone(), text).await?;
 
-                let text = json.to_string();
-
-                match client.try_write(text.as_bytes()) {
-                    Ok(n) => {
-                        dbg!("write {} bytes", &n);
-                        // dbg!("text: {}", &text);
-                    }
-                    Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-                        continue;
-                    }
-                    Err(_) => {
-                        continue;
-                    }
-                }
-
-                break;
-            }
-        }
-        #[cfg(debug_assertions)]
-        {
-            tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
-        }
-        #[cfg(not(debug_assertions))]
-        {
-            tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
-        }
-
-        // FIXME: may unicode problem
-        loop {
-            let ready = client
-                .ready(Interest::READABLE | Interest::WRITABLE)
-                .await?;
-
-            if ready.is_readable() {
-                dbg!("readable");
-
-                let mut data = Vec::<u8>::new();
-                client.read_to_end(&mut data).await?;
-
-                let mut text = String::from_utf8(data).unwrap();
-                text = text.trim_end_matches(char::from(0)).to_string();
-                // println!("text: {:?}", &text);
-
-                return Ok(text);
-            }
-        }
+        Ok(output)
     }
 }
 
