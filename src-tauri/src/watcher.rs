@@ -105,16 +105,20 @@ impl Watcher {
             return;
         }
 
-        let self_hwnd = self.app_state.as_ref().unwrap().hwnd;
+        let app_state = self.app_state.as_ref().unwrap();
+
+        let self_hwnd = app_state.hwnd;
         if hwnd != self_hwnd {
             return;
         }
 
-        save_size_and_position(
-            self.last_rect.unwrap(),
-            self.app_state.as_ref().unwrap().is_window_borderless,
-            self.app_state.as_ref().unwrap().config_id.clone(),
-        );
+        if app_state.is_auto_save_location_and_size {
+            save_size_and_position(
+                self.last_rect.unwrap(),
+                app_state.is_window_borderless,
+                app_state.config_id.clone(),
+            );
+        }
 
         self.unhook_all_window_events();
 
