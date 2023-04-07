@@ -1,7 +1,7 @@
 
 <script lang="ts">
   import 'svelte-material-ui/bare.css'
-  import IconButton from '@smui/icon-button'
+  import IconButton, { Icon } from '@smui/icon-button'
   import { onMount } from 'svelte'
   import { exit, getConfigId, open, start } from '../utils/app'
   import Grid from 'svelte-grid'
@@ -344,12 +344,28 @@
   style={
   `width: ${gridSize[0] * 50}px; height: ${gridSize[1] * 50}px; min-width: ${gridSize[0] * 50}px; min-height: ${gridSize[1] * 50}px;`}
   >
-    <!-- temp -->
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    {#if currentConfigId}
+    {#if currentConfigId && mode === 'normal'}
       <div 
+        style="
+        position: absolute; 
+        bottom: 0; left: 0; 
+        width: 16px; 
+        height: 12px; 
+         z-index: 1;
+        overflow: hidden;
+        padding: -5px;
+        display: flex; justify-content: center; align-items: center;
+        ">
+      
+        <Icon class="material-icons" 
         on:click={() => { toggleMode() }}
-        style="position: absolute; bottom: 0; left: 0; width: 10px; height: 10px; background: #000; opacity: 0.2; z-index: 1;">
+        style="
+          color: rgb(96, 125, 139); font-size: 10px;
+          width: 15px; height: 15px; padding: 0; margin: 0;
+          cursor: pointer;
+        ">
+          build_circle
+        </Icon>
       </div>
 
     {/if}
