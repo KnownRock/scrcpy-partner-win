@@ -7,6 +7,7 @@ extern crate lazy_static;
 use std::env;
 
 use std::os::windows::process::CommandExt;
+use std::process;
 use std::process::Command;
 
 mod cmds;
@@ -97,6 +98,8 @@ fn exit() {
     unsafe {
         WATCHER.exit();
     }
+
+    process::exit(0);
 }
 
 #[tauri::command]
