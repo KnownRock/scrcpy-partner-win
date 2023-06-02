@@ -10,7 +10,7 @@
   {/if}
 
   {#if error}
-    <h3>{error}</h3>
+    <h3 style="margin:0;">{error}</h3>
     <Button on:click={exit}>
       {$t('Close')}
     </Button>
