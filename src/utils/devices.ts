@@ -21,7 +21,9 @@ async function getAdbDevices (): Promise<Device[]> {
   return deviceLines.map(line => {
     const matched = (/(\S+)\s+(device|offline) product:(\S+) model:(\S+) device:(\S+) transport_id:(\S+)/.exec(line))
     if (matched == null) {
-      throw new Error(`Failed to parse device line: ${line}`)
+      // TODO: handle unauthorized device
+      // throw new Error(`Failed to parse device line: ${line}`)
+      return null
     }
     const [,adbId, state, product, model] = matched
     if (state !== 'device') {
