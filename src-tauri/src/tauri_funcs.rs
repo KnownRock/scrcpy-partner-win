@@ -15,6 +15,7 @@ pub fn init_main_window(app: &tauri::AppHandle) {
 pub fn init_main_window(app: &tauri::AppHandle) {
     tauri::WindowBuilder::new(app, "main", tauri::WindowUrl::App("index.html".into()))
         .center()
+        .min_inner_size(480.0, 300.0)
         // .visible(false)
         .title("Scrcpy Partner")
         .build()
