@@ -24,6 +24,12 @@
 
   export let device: DeviceExt
 
+  export let onMoveUp: (device: DeviceExt) => void = () => {}
+  export let onMoveDown: (device: DeviceExt) => void = () => {}
+
+  export let canMoveUp: boolean = false
+  export let canMoveDown: boolean = false
+
   // eslint-disable-next-line
   export let config: DeviceConfigExt | undefined = undefined
 
@@ -155,6 +161,15 @@
       deviceId: device.id
     })
   }
+
+  function moveDeviceUp () {
+    onMoveUp(device)
+  }
+
+  function moveDeviceDown () {
+    onMoveDown(device)
+  }
+  
 </script>
 
 <Card>
@@ -187,7 +202,6 @@
           <Badge 
             style="padding-left: 0.5em;"
             position="inset"
-            
              aria-label="notification count">
             {$t('New device')}
             </Badge>
@@ -264,6 +278,28 @@
 
 
         <div>
+          <!-- up -->
+          <IconButton 
+            class="material-icons"
+            on:click={() => moveDeviceUp()}
+            title="Move up"
+            disabled={!canMoveUp}
+          >
+            arrow_upward
+          </IconButton>
+
+          <!-- down -->
+          <IconButton 
+            class="material-icons"
+            on:click={() => moveDeviceDown()}
+            title="Move down"
+            disabled={!canMoveDown}
+          >
+            arrow_downward
+          </IconButton>
+
+
+
           <IconButton
             bind:this={actionButton}
             class="material-icons"

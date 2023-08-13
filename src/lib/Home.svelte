@@ -64,7 +64,6 @@
   </TabBar>
 
   <div class="row">
-
     {#if active.k === 'config'}
       <Configs />
     {/if}
@@ -88,7 +87,7 @@
 
 .row{
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
 }
 
 

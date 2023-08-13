@@ -28,6 +28,8 @@ model Device {
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
   lastSeenAt DateTime?
+
+  order Float?
 }
 
 model DeviceConfig {
@@ -40,6 +42,8 @@ model DeviceConfig {
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
   lastSeenAt DateTime?
+
+  order Float?
 
   sideBarConfigId String?
   sideBarConfig   SideBarConfig? @relation(fields: [sideBarConfigId], references: [id])

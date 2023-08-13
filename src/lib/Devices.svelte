@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { setContext } from 'svelte'
+  import { setContext, onDestroy } from 'svelte'
   import { t } from 'svelte-i18n'
   import 'svelte-material-ui/bare.css'
   import LayoutGrid, { Cell } from '@smui/layout-grid'
@@ -30,6 +30,15 @@
       return (aValue - bValue) * currentSortOrder
     })
   }
+
+  const timer = setInterval(() => {
+    freshDevices()
+  }, 1000 * 5)
+
+  onDestroy(() => {
+    clearInterval(timer)
+  })
+
 
   let currentSort = 'createdAt'
 
