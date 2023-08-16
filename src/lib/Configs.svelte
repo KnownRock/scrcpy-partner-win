@@ -9,6 +9,7 @@
   import { getConfigs, type DeviceConfigExt, saveConfig } from '../utils/configs'
   import { getDevices, type DeviceExt } from '../utils/devices'
   import { v4 as uuidv4 } from 'uuid'
+  import FabBox from './components/FabBox.svelte'
   
   let configs: DeviceConfigExt[] = []
   let devices: DeviceExt[] = []
@@ -20,21 +21,12 @@
   const allDeviceId = uuidv4()
   const currentDeviceId = allDeviceId
 
-  async function freshConfigs () {
-    let queryDeviceId : undefined | string = currentDeviceId
-    if (currentDeviceId === allDeviceId) {
-      queryDeviceId = undefined
-    }
-
-    devices = await getDevices('only saved')
-    configs = await getConfigs(queryDeviceId)
-
+  function sortVirtualDevices () {
     const deviceDict = {}
     devices.forEach(device => {
       deviceDict[device.id] = device
     })
-
-
+  
     virtualDevices = configs.map(config => {
       return {
         device: deviceDict[config.deviceId],
@@ -49,12 +41,21 @@
 
       return aValue - bValue
     })
+  }
 
-    console.log(virtualDevices)
+  async function freshConfigs () {
+    let queryDeviceId : undefined | string = currentDeviceId
+    if (currentDeviceId === allDeviceId) {
+      queryDeviceId = undefined
+    }
+
+    devices = await getDevices('only saved')
+    configs = await getConfigs(queryDeviceId)
+  
+    sortVirtualDevices()
   }
 
   async function handleMoveUp (device: DeviceExt) {
-    // alert(123)
     const index = virtualDevices.findIndex(virtualDevice => virtualDevice.device.id === device.id)
     if (index === 0) return
     const virtualDevice = virtualDevices[index]
@@ -72,6 +73,8 @@
   
     virtualDevice.config.order = prevOrder
     prevVirtualDevice.config.order = nowOrder
+
+    sortVirtualDevices()
   
     await Promise.all([
       saveConfig(virtualDevice.config),
@@ -99,7 +102,10 @@
   
     virtualDevice.config.order = nextOrder
     nextVirtualDevice.config.order = nowOrder
+
+    sortVirtualDevices()
   
+    // TODO: make task quene to save
     await Promise.all([
       saveConfig(virtualDevice.config),
       saveConfig(nextVirtualDevice.config)
@@ -111,7 +117,7 @@
 
   const timer = setInterval(() => {
     freshConfigs()
-  }, 1000 * 5)
+  }, 1000 * 10)
 
   onDestroy(() => {
     clearInterval(timer)
@@ -144,14 +150,11 @@
     {/each}
   </LayoutGrid>
   <!-- add fab button -->
-  <div style="
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-  ">
+  <FabBox>
     <Fab  
       style="min-width: 56px;"
-      color="primary" on:click={
+      color="primary" 
+      on:click={
         () => {
         configForm.set({
           show: true,
@@ -165,12 +168,10 @@
         })
       }
       } ripple={false}>
-        <Icon  class="material-icons">
-          add
-        </Icon>
-      </Fab>
-            
-
-  </div>
+      <Icon  class="material-icons">
+        add
+      </Icon>
+    </Fab>
+  </FabBox>
 
 </div>

@@ -9,6 +9,7 @@
   import DeviceCard from './DeviceCard.svelte'
   import { deviceForm } from '../store/index'
   import Select, { Option } from '@smui/select'
+  import FabBox from './components/FabBox.svelte'
   
   export let queryType: Parameters<typeof getDevices>[0] = 'all'
   let devices : DeviceExt[] = []
@@ -40,7 +41,7 @@
   })
 
 
-  let currentSort = 'createdAt'
+  const currentSort = 'createdAt'
 
   $: currentSort && (function () {
     freshDevices()
@@ -53,84 +54,6 @@
 </script>
 
 <div>
-  <LayoutGrid style="
-    margin: 0 ;
-    padding-bottom: 0;
-
-  ">
-    <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 4, phone: 1 }}>
-
-      {#if queryType !== 'only adb'}
-      <Fab  color="primary" on:click={() => {
-        deviceForm.set({
-          show: true,
-          device: {
-            id: '',
-            name: '',
-            adbId: '',
-            model: '',
-            product: '',
-            createdAt: null,
-            updatedAt: null,
-            lastSeenAt: null
-          },
-          callback: async () => {
-            await freshDevices()
-          }
-        })
-      }} extended  ripple={false}>
-        <Icon  class="material-icons">add</Icon>
-        <Label>Add</Label>
-      </Fab>
-      {/if}
-      
-    </Cell>
-
-    <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 4, phone: 3 }}
-     style="display: flex; align-items: center; justify-content: flex-end;">
-      <!-- sort by createdAt or updatedAt or lastSeenAt -->
-      
-      <Select
-        style="margin-right: 0.5em; width: min(calc(100% - 56px) , 200px);"
-        variant="outlined"
-        label={$t('Sort by')}
-        bind:value={currentSort}
-      >
-      <Option value="createdAt">
-        {$t('Created at')}
-      </Option>
-      <Option value="createdAt_asc">
-        {$t('Created at (asc)')}
-      </Option>
-      <Option value="updatedAt">
-        {$t('Updated at')}
-      </Option>
-      <Option value="updatedAt_asc">
-        {$t('Updated at (asc)')}
-      </Option>
-      <Option value="lastSeenAt">
-        {$t('Last seen at')}
-      </Option>
-      <Option value="lastSeenAt_asc">
-        {$t('Last seen at (asc)')}
-      </Option>
-      </Select>
-
-
-      <!-- fix width -->
-      <Fab  
-      
-      style="min-width: 56px;"
-      color="primary" on:click={freshDevices} ripple={false}>
-        <Icon  class="material-icons">refresh</Icon>
-      </Fab>
-     
-
-    </Cell>
-    
-
-    
-  </LayoutGrid>
   <LayoutGrid>
     {#each devices as device}
       <Cell>
@@ -142,5 +65,31 @@
     {/each}
 
   </LayoutGrid>
+  <FabBox>
+    <Fab  
+    style="min-width: 56px;"
+    color="primary" 
+    on:click={() => {
+      deviceForm.set({
+        show: true,
+        device: {
+          id: '',
+          name: '',
+          adbId: '',
+          model: '',
+          product: '',
+          createdAt: null,
+          updatedAt: null,
+          lastSeenAt: null,
+          order: null
+        },
+        callback: async () => {
+          await freshDevices()
+        }
+      })
+    }}  ripple={false}>
+      <Icon  class="material-icons">add</Icon>
+    </Fab>
+  </FabBox>
 
 </div>
