@@ -1,0 +1,1 @@
+scrcpy-server.jar for send touch events to device (requires:version<2.0)
