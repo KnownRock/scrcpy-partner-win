@@ -40,3 +40,5 @@
 [ ] fix setting page dom covered issue
 [ ] add execute script error handling
 [ ] * use native client to make it cross-platform
+[ ] add a config page to configure parameters of scrcpy and auto refresh time
+[ ] add a manual refresh button at bottom
