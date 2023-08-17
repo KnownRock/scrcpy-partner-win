@@ -28,7 +28,8 @@ async function main () {
     ['del  .\\prisma\\prod.db*'],
     ['npx tauri build'],
     ['pyinstaller main.spec', { cwd: './src-scrcpy-control' }],
-    ['copy  .\\dist\\scrcpy-control.exe ..\\src-tauri\\target\\release\\scrcpy-control.exe', { cwd: './src-scrcpy-control' }]
+    ['copy  .\\dist\\scrcpy-control.exe ..\\src-tauri\\target\\release\\scrcpy-control.exe', { cwd: './src-scrcpy-control' }],
+    ['start .\\src-tauri\\target\\release\\']
   ]
 
   for (const cmd of cmds) {
