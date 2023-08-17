@@ -163,7 +163,7 @@
 
   const timer = setInterval(() => {
     freshConfigs()
-  }, 1000 * 10)
+  }, 1000 * 5)
 
   onDestroy(() => {
     clearInterval(timer)
