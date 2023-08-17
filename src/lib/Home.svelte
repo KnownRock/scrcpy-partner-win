@@ -10,6 +10,14 @@
   import Loading from './general/Loading.svelte'
   import { appWindow } from '@tauri-apps/api/window'
 
+  import { window } from '@tauri-apps/api'
+  import { TauriEvent } from '@tauri-apps/api/event'
+  import { exit } from '../utils/app'
+
+  window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
+    exit()
+  })
+
   type TabEntry = {
     k: string;
     label: string;

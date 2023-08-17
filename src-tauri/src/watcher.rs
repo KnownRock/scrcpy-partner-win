@@ -8,7 +8,7 @@ use winapi::shared::ntdef::LONG;
 use winapi::shared::windef::RECT;
 use winapi::shared::windef::{HWINEVENTHOOK, HWND};
 
-use crate::cmds::{kill_process, save_size_and_position};
+use crate::cmds::{self, kill_process, save_size_and_position};
 use crate::sendkey;
 use crate::tauri_funcs::init_record_window;
 use crate::wins::{self, set_window_loc_and_size_by_hwnd, set_window_loc_by_hwnd};
@@ -120,6 +120,8 @@ impl Watcher {
         }
 
         self.unhook_all_window_events();
+
+        cmds::kill_prisma();
 
         std::process::exit(0);
     }
