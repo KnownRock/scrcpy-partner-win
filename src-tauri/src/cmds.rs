@@ -46,6 +46,7 @@ enum PrismaState {
     Ready,
 }
 static mut PRISMA_STATE: PrismaState = PrismaState::NotStart;
+static mut PRISMA_PID: u32 = 0;
 
 async fn start_prisma() {
     #[cfg(debug_assertions)]
@@ -70,6 +71,10 @@ async fn start_prisma() {
             .spawn()
             .unwrap();
 
+        unsafe {
+            PRISMA_PID = child.id();
+        }
+
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
 
@@ -78,6 +83,26 @@ async fn start_prisma() {
         wait_for_pipe(pipe_name.clone()).await;
 
         PRISMA_STATE = PrismaState::Ready;
+    }
+}
+
+pub async fn stop_prisma() {
+    unsafe {
+        let pipe_name = PRISMA_PIPE_NAME.clone();
+
+        let json = serde_json::json!({
+            "func": "exit"
+        });
+
+        let _ = write_to_pipe(pipe_name.clone(), json.to_string()).await;
+
+        kill_process(PRISMA_PID);
+    }
+}
+
+pub fn kill_prisma() {
+    unsafe {
+        kill_process(PRISMA_PID);
     }
 }
 

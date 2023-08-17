@@ -20,6 +20,14 @@
   import prismaClientLike from '../utils/prisma-like-client'
   import Loading from './general/Loading.svelte'
   import Form from './general/Form.svelte'
+
+  import { window } from '@tauri-apps/api'
+  import { TauriEvent } from '@tauri-apps/api/event'
+
+  window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
+    exit()
+  })
+
   const componentDict = {
     setting: Setting
   }

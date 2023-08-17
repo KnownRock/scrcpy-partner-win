@@ -94,10 +94,12 @@ async fn get_env_args() -> Vec<String> {
 }
 
 #[tauri::command]
-fn exit() {
+async fn exit() {
     unsafe {
         WATCHER.exit();
     }
+
+    cmds::stop_prisma().await;
 
     process::exit(0);
 }

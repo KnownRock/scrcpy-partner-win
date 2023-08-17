@@ -36,6 +36,13 @@
   import { argsTemplate } from '../utils/scrcpy'
   import { appWindow } from '@tauri-apps/api/window'
 
+  import { window } from '@tauri-apps/api'
+  import { TauriEvent } from '@tauri-apps/api/event'
+
+  window.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, () => {
+    exit()
+  })
+
   async function sleep (ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
   }

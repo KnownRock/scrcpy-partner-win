@@ -28,6 +28,10 @@ async function init (url, pipeName) {
 
       const argJson = json ? JSON.parse(json) : undefined
 
+      if (func === 'exit') {
+        process.exit(0)
+      }
+
 
       console.log(table, func, argJson)
 
