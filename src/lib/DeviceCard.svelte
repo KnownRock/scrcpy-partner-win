@@ -24,8 +24,8 @@
 
   export let device: DeviceExt
 
-  export let onMoveUp: (device: DeviceExt) => void = () => {}
-  export let onMoveDown: (device: DeviceExt) => void = () => {}
+  export let onMoveUp: (id: string) => void = () => {}
+  export let onMoveDown: (id: string) => void = () => {}
 
   export let canMoveUp: boolean = false
   export let canMoveDown: boolean = false
@@ -118,7 +118,7 @@
     deviceForm.set({
       show: true,
       device: editDevice,
-      callback: async (device) => {
+      callback: async () => {
         await freshDevices()
       }
     })
@@ -163,11 +163,11 @@
   }
 
   function moveDeviceUp () {
-    onMoveUp(device)
+    onMoveUp(config?.id ?? device.id)
   }
 
   function moveDeviceDown () {
-    onMoveDown(device)
+    onMoveDown(config?.id ?? device.id)
   }
   
 </script>

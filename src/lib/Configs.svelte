@@ -7,40 +7,51 @@
   import DeviceCard from './DeviceCard.svelte'
   import { configForm } from '../store/index'
   import { getConfigs, type DeviceConfigExt, saveConfig } from '../utils/configs'
-  import { getDevices, type DeviceExt } from '../utils/devices'
+  import { getDevices, type DeviceExt, saveDevice } from '../utils/devices'
   import { v4 as uuidv4 } from 'uuid'
   import FabBox from './components/FabBox.svelte'
+
+  export let queryType: Parameters<typeof getDevices>[0] = 'only saved'
+  export let pageType:'config' | 'device' = 'config'
   
-  let configs: DeviceConfigExt[] = []
-  let devices: DeviceExt[] = []
   let virtualDevices: {
     device: DeviceExt,
-    config: DeviceConfigExt
+    config?: DeviceConfigExt
   }[] = []
   
   const allDeviceId = uuidv4()
   const currentDeviceId = allDeviceId
 
+  type CustomSortable = {
+    order: number | null,
+    createdAt: Date | null
+  }
+
+  function sortOrder (a: CustomSortable, b: CustomSortable) {
+    const aValue = +(a.order || a.createdAt || 0)
+    const bValue = +(b.order || b.createdAt || 1)
+
+    if (isNaN(aValue)) return 1
+    if (isNaN(bValue)) return -1
+
+    return aValue - bValue
+  }
+
+
   function sortVirtualDevices () {
-    const deviceDict = {}
-    devices.forEach(device => {
-      deviceDict[device.id] = device
-    })
-  
-    virtualDevices = configs.map(config => {
-      return {
-        device: deviceDict[config.deviceId],
-        config
-      }
-    }).sort((a, b) => {
-      const aValue = +(a.config.order || a.config.createdAt || 0)
-      const bValue = +(b.config.order || b.config.createdAt || 1)
-
-      if (isNaN(aValue)) return 1
-      if (isNaN(bValue)) return -1
-
-      return aValue - bValue
-    })
+    if (pageType === 'config') {
+      virtualDevices = virtualDevices.sort((a, b) => {
+        if (a.config && b.config) {
+          return sortOrder(a.config, b.config)
+        } else {
+          return 0
+        }
+      })
+    } else {
+      virtualDevices = virtualDevices.sort((a, b) => {
+        return sortOrder(a.device, b.device)
+      })
+    }
   }
 
   async function freshConfigs () {
@@ -49,20 +60,61 @@
       queryDeviceId = undefined
     }
 
-    devices = await getDevices('only saved')
-    configs = await getConfigs(queryDeviceId)
+    const devices = await getDevices(queryType)
+    if (pageType === 'config') {
+      const configs = await getConfigs(queryDeviceId)
+      const deviceDict = {}
+      devices.forEach(device => {
+        deviceDict[device.id] = device
+      })
+
+      virtualDevices = configs.map(config => {
+        const device = deviceDict[config.deviceId]
+        return {
+          device,
+          config
+        }
+      })
+    } else {
+      virtualDevices = devices.map(device => {
+        return {
+          device
+        }
+      })
+    }
+  
   
     sortVirtualDevices()
   }
 
-  async function handleMoveUp (device: DeviceExt) {
-    const index = virtualDevices.findIndex(virtualDevice => virtualDevice.device.id === device.id)
+  // TODO: only update order
+  async function saveOrder (virtualDevice: typeof virtualDevices[0], prevVirtualDevice: typeof virtualDevices[0]) {
+    if (pageType === 'config') {
+      if (virtualDevice.config && prevVirtualDevice.config) {
+        await Promise.all([
+          saveConfig(virtualDevice.config),
+          saveConfig(prevVirtualDevice.config)
+        ])
+      }
+    } else {
+      await Promise.all([
+        saveDevice(virtualDevice.device),
+        saveDevice(prevVirtualDevice.device)
+      ])
+    }
+  }
+
+  async function handleMoveUp (id: string) {
+    const index = virtualDevices.findIndex(virtualDevice => (virtualDevice?.config?.id ?? virtualDevice.device.id) === id)
     if (index === 0) return
     const virtualDevice = virtualDevices[index]
     const prevVirtualDevice = virtualDevices[index - 1]
 
-    let nowOrder = +(virtualDevice.config.order || virtualDevice.config.createdAt || 0)
-    let prevOrder = +(prevVirtualDevice.config.order || prevVirtualDevice.config.createdAt || 1)
+    const item = virtualDevice.config ?? virtualDevice.device
+    const prevItem = prevVirtualDevice.config ?? prevVirtualDevice.device
+
+    let nowOrder = +(item.order || item.createdAt || 0)
+    let prevOrder = +(prevItem.order || prevItem.createdAt || 1)
 
     if (isNaN(nowOrder)) nowOrder = 0
     if (isNaN(prevOrder)) prevOrder = nowOrder + 1
@@ -71,27 +123,25 @@
       prevOrder = nowOrder + 1
     }
   
-    virtualDevice.config.order = prevOrder
-    prevVirtualDevice.config.order = nowOrder
+    item.order = prevOrder
+    prevItem.order = nowOrder
 
     sortVirtualDevices()
-  
-    await Promise.all([
-      saveConfig(virtualDevice.config),
-      saveConfig(prevVirtualDevice.config)
-    ])
-
+    saveOrder(virtualDevice, prevVirtualDevice)
     await freshConfigs()
   }
 
-  async function handleMoveDown (device: DeviceExt) {
-    const index = virtualDevices.findIndex(virtualDevice => virtualDevice.device.id === device.id)
+  async function handleMoveDown (id: string) {
+    const index = virtualDevices.findIndex(virtualDevice => (virtualDevice?.config?.id ?? virtualDevice.device.id) === id)
     if (index === virtualDevices.length - 1) return
     const virtualDevice = virtualDevices[index]
     const nextVirtualDevice = virtualDevices[index + 1]
 
-    let nowOrder = +(virtualDevice.config.order || virtualDevice.config.createdAt || 0)
-    let nextOrder = +(nextVirtualDevice.config.order || nextVirtualDevice.config.createdAt || 1)
+    const item = virtualDevice.config ?? virtualDevice.device
+    const nextItem = nextVirtualDevice.config ?? nextVirtualDevice.device
+
+    let nowOrder = +(item.order || item.createdAt || 0)
+    let nextOrder = +(nextItem.order || nextItem.createdAt || 1)
 
     if (isNaN(nowOrder)) nowOrder = 0
     if (isNaN(nextOrder)) nextOrder = nowOrder + 1
@@ -100,16 +150,12 @@
       nextOrder = nowOrder + 1
     }
   
-    virtualDevice.config.order = nextOrder
-    nextVirtualDevice.config.order = nowOrder
+    item.order = nextOrder
+    nextItem.order = nowOrder
 
     sortVirtualDevices()
-  
-    // TODO: make task quene to save
-    await Promise.all([
-      saveConfig(virtualDevice.config),
-      saveConfig(nextVirtualDevice.config)
-    ])
+
+    saveOrder(virtualDevice, nextVirtualDevice)
 
     await freshConfigs()
   }

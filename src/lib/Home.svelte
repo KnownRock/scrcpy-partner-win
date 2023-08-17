@@ -1,6 +1,5 @@
 <script lang="ts">
   import { t } from 'svelte-i18n'
-  import Devices from './Devices.svelte'
   import Configs from './Configs.svelte'
   import 'svelte-material-ui/bare.css'
   import Tab from '@smui/tab'
@@ -19,7 +18,6 @@
   const key = (tab: TabEntry) => tab.k
 
   const tabs: TabEntry[] = [
-
     {
       k: 'config',
       // label: 'Config'
@@ -68,10 +66,10 @@
       <Configs />
     {/if}
     {#if active.k === 'devices'}
-      <Devices />
+      <Configs pageType='device' />
     {/if}
     {#if active.k === 'adb'}
-      <Devices queryType="only adb" />
+      <Configs pageType='device' queryType="only adb" />
     {/if}
   </div>
 </main>
