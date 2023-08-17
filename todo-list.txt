@@ -44,3 +44,4 @@
 [ ] add a manual refresh button at bottom
 [ ] add a unauthorized state for device
 [ ] make a github action to build it automatically
+[ ] make a db migrate tool
