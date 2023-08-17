@@ -1,50 +1,176 @@
 <script lang="ts">
-  import { setContext } from 'svelte'
-  import { t } from 'svelte-i18n'
+  import { onDestroy, setContext } from 'svelte'
   import 'svelte-material-ui/bare.css'
   import LayoutGrid, { Cell } from '@smui/layout-grid'
-  import Fab, { Label, Icon } from '@smui/fab'
+  import Fab, { Icon } from '@smui/fab'
   
   import DeviceCard from './DeviceCard.svelte'
   import { configForm } from '../store/index'
-  import Select, { Option } from '@smui/select'
-  import { getConfigs, type DeviceConfigExt } from '../utils/configs'
-  import { getDevices, type DeviceExt } from '../utils/devices'
+  import { getConfigs, type DeviceConfigExt, saveConfig } from '../utils/configs'
+  import { getDevices, type DeviceExt, saveDevice } from '../utils/devices'
+  import { v4 as uuidv4 } from 'uuid'
+  import FabBox from './components/FabBox.svelte'
+
+  export let queryType: Parameters<typeof getDevices>[0] = 'only saved'
+  export let pageType:'config' | 'device' = 'config'
   
-  let configs: DeviceConfigExt[] = []
-  let devices: DeviceExt[] = []
   let virtualDevices: {
     device: DeviceExt,
-    config: DeviceConfigExt
+    config?: DeviceConfigExt
   }[] = []
   
-  let currentDeviceId = 'all'
+  const allDeviceId = uuidv4()
+  const currentDeviceId = allDeviceId
+
+  type CustomSortable = {
+    order: number | null,
+    createdAt: Date | null
+  }
+
+  function sortOrder (a: CustomSortable, b: CustomSortable) {
+    const aValue = +(a.order || a.createdAt || 0)
+    const bValue = +(b.order || b.createdAt || 1)
+
+    if (isNaN(aValue)) return 1
+    if (isNaN(bValue)) return -1
+
+    return aValue - bValue
+  }
+
+
+  function sortVirtualDevices () {
+    if (pageType === 'config') {
+      virtualDevices = virtualDevices.sort((a, b) => {
+        if (a.config && b.config) {
+          return sortOrder(a.config, b.config)
+        } else {
+          return 0
+        }
+      })
+    } else {
+      virtualDevices = virtualDevices.sort((a, b) => {
+        return sortOrder(a.device, b.device)
+      })
+    }
+  }
 
   async function freshConfigs () {
     let queryDeviceId : undefined | string = currentDeviceId
-    if (currentDeviceId === 'all') {
+    if (currentDeviceId === allDeviceId) {
       queryDeviceId = undefined
     }
 
-    devices = await getDevices('only saved')
-    configs = await getConfigs(queryDeviceId)
+    const devices = await getDevices(queryType)
+    if (pageType === 'config') {
+      const configs = await getConfigs(queryDeviceId)
+      const deviceDict = {}
+      devices.forEach(device => {
+        deviceDict[device.id] = device
+      })
 
-    const deviceDict = {}
-    devices.forEach(device => {
-      deviceDict[device.id] = device
-    })
-
-    virtualDevices = configs.map(config => {
-      return {
-        device: deviceDict[config.deviceId],
-        config
-      }
-    })
+      virtualDevices = configs.map(config => {
+        const device = deviceDict[config.deviceId]
+        return {
+          device,
+          config
+        }
+      })
+    } else {
+      virtualDevices = devices.map(device => {
+        return {
+          device
+        }
+      })
+    }
+  
+  
+    sortVirtualDevices()
   }
 
-  let currentSort = 'createdAt'
+  // TODO: only update order
+  async function saveOrder (virtualDevice: typeof virtualDevices[0], prevVirtualDevice: typeof virtualDevices[0]) {
+    if (pageType === 'config') {
+      if (virtualDevice.config && prevVirtualDevice.config) {
+        await Promise.all([
+          saveConfig(virtualDevice.config),
+          saveConfig(prevVirtualDevice.config)
+        ])
+      }
+    } else {
+      await Promise.all([
+        saveDevice(virtualDevice.device),
+        saveDevice(prevVirtualDevice.device)
+      ])
+    }
+  }
 
-  $: (currentSort || currentDeviceId) && (function () {
+  async function handleMoveUp (id: string) {
+    const index = virtualDevices.findIndex(virtualDevice => (virtualDevice?.config?.id ?? virtualDevice.device.id) === id)
+    if (index === 0) return
+    const virtualDevice = virtualDevices[index]
+    const prevVirtualDevice = virtualDevices[index - 1]
+
+    const item = virtualDevice.config ?? virtualDevice.device
+    const prevItem = prevVirtualDevice.config ?? prevVirtualDevice.device
+
+    let nowOrder = +(item.order || item.createdAt || 0)
+    let prevOrder = +(prevItem.order || prevItem.createdAt || 1)
+
+    if (isNaN(nowOrder)) nowOrder = 0
+    if (isNaN(prevOrder)) prevOrder = nowOrder + 1
+
+    if (prevOrder === nowOrder) {
+      prevOrder = nowOrder + 1
+    }
+  
+    item.order = prevOrder
+    prevItem.order = nowOrder
+
+    sortVirtualDevices()
+    saveOrder(virtualDevice, prevVirtualDevice)
+    await freshConfigs()
+  }
+
+  async function handleMoveDown (id: string) {
+    const index = virtualDevices.findIndex(virtualDevice => (virtualDevice?.config?.id ?? virtualDevice.device.id) === id)
+    if (index === virtualDevices.length - 1) return
+    const virtualDevice = virtualDevices[index]
+    const nextVirtualDevice = virtualDevices[index + 1]
+
+    const item = virtualDevice.config ?? virtualDevice.device
+    const nextItem = nextVirtualDevice.config ?? nextVirtualDevice.device
+
+    let nowOrder = +(item.order || item.createdAt || 0)
+    let nextOrder = +(nextItem.order || nextItem.createdAt || 1)
+
+    if (isNaN(nowOrder)) nowOrder = 0
+    if (isNaN(nextOrder)) nextOrder = nowOrder + 1
+
+    if (nextOrder === nowOrder) {
+      nextOrder = nowOrder + 1
+    }
+  
+    item.order = nextOrder
+    nextItem.order = nowOrder
+
+    sortVirtualDevices()
+
+    saveOrder(virtualDevice, nextVirtualDevice)
+
+    await freshConfigs()
+  }
+
+
+  const timer = setInterval(() => {
+    freshConfigs()
+  }, 1000 * 5)
+
+  onDestroy(() => {
+    clearInterval(timer)
+  })
+
+
+  $: (currentDeviceId) && (function () {
     freshConfigs()
   })()
 
@@ -52,15 +178,30 @@
 
 </script>
 
-<div>
-  <LayoutGrid style="
-    margin: 0 ;
-    padding-bottom: 0;
+<div style="height:100%">
+  <LayoutGrid style="height:calc(100%); overflow-y: auto;">
+    {#each virtualDevices as vd, index}
+      <Cell>
+        <DeviceCard 
+          config={vd.config} 
+          device={vd.device}
 
-  ">
-    <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 2, phone: 1 }}>
+          onMoveUp={handleMoveUp}
+          onMoveDown={handleMoveDown}
 
-      <Fab  color="primary" on:click={() => {
+          canMoveUp={index !== 0}
+          canMoveDown={index !== virtualDevices.length - 1}
+        />
+      </Cell>
+    {/each}
+  </LayoutGrid>
+  <!-- add fab button -->
+  <FabBox>
+    <Fab  
+      style="min-width: 56px;"
+      color="primary" 
+      on:click={
+        () => {
         configForm.set({
           show: true,
           type: 'new',
@@ -71,78 +212,12 @@
             }, 500)
           }
         })
-      }} extended  ripple={false}>
-        <Icon  class="material-icons">add</Icon>
-        <Label>
-          {$t('add')}
-        </Label>
-      </Fab>
-      
-    </Cell>
-
-    <Cell align="middle"  spanDevices={{ desktop: 6, tablet: 6, phone: 4 }}
-     style="display: flex; align-items: center; justify-content: flex-end;">
-      
-     <Select 
-      bind:value={currentDeviceId}
-      label={
-        $t('filter by device')
-      } variant="outlined" style="width: min(calc(50% - 56px) , 200px);">
-        <Option value={'all'}>{'All'}</Option>
-        {#each devices as device}
-          <Option value={device.id}>{device.name}</Option>
-        {/each}
-      </Select>
-
-      <Select
-        style="margin: 0 0.5em; width: min(calc(50% - 56px) , 200px);"
-        variant="outlined"
-        label={$t('Sort by')}
-        bind:value={currentSort}
-      >
-        <Option value="createdAt">
-          {$t('Created at')}
-        </Option>
-        <Option value="createdAt_asc">
-          {$t('Created at (asc)')}
-        </Option>
-        <Option value="updatedAt">
-          {$t('Updated at')}
-        </Option>
-        <Option value="updatedAt_asc">
-          {$t('Updated at (asc)')}
-        </Option>
-        <Option value="lastSeenAt">
-          {$t('Last seen at')}
-        </Option>
-        <Option value="lastSeenAt_asc">
-          {$t('Last seen at (asc)')}
-        </Option>
-      </Select>
-
-
-
-      <!-- fix width -->
-      <Fab  
-        style="min-width: 56px;"
-        color="primary" on:click={freshConfigs} ripple={false}>
-        <Icon  class="material-icons">refresh</Icon>
-      </Fab>
-     
-
-    </Cell>
-    
-
-    
-  </LayoutGrid>
-  <LayoutGrid>
-    {#each virtualDevices as vd}
-      <Cell>
-        <DeviceCard config={vd.config} device={vd.device} />
-      </Cell>
-    {/each}
-
-
-  </LayoutGrid>
+      }
+      } ripple={false}>
+      <Icon  class="material-icons">
+        add
+      </Icon>
+    </Fab>
+  </FabBox>
 
 </div>

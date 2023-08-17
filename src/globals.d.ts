@@ -97,4 +97,5 @@ type FormItem = ({
   name: string
   description?: string
   disabled?: boolean
+  enable?: boolean
 }

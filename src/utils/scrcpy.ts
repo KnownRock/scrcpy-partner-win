@@ -206,7 +206,7 @@ export function getFormItems (
           ...formItemOverride[arg],
           // FIXME: make type more strict
           enable: formValue[arg] !== undefined,
-          value: formValue[arg] ?? formItemOverride[arg].value,
+          value: formValue[arg] ?? (formItemOverride[arg] as { value: any }).value,
           description: argsDescriptions[arg]
         })
       } else if (template === Number) {
