@@ -4,13 +4,23 @@
 
 ## Features
 
-1. Docked side control panel
-![image](https://user-images.githubusercontent.com/58989910/220813616-ecc0e11c-f604-4aa2-99de-5ce912eed19f.png)
-2. Devices list
-![image](https://user-images.githubusercontent.com/58989910/220813881-a2afea70-6d74-4d2b-ba8f-c6530cb4b6bd.png)
-3. Gui for scrcpy parameters
-![image](https://user-images.githubusercontent.com/58989910/220814016-78b92d81-2eb1-48b9-baff-2874cb96b1be.png)
+1. Configurable docked side control panel for scrcpy
+   
+![image](https://github.com/KnownRock/scrcpy-partner-win/assets/58989910/6c3b02ad-0d5e-4021-a4b6-c4066366b7ab)
 
+![image](https://github.com/KnownRock/scrcpy-partner-win/assets/58989910/08a19176-6e65-43b0-a0b8-9a4e9bfffbb6)
+
+2. Devices list
+   
+![image](https://github.com/KnownRock/scrcpy-partner-win/assets/58989910/656bd058-5f50-4a98-b5df-95a8cc0baae7)
+
+3. Record event panel
+
+![image](https://github.com/KnownRock/scrcpy-partner-win/assets/58989910/e5a6cf7d-ba2b-485c-8d71-9b5010334c05)
+
+4. Gui for scrcpy parameters
+
+![image](https://github.com/KnownRock/scrcpy-partner-win/assets/58989910/98853bc0-8085-4a72-bcc7-f28cec193c55)
 
 ## Recommended IDE Setup
 
