@@ -42,3 +42,5 @@
 [ ] * use native client to make it cross-platform
 [ ] add a config page to configure parameters of scrcpy and auto refresh time
 [ ] add a manual refresh button at bottom
+[ ] add a unauthorized state for device
+[ ] make a github action to build it automatically
