@@ -46,3 +46,6 @@ npm run setup-dev
 npm run setup-dev -- -- -- -- -s1234
 ```
 
+## Reference 
+Control Record: [py-scrcpy-client](https://github.com/leng-yue/py-scrcpy-client)
+Core: [scrcpy](https://github.com/Genymobile/scrcpy)
